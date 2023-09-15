@@ -1,0 +1,7 @@
+pip-tools
+taskipy
+black
+isort
+ruff
+mypy
+types-python-dateutil

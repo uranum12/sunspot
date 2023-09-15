@@ -1,0 +1,37 @@
+[tool.black]
+target-version = ["py310"]
+line-length = 79
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+src = ["src"]
+target-version = "py310"
+format = "grouped"
+select = ["ALL"]
+ignore = ["D", "FA", "T20", "INP", "PD"]
+unfixable = ["I", "ERA"]
+
+[tool.mypy]
+python_version = "3.10"
+show_error_context = true
+show_column_numbers = true
+ignore_missing_imports = true
+
+[tool.taskipy.tasks]
+lock = "pip-compile -U requirements.in -o requirements.txt"
+sync = "pip-sync requirements.txt"
+install = "pip install -r requirements.txt"
+update = "task lock && task install"
+update-dev = "pip install -Ur dev-requirements.txt"
+
+black = "black src"
+black-check = "black --check src"
+isort = "isort src"
+ruff = "ruff src"
+ruff-fix = "ruff --fix src"
+mypy = "mypy src"
+format = "task black && task isort"
+lint = "task black-check && task ruff && task mypy"
+fix = "task ruff-fix"

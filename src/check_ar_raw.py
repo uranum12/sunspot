@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import polars as pl
@@ -73,7 +74,7 @@ def check_raw_new(df: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def main() -> None:
+def main() -> int:
     ar_path = Path("data/fujimori_ar")
 
     for path in ar_path.glob("*-*.csv"):
@@ -83,7 +84,7 @@ def main() -> None:
         except pl.ComputeError as e:
             print(f"{year}/{month}")
             print(e)
-            break
+            return 1
 
         match ar_type.detect_schema_type(year, month):
             case ar_type.SchemaType.NOTEBOOK:
@@ -91,6 +92,7 @@ def main() -> None:
                 if (columns := file.columns) != ["no", "ns", "lat"]:
                     print(f"{year}/{month}")
                     print(f"invalid columns: {columns}")
+                    return 1
             case ar_type.SchemaType.OLD | ar_type.SchemaType.NEW:
                 # 古い形式と新しい形式
                 if (columns := file.columns) != [
@@ -102,6 +104,7 @@ def main() -> None:
                 ]:
                     print(f"{year}/{month}")
                     print(f"invalid columns: {columns}")
+                    return 1
             case _:
                 print(f"Err: not supported date for {year}/{month}")
                 continue
@@ -122,7 +125,11 @@ def main() -> None:
         if raw_checked.height != 0:
             print(f"{year}/{month}")
             print(raw_checked)
+            return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    ret = main()
+    sys.exit(ret)

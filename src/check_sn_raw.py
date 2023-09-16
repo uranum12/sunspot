@@ -1,4 +1,5 @@
 import calendar
+import sys
 from pathlib import Path
 
 import polars as pl
@@ -34,7 +35,7 @@ def check_raw_ut(df: pl.DataFrame, days: int) -> pl.DataFrame:
     )
 
 
-def main() -> None:
+def main() -> int:
     sn_path = Path("data/fujimori_sn")
 
     for path in sn_path.glob("*-*.csv"):
@@ -44,7 +45,7 @@ def main() -> None:
         except pl.ComputeError as e:
             print(f"{year}/{month}")
             print(e)
-            break
+            return 1
 
         if (columns := file.columns) != [
             "date",
@@ -57,6 +58,7 @@ def main() -> None:
         ]:
             print(f"{year}/{month}")
             print(f"invalid columns: {columns}")
+            return 1
 
         match sn_type.detect_time_type(year, month):
             case sn_type.TimeType.JST:
@@ -75,7 +77,11 @@ def main() -> None:
         if raw_checked.height != 0:
             print(f"{year}/{month}")
             print(raw_checked)
+            return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    ret = main()
+    sys.exit(ret)

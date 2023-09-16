@@ -6,7 +6,14 @@ def extract_no(df: pl.LazyFrame) -> pl.LazyFrame:
         # NSデータ
         pl.col("no").str.extract(r"([NS])").cast(pl.Categorical).alias("ns"),
         # 通し番号
-        pl.col("no").str.extract(r"(\d+)").cast(pl.UInt16).alias("no"),
+        pl.col("no").str.extract(r"(\d+(_\d+)?)").alias("no"),
+    )
+
+
+def convert_no(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.with_columns(
+        # 通し番号を文字列から整数へ
+        pl.col("no").cast(pl.UInt32),
     )
 
 

@@ -7,7 +7,7 @@ def scan_csv(path: Path) -> pl.LazyFrame:
     return pl.scan_csv(
         path,
         dtypes={
-            "no": pl.UInt16,
+            "no": pl.Utf8,
             "ns": pl.Categorical,
             "lat": pl.Utf8,
         },
@@ -35,4 +35,12 @@ def fill_blanks(df: pl.LazyFrame) -> pl.LazyFrame:
     ]
     return df.with_columns(
         [pl.lit(None).cast(dtype).alias(col) for col, dtype in cols],
+    )
+
+
+def concat_no(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.with_columns(
+        pl.col("no").str.split("_").cast(pl.List(pl.UInt32)),
+    ).with_columns(
+        pl.col("no").list.get(0) + pl.col("no").list.get(1),
     )

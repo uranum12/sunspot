@@ -10,17 +10,43 @@ def contains_invalid_chars(col: str, pattern: str) -> pl.Expr:
     return pl.col(col).str.count_matches(pattern) != 1
 
 
-def check_raw_notebook(df: pl.DataFrame) -> pl.DataFrame:
+def check_raw_notebook_type1(df: pl.DataFrame) -> pl.DataFrame:
     """
     使用できない文字が混入していないかを確認する関数
     全て文字列として読み込んだものを使用すること
-    手帳形式専用
+    手帳形式type1専用
     混入していたものを返す
     """
     return df.filter(
         contains_invalid_chars("ns", r"^[NS]$")
-        | contains_invalid_chars("no", r"^\d{1,4}(\.\d)?$")
-        | contains_invalid_chars("lat", r"^-?\d{1,2}(~-?\d{1,2})?\??$"),
+        | contains_invalid_chars("no", r"^\d{1,4}$")
+        | contains_invalid_chars("lat", r"^\d{1,2}(~\d{1,2})?$"),
+    )
+
+
+def check_raw_notebook_type2(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    使用できない文字が混入していないかを確認する関数
+    全て文字列として読み込んだものを使用すること
+    手帳形式type2専用
+    混入していたものを返す
+    """
+    return df.filter(
+        contains_invalid_chars("no", r"^[NS]\d{1,3}$")
+        | contains_invalid_chars("lat", r"^\d{1,2}(~\d{1,2})?\??$"),
+    )
+
+
+def check_raw_notebook_type3(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    使用できない文字が混入していないかを確認する関数
+    全て文字列として読み込んだものを使用すること
+    手帳形式type3専用
+    混入していたものを返す
+    """
+    return df.filter(
+        contains_invalid_chars("no", r"^[NS]\d{4}_\d{1,2}$")
+        | contains_invalid_chars("lat", r"^-?\d{1,2}(~-?\d{1,2})?$"),
     )
 
 
@@ -87,9 +113,15 @@ def main() -> int:
             return 1
 
         match ar_type.detect_schema_type(year, month):
-            case ar_type.SchemaType.NOTEBOOK:
-                # 手帳形式
+            case ar_type.SchemaType.NOTEBOOK_1:
+                # 手帳形式 type 1
                 if (columns := file.columns) != ["no", "ns", "lat"]:
+                    print(f"{year}/{month}")
+                    print(f"invalid columns: {columns}")
+                    return 1
+            case ar_type.SchemaType.NOTEBOOK_2 | ar_type.SchemaType.NOTEBOOK_3:
+                # 手帳形式 type 2 and 3
+                if (columns := file.columns) != ["no", "lat"]:
                     print(f"{year}/{month}")
                     print(f"invalid columns: {columns}")
                     return 1
@@ -110,9 +142,15 @@ def main() -> int:
                 continue
 
         match ar_type.detect_schema_type(year, month):
-            case ar_type.SchemaType.NOTEBOOK:
-                # 手帳形式
-                raw_checked = check_raw_notebook(file)
+            case ar_type.SchemaType.NOTEBOOK_1:
+                # 手帳形式 type1
+                raw_checked = check_raw_notebook_type1(file)
+            case ar_type.SchemaType.NOTEBOOK_2:
+                # 手帳形式 type2
+                raw_checked = check_raw_notebook_type2(file)
+            case ar_type.SchemaType.NOTEBOOK_3:
+                # 手帳形式 type3
+                raw_checked = check_raw_notebook_type3(file)
             case ar_type.SchemaType.OLD:
                 # 古い形式
                 raw_checked = check_raw_old(file)

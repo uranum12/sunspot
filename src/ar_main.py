@@ -25,7 +25,11 @@ def main() -> None:
     for path in data_path.glob("*-*.csv"):
         year, month = map(int, path.stem.split("-"))
         match schema_type := ar_type.detect_schema_type(year, month):
-            case ar_type.SchemaType.NOTEBOOK:
+            case (
+                ar_type.SchemaType.NOTEBOOK_1
+                | ar_type.SchemaType.NOTEBOOK_2
+                | ar_type.SchemaType.NOTEBOOK_3
+            ):
                 df = ar_notebook.scan_csv(path)
                 df = ar_notebook.calc_obs_date(df, year, month)
             case ar_type.SchemaType.OLD:
@@ -42,17 +46,41 @@ def main() -> None:
     # 形式ごとに一つのデータフレームへ結合
     df_by_schema: dict[ar_type.SchemaType, pl.LazyFrame] = {}
     for schema_type, dfl in dfl_by_schema.items():
+        df_by_schema[schema_type] = pl.concat(dfl)
+
+    # 形式ごとに通し番号の計算
+    for schema_type in df_by_schema:
+        df = df_by_schema[schema_type]
         match schema_type:
-            case ar_type.SchemaType.NOTEBOOK:
-                df = pl.concat(dfl)
-                df = ar_notebook.fill_blanks(df)
+            case ar_type.SchemaType.NOTEBOOK_1:
+                df = ar_common.convert_no(df)
+            case ar_type.SchemaType.NOTEBOOK_3:
+                df = ar_common.extract_no(df)
+                df = ar_notebook.concat_no(df)
+                df = ar_common.convert_no(df)
+            case (
+                ar_type.SchemaType.NOTEBOOK_2
+                | ar_type.SchemaType.OLD
+                | ar_type.SchemaType.NEW
+            ):
+                df = ar_common.extract_no(df)
+                df = ar_common.convert_no(df)
+        df_by_schema[schema_type] = df
+
+    # 形式ごとに経緯度の計算
+    for schema_type in df_by_schema:
+        df = df_by_schema[schema_type]
+        match schema_type:
+            case (
+                ar_type.SchemaType.NOTEBOOK_1
+                | ar_type.SchemaType.NOTEBOOK_2
+                | ar_type.SchemaType.NOTEBOOK_3
+            ):
                 df = ar_common.extract_coords_qm(df, ["lat"])
                 df = ar_common.extract_coords_lr(df, ["lat"])
                 df = ar_common.extract_coords_sign(df, ["lat"])
                 df = ar_common.convert_lat(df)
             case ar_type.SchemaType.OLD | ar_type.SchemaType.NEW:
-                df = pl.concat(dfl)
-                df = ar_common.extract_no(df)
                 df = ar_common.detect_coords_over(df)
                 df = ar_common.extract_coords_qm(df)
                 df = ar_common.extract_coords_lr(df)
@@ -60,6 +88,17 @@ def main() -> None:
                 df = ar_common.convert_lat(df)
                 df = ar_common.convert_lon(df)
         df_by_schema[schema_type] = df
+
+    # 手帳形式を一つのデータフレームへ結合し空白を埋める
+    df_notebook = ar_notebook.fill_blanks(
+        pl.concat(
+            [
+                df_by_schema[ar_type.SchemaType.NOTEBOOK_1],
+                df_by_schema[ar_type.SchemaType.NOTEBOOK_2],
+                df_by_schema[ar_type.SchemaType.NOTEBOOK_3],
+            ],
+        ),
+    )
 
     # 複数のシートに跨って存在するデータを一つに結合
     df_merged = ar_merge.merge(
@@ -72,14 +111,7 @@ def main() -> None:
     )
 
     # 全ての処理済みを一つのデータフレームへ結合しソート
-    df_sorted = ar_common.sort(
-        pl.concat(
-            [
-                df_by_schema[ar_type.SchemaType.NOTEBOOK],
-                df_merged,
-            ],
-        ),
-    )
+    df_sorted = ar_common.sort(pl.concat([df_notebook, df_merged]))
 
     with pl.StringCache():
         # プロファイルとともに計算

@@ -4,10 +4,10 @@ import polars as pl
 def extract_no(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         # NSデータ
-        pl.col("No").str.extract(r"([NS])").cast(pl.Categorical).alias("ns"),
+        pl.col("no").str.extract(r"([NS])").cast(pl.Categorical).alias("ns"),
         # 通し番号
-        pl.col("No").str.extract(r"(\d+)").cast(pl.UInt16).alias("no"),
-    ).drop("No")
+        pl.col("no").str.extract(r"(\d+)").cast(pl.UInt16).alias("no"),
+    )
 
 
 def detect_coords_over(df: pl.LazyFrame) -> pl.LazyFrame:

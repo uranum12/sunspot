@@ -7,7 +7,7 @@ def scan_csv(path: Path) -> pl.LazyFrame:
     return pl.scan_csv(
         path,
         dtypes={
-            "No": pl.Utf8,
+            "no": pl.Utf8,
             "lat": pl.Utf8,
             "lon": pl.Utf8,
             "first": pl.UInt8,

@@ -32,7 +32,7 @@ def check_raw_old(df: pl.DataFrame) -> pl.DataFrame:
     混入していたものを返す
     """
     return df.filter(
-        contains_invalid_chars("No", r"^[NS]\d{4}$")
+        contains_invalid_chars("no", r"^[NS]\d{4}$")
         | contains_invalid_chars(
             "lat",
             r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
@@ -54,7 +54,7 @@ def check_raw_new(df: pl.DataFrame) -> pl.DataFrame:
     混入していたものを返す
     """
     return df.filter(
-        contains_invalid_chars("No", r"^[NS]\d{4}$")
+        contains_invalid_chars("no", r"^[NS]\d{4}$")
         | contains_invalid_chars(
             "lat",
             r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
@@ -96,7 +96,7 @@ def main() -> int:
             case ar_type.SchemaType.OLD | ar_type.SchemaType.NEW:
                 # 古い形式と新しい形式
                 if (columns := file.columns) != [
-                    "No",
+                    "no",
                     "lat",
                     "lon",
                     "first",

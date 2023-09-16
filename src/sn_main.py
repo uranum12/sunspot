@@ -5,6 +5,7 @@ import polars as pl
 
 import sn_common
 import sn_jst
+import sn_type
 import sn_ut
 
 
@@ -21,13 +22,14 @@ def main() -> None:
         year, month = map(int, path.stem.split("-"))
         file_frame = sn_common.scan_csv(path)
         # jstとutで時刻の計算方法が別
-        if sn_jst.is_date_supported(year, month):
-            file_frame = sn_jst.calc_time(file_frame)
-        elif sn_ut.is_date_supported(year, month):
-            file_frame = sn_ut.calc_time(file_frame)
-        else:
-            print(f"Err: not supported date for {year}/{month}")
-            continue
+        match sn_type.detect_time_type(year, month):
+            case sn_type.TimeType.JST:
+                file_frame = sn_jst.calc_time(file_frame)
+            case sn_type.TimeType.UT:
+                file_frame = sn_ut.calc_time(file_frame)
+            case _:
+                print(f"Err: not supported date for {year}/{month}")
+                continue
         # 日付の計算
         file_frame = sn_common.calc_date(file_frame, year, month)
         file_frames.append(file_frame)

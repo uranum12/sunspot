@@ -1,18 +1,4 @@
-from datetime import date
-
 import polars as pl
-
-
-def is_date_supported(year: int, month: int) -> bool:
-    # jst (1954/1~1959/12) or (1960/4~1968/6)
-    supported_ranges = [
-        (date(1954, 1, 1), date(1959, 12, 1)),
-        (date(1960, 4, 1), date(1968, 6, 1)),
-    ]
-    for start_date, end_date in supported_ranges:
-        if start_date <= date(year, month, 1) <= end_date:
-            return True
-    return False
 
 
 def calc_time(df: pl.LazyFrame) -> pl.LazyFrame:

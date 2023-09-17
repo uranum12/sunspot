@@ -24,23 +24,21 @@ def main() -> None:
     }
     for path in data_path.glob("*-*.csv"):
         year, month = map(int, path.stem.split("-"))
-        match schema_type := ar_type.detect_schema_type(year, month):
+        if (schema_type := ar_type.detect_schema_type(year, month)) is None:
+            print(f"Err: not supported date for {year}/{month}")
+            continue
+        df = pl.scan_csv(path, dtypes=ar_type.detect_dtypes(schema_type))
+        match schema_type:
             case (
                 ar_type.SchemaType.NOTEBOOK_1
                 | ar_type.SchemaType.NOTEBOOK_2
                 | ar_type.SchemaType.NOTEBOOK_3
             ):
-                df = ar_notebook.scan_csv(path)
                 df = ar_notebook.calc_obs_date(df, year, month)
             case ar_type.SchemaType.OLD:
-                df = ar_old.scan_csv(path)
                 df = ar_old.calc_obs_date(df, year, month)
             case ar_type.SchemaType.NEW:
-                df = ar_new.scan_csv(path)
                 df = ar_new.calc_obs_date(df, year, month)
-            case _:
-                print(f"Err: not supported date for {year}/{month}")
-                continue
         dfl_by_schema[schema_type].append(df)
 
     # 形式ごとに一つのデータフレームへ結合

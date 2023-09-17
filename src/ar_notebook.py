@@ -1,17 +1,4 @@
-from pathlib import Path
-
 import polars as pl
-
-
-def scan_csv(path: Path) -> pl.LazyFrame:
-    return pl.scan_csv(
-        path,
-        dtypes={
-            "no": pl.Utf8,
-            "ns": pl.Categorical,
-            "lat": pl.Utf8,
-        },
-    )
 
 
 def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:

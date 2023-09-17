@@ -1,6 +1,8 @@
 from datetime import date
 from enum import Enum, auto
 
+import polars as pl
+
 
 class SchemaType(Enum):
     NOTEBOOK_1 = auto()
@@ -26,3 +28,35 @@ def detect_schema_type(year: int, month: int) -> SchemaType | None:
             return schema_type
 
     return None
+
+
+def detect_dtypes(schema_type: SchemaType) -> dict[str, pl.PolarsDataType]:
+    match schema_type:
+        case SchemaType.NOTEBOOK_1:
+            return {
+                "no": pl.UInt32,
+                "ns": pl.Categorical,
+                "lat": pl.Utf8,
+            }
+        case SchemaType.NOTEBOOK_2 | SchemaType.NOTEBOOK_3:
+            return {
+                "no": pl.Utf8,
+                "ns": pl.Categorical,
+                "lat": pl.Utf8,
+            }
+        case SchemaType.OLD:
+            return {
+                "no": pl.Utf8,
+                "lat": pl.Utf8,
+                "lon": pl.Utf8,
+                "first": pl.UInt8,
+                "last": pl.UInt8,
+            }
+        case SchemaType.NEW:
+            return {
+                "no": pl.Utf8,
+                "lat": pl.Utf8,
+                "lon": pl.Utf8,
+                "first": pl.Utf8,
+                "last": pl.Utf8,
+            }

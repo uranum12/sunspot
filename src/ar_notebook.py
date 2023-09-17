@@ -40,7 +40,5 @@ def fill_blanks(df: pl.LazyFrame) -> pl.LazyFrame:
 
 def concat_no(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
-        pl.col("no").str.split("_").cast(pl.List(pl.UInt32)),
-    ).with_columns(
-        pl.col("no").list.get(0) + pl.col("no").list.get(1),
+        pl.col("no").str.replace("_", ""),
     )

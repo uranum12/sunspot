@@ -13,7 +13,7 @@ import ar_common
         ("S1234", "S", "1234"),
         ("S5432", "S", "5432"),
         ("N1234_56", "N", "1234_56"),
-        ("S6543_02", "S", "6543_02"),
+        ("S6543_2", "S", "6543_2"),
     ],
 )
 def test_extract_no(in_no: str, out_ns: str, out_no: str) -> None:

@@ -373,3 +373,92 @@ def test_convert_lon(
     df_out = ar_common.convert_lon(df_in).collect()
     assert df_out.item(0, "lon_left") == out_lon_left
     assert df_out.item(0, "lon_right") == out_lon_right
+
+
+def test_sort_by_row() -> None:
+    in_rows = [
+        "no",
+        "ns",
+        "over",
+        "first",
+        "last",
+        "lat_left",
+        "lat_right",
+        "lon_left",
+        "lon_right",
+        "lat_left_sign",
+        "lat_right_sign",
+        "lon_left_sign",
+        "lon_right_sign",
+        "lat_question",
+        "lon_question",
+    ]
+    out_rows = [
+        "ns",
+        "no",
+        "lat_left",
+        "lat_right",
+        "lat_left_sign",
+        "lat_right_sign",
+        "lat_question",
+        "lon_left",
+        "lon_right",
+        "lon_left_sign",
+        "lon_right_sign",
+        "lon_question",
+        "first",
+        "last",
+        "over",
+    ]
+    df_in = pl.LazyFrame({row_name: [] for row_name in in_rows})
+    df_out = ar_common.sort(df_in)
+    assert df_out.columns == out_rows
+
+
+@pytest.mark.parametrize(
+    ("in_no", "in_ns", "out_no", "out_ns"),
+    [
+        (
+            [1, 1, 3, 3, 2, 2],
+            ["N", "S", "S", "N", "N", "S"],
+            [1, 2, 3, 1, 2, 3],
+            ["N", "N", "N", "S", "S", "S"],
+        ),
+        (
+            [1, 2, None, 1, None, 3],
+            [None, "N", "N", "S", "S", "S"],
+            [1, None, 2, None, 1, 3],
+            [None, "N", "N", "S", "S", "S"],
+        ),
+    ],
+)
+def test_sort_by_no(
+    in_no: list[int],
+    in_ns: list[str],
+    out_no: list[int],
+    out_ns: list[str],
+) -> None:
+    cols = [
+        "lat_left",
+        "lat_right",
+        "lat_left_sign",
+        "lat_right_sign",
+        "lat_question",
+        "lon_left",
+        "lon_right",
+        "lon_left_sign",
+        "lon_right_sign",
+        "lon_question",
+        "first",
+        "last",
+        "over",
+    ]
+    df_in = pl.LazyFrame(
+        {
+            "no": in_no,
+            "ns": in_ns,
+        },
+    ).with_columns([pl.lit(None).alias(col) for col in cols])
+    df_out = ar_common.sort(df_in).collect()
+    assert df_out.get_column("no").to_list() == out_no
+    assert df_out.get_column("ns").to_list() == out_ns

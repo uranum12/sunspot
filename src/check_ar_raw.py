@@ -1,103 +1,71 @@
 import sys
+from functools import reduce
 from pathlib import Path
 
 import polars as pl
 
 import ar_type
 
+columns: dict[ar_type.SchemaType, list[str]] = {
+    ar_type.SchemaType.NOTEBOOK_1: ["no", "ns", "lat"],
+    ar_type.SchemaType.NOTEBOOK_2: ["no", "lat"],
+    ar_type.SchemaType.NOTEBOOK_3: ["no", "lat"],
+    ar_type.SchemaType.OLD: ["no", "lat", "lon", "first", "last"],
+    ar_type.SchemaType.NEW: ["no", "lat", "lon", "first", "last"],
+}
 
-def contains_invalid_chars(col: str, pattern: str) -> pl.Expr:
-    return pl.col(col).str.count_matches(pattern) != 1
+patterns: dict[ar_type.SchemaType, dict[str, str]] = {
+    ar_type.SchemaType.NOTEBOOK_1: {
+        "ns": r"^[NS]$",
+        "no": r"^\d{1,4}$",
+        "lat": r"^\d{1,2}(~\d{1,2})?$",
+    },
+    ar_type.SchemaType.NOTEBOOK_2: {
+        "no": r"^[NS]\d{1,3}$",
+        "lat": r"^\d{1,2}(~\d{1,2})?\??$",
+    },
+    ar_type.SchemaType.NOTEBOOK_3: {
+        "no": r"^[NS]\d{4}_\d{1,2}$",
+        "lat": r"^-?\d{1,2}(~-?\d{1,2})?$",
+    },
+    ar_type.SchemaType.OLD: {
+        "no": r"^[NS]\d{4}$",
+        "lat": r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
+        "lon": r"(^/$|^[p-]?\d{1,3}(~[p-]?\d{1,3})?\??$)",
+        "first": r"^\d{1,2}$",
+        "last": r"^\d{1,2}$",
+    },
+    ar_type.SchemaType.NEW: {
+        "no": r"^[NS]\d{4}$",
+        "lat": r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
+        "lon": r"(^/$|^[p-]?\d{1,3}(~[p-]?\d{1,3})?\??$)",
+        "first": r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.\d{1,2}$",
+        "last": r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.\d{1,2}$",
+    },
+}
 
 
-def check_raw_notebook_type1(df: pl.DataFrame) -> pl.DataFrame:
-    """
-    使用できない文字が混入していないかを確認する関数
-    全て文字列として読み込んだものを使用すること
-    手帳形式type1専用
-    混入していたものを返す
-    """
+def check_raw(df: pl.DataFrame, pats: dict[str, str]) -> pl.DataFrame:
     return df.filter(
-        contains_invalid_chars("ns", r"^[NS]$")
-        | contains_invalid_chars("no", r"^\d{1,4}$")
-        | contains_invalid_chars("lat", r"^\d{1,2}(~\d{1,2})?$"),
-    )
-
-
-def check_raw_notebook_type2(df: pl.DataFrame) -> pl.DataFrame:
-    """
-    使用できない文字が混入していないかを確認する関数
-    全て文字列として読み込んだものを使用すること
-    手帳形式type2専用
-    混入していたものを返す
-    """
-    return df.filter(
-        contains_invalid_chars("no", r"^[NS]\d{1,3}$")
-        | contains_invalid_chars("lat", r"^\d{1,2}(~\d{1,2})?\??$"),
-    )
-
-
-def check_raw_notebook_type3(df: pl.DataFrame) -> pl.DataFrame:
-    """
-    使用できない文字が混入していないかを確認する関数
-    全て文字列として読み込んだものを使用すること
-    手帳形式type3専用
-    混入していたものを返す
-    """
-    return df.filter(
-        contains_invalid_chars("no", r"^[NS]\d{4}_\d{1,2}$")
-        | contains_invalid_chars("lat", r"^-?\d{1,2}(~-?\d{1,2})?$"),
-    )
-
-
-def check_raw_old(df: pl.DataFrame) -> pl.DataFrame:
-    """
-    使用できない文字が混入していないかを確認する関数
-    全て文字列として読み込んだものを使用すること
-    古い形式専用
-    混入していたものを返す
-    """
-    return df.filter(
-        contains_invalid_chars("no", r"^[NS]\d{4}$")
-        | contains_invalid_chars(
-            "lat",
-            r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
-        )
-        | contains_invalid_chars(
-            "lon",
-            r"(^/$|^[p-]?\d{1,3}(~[p-]?\d{1,3})?\??$)",
-        )
-        | contains_invalid_chars("first", r"^\d{1,2}$")
-        | contains_invalid_chars("last", r"^\d{1,2}$"),
-    )
-
-
-def check_raw_new(df: pl.DataFrame) -> pl.DataFrame:
-    """
-    使用できない文字が混入してないかを確認する関数
-    全て文字列として読み込んだものを使用すること
-    新しい形式専用
-    混入していたものを返す
-    """
-    return df.filter(
-        contains_invalid_chars("no", r"^[NS]\d{4}$")
-        | contains_invalid_chars(
-            "lat",
-            r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
-        )
-        | contains_invalid_chars(
-            "lon",
-            r"(^/$|^[p-]?\d{1,3}(~[p-]?\d{1,3})?\??$)",
-        )
-        | contains_invalid_chars(
-            "first",
-            r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.\d{1,2}$",
-        )
-        | contains_invalid_chars(
-            "last",
-            r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.\d{1,2}$",
+        reduce(
+            lambda acc, cur: acc | cur,
+            [
+                pl.col(col).str.count_matches(pat) != 1
+                for col, pat in pats.items()
+            ],
         ),
     )
+
+
+def check_file(path: Path, cols: list[str], pats: dict[str, str]) -> None:
+    file = pl.read_csv(path, infer_schema_length=0)
+
+    if (c := file.columns) != cols:
+        msg = f"invalid columns: {c}"
+        raise ValueError(msg)
+
+    if (raw_checked := check_raw(file, pats)).height != 0:
+        raise ValueError(raw_checked)
 
 
 def main() -> int:
@@ -105,65 +73,16 @@ def main() -> int:
 
     for path in ar_path.glob("*-*.csv"):
         year, month = map(int, path.stem.split("-"))
-        try:
-            file = pl.read_csv(path, infer_schema_length=0)
-        except pl.ComputeError as e:
-            print(f"{year}/{month}")
-            print(e)
-            return 1
-
-        match ar_type.detect_schema_type(year, month):
-            case ar_type.SchemaType.NOTEBOOK_1:
-                # 手帳形式 type 1
-                if (columns := file.columns) != ["no", "ns", "lat"]:
-                    print(f"{year}/{month}")
-                    print(f"invalid columns: {columns}")
-                    return 1
-            case ar_type.SchemaType.NOTEBOOK_2 | ar_type.SchemaType.NOTEBOOK_3:
-                # 手帳形式 type 2 and 3
-                if (columns := file.columns) != ["no", "lat"]:
-                    print(f"{year}/{month}")
-                    print(f"invalid columns: {columns}")
-                    return 1
-            case ar_type.SchemaType.OLD | ar_type.SchemaType.NEW:
-                # 古い形式と新しい形式
-                if (columns := file.columns) != [
-                    "no",
-                    "lat",
-                    "lon",
-                    "first",
-                    "last",
-                ]:
-                    print(f"{year}/{month}")
-                    print(f"invalid columns: {columns}")
-                    return 1
-            case _:
-                print(f"Err: not supported date for {year}/{month}")
-                continue
-
-        match ar_type.detect_schema_type(year, month):
-            case ar_type.SchemaType.NOTEBOOK_1:
-                # 手帳形式 type1
-                raw_checked = check_raw_notebook_type1(file)
-            case ar_type.SchemaType.NOTEBOOK_2:
-                # 手帳形式 type2
-                raw_checked = check_raw_notebook_type2(file)
-            case ar_type.SchemaType.NOTEBOOK_3:
-                # 手帳形式 type3
-                raw_checked = check_raw_notebook_type3(file)
-            case ar_type.SchemaType.OLD:
-                # 古い形式
-                raw_checked = check_raw_old(file)
-            case ar_type.SchemaType.NEW:
-                # 新しい形式
-                raw_checked = check_raw_new(file)
-            case _:
-                print(f"Err: not supported date for {year}/{month}")
-                continue
-        if raw_checked.height != 0:
-            print(f"{year}/{month}")
-            print(raw_checked)
-            return 1
+        if schema_type := ar_type.detect_schema_type(year, month):
+            try:
+                check_file(path, columns[schema_type], patterns[schema_type])
+            except (pl.ComputeError, ValueError) as e:
+                print(f"{year}/{month}")
+                print(e)
+                return 1
+        else:
+            print(f"Err: not supported date for {year}/{month}")
+            continue
 
     return 0
 

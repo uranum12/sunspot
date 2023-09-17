@@ -55,7 +55,7 @@ def main() -> None:
             case ar_type.SchemaType.NOTEBOOK_1:
                 df = ar_common.convert_no(df)
             case ar_type.SchemaType.NOTEBOOK_3:
-                df = ar_common.extract_no(df)
+                df = ar_common.extract_ns(df)
                 df = ar_notebook.concat_no(df)
                 df = ar_common.convert_no(df)
             case (
@@ -63,7 +63,7 @@ def main() -> None:
                 | ar_type.SchemaType.OLD
                 | ar_type.SchemaType.NEW
             ):
-                df = ar_common.extract_no(df)
+                df = ar_common.extract_ns(df)
                 df = ar_common.convert_no(df)
         df_by_schema[schema_type] = df
 

@@ -1,12 +1,12 @@
 import polars as pl
 
 
-def extract_no(df: pl.LazyFrame) -> pl.LazyFrame:
+def extract_ns(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         # NSデータ
         pl.col("no").str.extract(r"([NS])").cast(pl.Categorical).alias("ns"),
-        # 通し番号
-        pl.col("no").str.extract(r"(\d+(_\d+)?)").alias("no"),
+        # 通し番号からNSを削除
+        pl.col("no").str.replace(r"[NS]", ""),
     )
 
 
@@ -39,6 +39,8 @@ def extract_coords_qm(
         .str.extract(r"(\?)")
         .cast(pl.Categorical)
         .suffix("_question"),
+        # 経緯度からはてなマーク削除
+        pl.col(coords).str.replace(r"\?", ""),
     )
 
 
@@ -89,24 +91,24 @@ def extract_coords_sign(
         .str.replace(r"(p)", "+")
         .cast(pl.Categorical)
         .suffix("_sign"),
+        # 経緯度の左右の数値から符号を削除
+        pl.col(
+            [f"{coord}_{lr}" for coord in coords for lr in ["left", "right"]],
+        ).str.replace(r"p|-", ""),
     )
 
 
 def convert_lat(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
-        # 緯度の各数値から符号を無くし符号なし整数へ変換
-        pl.col("lat_left", "lat_right")
-        .str.extract(r"(\d+)")
-        .cast(pl.UInt8),
+        # 緯度の各数値を符号なし整数へ変換
+        pl.col("lat_left", "lat_right").cast(pl.UInt8),
     )
 
 
 def convert_lon(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
-        # 経度の各数値から符号を無くし符号なし整数へ変換
-        pl.col("lon_left", "lon_right")
-        .str.extract(r"(\d+)")
-        .cast(pl.UInt16),
+        # 経度の各数値を符号なし整数へ変換
+        pl.col("lon_left", "lon_right").cast(pl.UInt16),
     )
 
 

@@ -6,3 +6,5 @@ isort
 ruff
 mypy
 types-python-dateutil
+pytest
+pytest-cov

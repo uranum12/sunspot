@@ -184,29 +184,12 @@ def test_merge() -> None:
             "over": [False, False, False],
         },
     )
-    df_out = (
-        ar_merge.merge(df_in)
-        .select(
-            "ns",
-            "no",
-            "lat_left",
-            "lat_right",
-            "lat_left_sign",
-            "lat_right_sign",
-            "lat_question",
-            "lon_left",
-            "lon_right",
-            "lon_left_sign",
-            "lon_right_sign",
-            "lon_question",
-            "first",
-            "last",
-            "over",
-        )
-        .collect()
-    )
+    df_out = ar_merge.merge(df_in).collect()
     print(df_out)
     print(df_correct)
-    for row_out, row_correct in zip(df_out, df_correct, strict=True):
-        for item_out, item_correct in zip(row_out, row_correct, strict=True):
-            assert item_out == item_correct
+    for row_out, row_correct in zip(
+        df_out.iter_rows(named=True),
+        df_correct.iter_rows(named=True),
+        strict=True,
+    ):
+        assert row_out == row_correct

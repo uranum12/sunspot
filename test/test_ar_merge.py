@@ -185,8 +185,6 @@ def test_merge() -> None:
         },
     )
     df_out = ar_merge.merge(df_in).collect()
-    print(df_out)
-    print(df_correct)
     for row_out, row_correct in zip(
         df_out.iter_rows(named=True),
         df_correct.iter_rows(named=True),

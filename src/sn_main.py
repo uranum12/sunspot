@@ -20,7 +20,18 @@ def main() -> None:
     for path in data_path.glob("*-*.csv"):
         # ファイル名から対象の年と月を計算
         year, month = map(int, path.stem.split("-"))
-        file_frame = sn_common.scan_csv(path)
+        file_frame = pl.scan_csv(
+            path,
+            dtypes={
+                "date": pl.UInt8,
+                "time": pl.Utf8,
+                "ng": pl.UInt8,
+                "nf": pl.UInt16,
+                "sg": pl.UInt8,
+                "sf": pl.UInt16,
+                "remarks": pl.Utf8,
+            },
+        )
         # jstとutで時刻の計算方法が別
         match sn_type.detect_time_type(year, month):
             case sn_type.TimeType.JST:

@@ -11,6 +11,16 @@ def extract_over_no(df: pl.LazyFrame) -> pl.Series:
     )
 
 
+def get_obs_date(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.group_by("no").agg(
+        # 観測日以外
+        pl.all().exclude("first", "last"),
+        # 観測日の大小を比較
+        pl.col("first").min(),
+        pl.col("last").max(),
+    )
+
+
 def get_not_null(df: pl.LazyFrame) -> pl.LazyFrame:
     # リストから分解する列
     cols = [
@@ -58,13 +68,10 @@ def merge(df: pl.LazyFrame) -> pl.LazyFrame:
         # 結合対象
         df_over = df_filterd.filter(pl.col("no").is_in(over_no))
         # 通し番号でまとめ、観測日を計算
-        df_over = df_over.groupby("no").agg(
-            pl.all().exclude("first", "last"),
-            pl.col("first").min(),
-            pl.col("last").max(),
-        )
-        # 上記以外の値を戻す
+        df_over = get_obs_date(df_over)
+        # 観測日以外を戻す
         df_over = get_not_null(df_over)
+        # 結合済みとして処理
         df_over = df_over.with_columns(over=False)
 
         dfl.append(df_over)

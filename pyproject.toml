@@ -14,7 +14,7 @@ ignore = ["D", "FA", "T20", "INP", "PD"]
 unfixable = ["I", "ERA"]
 
 [tool.ruff.per-file-ignores]
-"test/*.py" = ["S101", "FBT001", "PLR0913"]
+"test/*.py" = ["S101", "FBT001", "PLR0913", "PLR2004"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -24,9 +24,6 @@ def test_calc_obs_date(in_year: int, in_month: int, out_first: date) -> None:
 def test_fill_blanks() -> None:
     df_in = pl.LazyFrame()
     df_out = ar_notebook.fill_blanks(df_in).collect()
-    assert df_out.item(0, "lat_left_sign") is None
-    assert df_out.item(0, "lat_right_sign") is None
-    assert df_out.item(0, "lat_question") is None
     assert df_out.item(0, "lon_left") is None
     assert df_out.item(0, "lon_right") is None
     assert df_out.item(0, "lon_left_sign") is None

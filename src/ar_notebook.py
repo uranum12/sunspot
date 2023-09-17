@@ -9,9 +9,6 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
 
 def fill_blanks(df: pl.LazyFrame) -> pl.LazyFrame:
     cols: list[tuple[str, pl.PolarsDataType]] = [
-        ("lat_left_sign", pl.Categorical),
-        ("lat_right_sign", pl.Categorical),
-        ("lat_question", pl.Categorical),
         ("lon_left", pl.UInt16),
         ("lon_right", pl.UInt16),
         ("lon_left_sign", pl.Categorical),

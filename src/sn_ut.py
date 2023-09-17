@@ -22,9 +22,13 @@ def calc_time(df: pl.LazyFrame) -> pl.LazyFrame:
                 )
                 .otherwise(
                     # 「-時:分」の場合
-                    pl.time(
-                        8 - pl.col("time").list.get(0),
-                        60 - pl.col("time").list.get(1),
+                    pl.when(pl.col("time").list.get(1).eq(0))  # 「-時:00」の場合
+                    .then(pl.time(9 - pl.col("time").list.get(0)))
+                    .otherwise(
+                        pl.time(
+                            8 - pl.col("time").list.get(0),
+                            60 - pl.col("time").list.get(1),
+                        ),
                     ),
                 ),
             )

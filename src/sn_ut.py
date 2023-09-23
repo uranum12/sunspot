@@ -39,8 +39,6 @@ def calc_time(df: pl.LazyFrame) -> pl.LazyFrame:
                     pl.col("time").list.get(1),
                 ),
             )
-            # 文字列へ変換
-            .dt.to_string("%H:%M")
             .alias("time"),
         )
         .drop("time_minus")

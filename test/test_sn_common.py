@@ -28,30 +28,6 @@ def test_calc_date(
     assert df_out.item(0, "date") == out_date
 
 
-def test_sort_by_row() -> None:
-    in_rows = [
-        "time",
-        "date",
-        "remarks",
-        "sf",
-        "nf",
-        "sg",
-        "ng",
-    ]
-    out_rows = [
-        "date",
-        "time",
-        "ng",
-        "nf",
-        "sg",
-        "sf",
-        "remarks",
-    ]
-    df_in = pl.LazyFrame({row_name: [] for row_name in in_rows})
-    df_out = sn_common.sort(df_in)
-    assert df_out.columns == out_rows
-
-
 @pytest.mark.parametrize(
     ("in_date", "out_date"),
     [

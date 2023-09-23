@@ -9,13 +9,5 @@ def calc_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
 
 
 def sort(df: pl.LazyFrame) -> pl.LazyFrame:
-    # 列の順番を揃え、日付でソートする
-    return df.select(
-        "date",
-        "time",
-        "ng",
-        "nf",
-        "sg",
-        "sf",
-        "remarks",
-    ).sort("date")
+    # 日付でソートする
+    return df.sort("date")

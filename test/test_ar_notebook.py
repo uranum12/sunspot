@@ -21,16 +21,26 @@ def test_calc_obs_date(in_year: int, in_month: int, out_first: date) -> None:
     assert df_out.item(0, "first") == out_first
 
 
-def test_fill_blanks() -> None:
+@pytest.mark.parametrize(
+    ("in_name", "in_type"),
+    [
+        ("last", pl.Date),
+        ("over", pl.Boolean),
+        ("lon_left", pl.UInt16),
+        ("lon_right", pl.UInt16),
+        ("lat_left_sign", pl.Categorical),
+        ("lat_right_sign", pl.Categorical),
+        ("lon_left_sign", pl.Categorical),
+        ("lon_right_sign", pl.Categorical),
+        ("lat_question", pl.Categorical),
+        ("lon_question", pl.Categorical),
+    ],
+)
+def test_fill_blanks(in_name: str, in_type: pl.PolarsDataType) -> None:
     df_in = pl.LazyFrame()
-    df_out = ar_notebook.fill_blanks(df_in).collect()
-    assert df_out.item(0, "lon_left") is None
-    assert df_out.item(0, "lon_right") is None
-    assert df_out.item(0, "lon_left_sign") is None
-    assert df_out.item(0, "lon_right_sign") is None
-    assert df_out.item(0, "lon_question") is None
-    assert df_out.item(0, "last") is None
-    assert df_out.item(0, "over") is None
+    df_out = ar_notebook.fill_blanks(df_in, [(in_name, in_type)]).collect()
+    assert df_out.item(0, in_name) is None
+    assert df_out.schema[in_name] == in_type
 
 
 @pytest.mark.parametrize(

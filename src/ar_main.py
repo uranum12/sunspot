@@ -11,7 +11,7 @@ import ar_old
 import ar_type
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0915
     # 入出力先のフォルダのパス
     # 出力先のフォルダがない場合は作成
     data_path = Path("data/fujimori_ar")
@@ -69,12 +69,10 @@ def main() -> None:
     for schema_type in df_by_schema:
         df = df_by_schema[schema_type]
         match schema_type:
-            case (
-                ar_type.SchemaType.NOTEBOOK_1
-                | ar_type.SchemaType.NOTEBOOK_2
-                | ar_type.SchemaType.NOTEBOOK_3
-            ):
-                df = ar_common.extract_coords_qm(df, ["lat"])
+            case ar_type.SchemaType.NOTEBOOK_1 | ar_type.SchemaType.NOTEBOOK_2:
+                df = ar_common.extract_coords_lr(df, ["lat"])
+                df = ar_common.convert_lat(df)
+            case ar_type.SchemaType.NOTEBOOK_3:
                 df = ar_common.extract_coords_lr(df, ["lat"])
                 df = ar_common.extract_coords_sign(df, ["lat"])
                 df = ar_common.convert_lat(df)
@@ -87,16 +85,40 @@ def main() -> None:
                 df = ar_common.convert_lon(df)
         df_by_schema[schema_type] = df
 
-    # 手帳形式を一つのデータフレームへ結合し空白を埋める
-    df_notebook = ar_notebook.fill_blanks(
-        pl.concat(
-            [
-                df_by_schema[ar_type.SchemaType.NOTEBOOK_1],
-                df_by_schema[ar_type.SchemaType.NOTEBOOK_2],
-                df_by_schema[ar_type.SchemaType.NOTEBOOK_3],
-            ],
-        ),
-    )
+    for schema_type in df_by_schema:
+        df = df_by_schema[schema_type]
+        match schema_type:
+            case ar_type.SchemaType.NOTEBOOK_1 | ar_type.SchemaType.NOTEBOOK_2:
+                df = ar_notebook.fill_blanks(
+                    df,
+                    [
+                        ("last", pl.Date),
+                        ("over", pl.Boolean),
+                        ("lon_left", pl.UInt16),
+                        ("lon_right", pl.UInt16),
+                        ("lat_left_sign", pl.Categorical),
+                        ("lat_right_sign", pl.Categorical),
+                        ("lon_left_sign", pl.Categorical),
+                        ("lon_right_sign", pl.Categorical),
+                        ("lat_question", pl.Categorical),
+                        ("lon_question", pl.Categorical),
+                    ],
+                )
+            case ar_type.SchemaType.NOTEBOOK_3:
+                df = ar_notebook.fill_blanks(
+                    df,
+                    [
+                        ("last", pl.Date),
+                        ("over", pl.Boolean),
+                        ("lon_left", pl.UInt16),
+                        ("lon_right", pl.UInt16),
+                        ("lon_left_sign", pl.Categorical),
+                        ("lon_right_sign", pl.Categorical),
+                        ("lat_question", pl.Categorical),
+                        ("lon_question", pl.Categorical),
+                    ],
+                )
+        df_by_schema[schema_type] = df
 
     # 複数のシートに跨って存在するデータを一つに結合
     df_merged = ar_merge.merge(
@@ -109,7 +131,16 @@ def main() -> None:
     )
 
     # 全ての処理済みを一つのデータフレームへ結合しソート
-    df_sorted = ar_common.sort(pl.concat([df_notebook, df_merged]))
+    df_sorted = ar_common.sort(
+        pl.concat(
+            [
+                df_by_schema[ar_type.SchemaType.NOTEBOOK_1],
+                df_by_schema[ar_type.SchemaType.NOTEBOOK_2],
+                df_by_schema[ar_type.SchemaType.NOTEBOOK_3],
+                df_merged,
+            ],
+        ),
+    )
 
     with pl.StringCache():
         # プロファイルとともに計算

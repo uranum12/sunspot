@@ -32,8 +32,39 @@ def find_gf_reversals(lf: pl.LazyFrame) -> pl.DataFrame | None:
     )
 
 
+def check_by_total(
+    lf: pl.LazyFrame,
+    index: pl.LazyFrame,
+) -> pl.DataFrame | None:
+    return (
+        df
+        if (
+            df := lf.select(
+                pl.col("date").dt.year().alias("year"),
+                pl.col("date").dt.month().alias("month"),
+                (pl.col("nf") + pl.col("ng") * 10).alias("nt"),
+                (pl.col("sf") + pl.col("sg") * 10).alias("st"),
+            )
+            .group_by("year", "month")
+            .agg(
+                pl.col("nt").sum(),
+                pl.col("st").sum(),
+            )
+            .join(index, on=["year", "month"], how="outer")
+            .filter(
+                (pl.col("nt") != pl.col("n")) | (pl.col("st") != pl.col("s")),
+            )
+            .sort("year", "month")
+            .collect()
+        ).height
+        != 0
+        else None
+    )
+
+
 def main() -> None:
     file = pl.scan_parquet(Path("out/sn/all.parquet"))
+    index = pl.scan_parquet(Path("out/sn/index.parquet"))
 
     with pl.Config() as cfg:
         cfg.set_tbl_cols(-1)
@@ -44,6 +75,9 @@ def main() -> None:
             print(checked)
         if (checked := find_gf_reversals(file)) is not None:
             print("gf reversals check failed")
+            print(checked)
+        if (checked := check_by_total(file, index)) is not None:
+            print("total check failed")
             print(checked)
 
 

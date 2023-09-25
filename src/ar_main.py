@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 from pprint import pprint
 
@@ -11,7 +12,92 @@ import ar_old
 import ar_type
 
 
-def main() -> None:  # noqa: C901, PLR0915
+def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
+    match ar_type.detect_schema_type(year, month):
+        case (
+            ar_type.SchemaType.NOTEBOOK_1
+            | ar_type.SchemaType.NOTEBOOK_2
+            | ar_type.SchemaType.NOTEBOOK_3
+        ):
+            df = ar_notebook.calc_obs_date(df, year, month)
+            df = ar_notebook.fill_blanks(df, [("last", pl.Date)])
+        case ar_type.SchemaType.OLD:
+            df = ar_old.calc_obs_date(df, year, month)
+        case ar_type.SchemaType.NEW:
+            df = ar_new.calc_obs_date(df, year, month)
+    return df
+
+
+def calc_no(
+    df: pl.LazyFrame,
+    schema_type: ar_type.SchemaType,
+) -> pl.LazyFrame:
+    match schema_type:
+        case ar_type.SchemaType.NOTEBOOK_1:
+            df = ar_common.convert_no(df)
+        case ar_type.SchemaType.NOTEBOOK_3:
+            df = ar_common.extract_ns(df)
+            df = ar_notebook.concat_no(df)
+            df = ar_common.convert_no(df)
+        case (
+            ar_type.SchemaType.NOTEBOOK_2
+            | ar_type.SchemaType.OLD
+            | ar_type.SchemaType.NEW
+        ):
+            df = ar_common.extract_ns(df)
+            df = ar_common.convert_no(df)
+    return df
+
+
+def calc_coords(
+    df: pl.LazyFrame,
+    schema_type: ar_type.SchemaType,
+) -> pl.LazyFrame:
+    match schema_type:
+        case ar_type.SchemaType.NOTEBOOK_1 | ar_type.SchemaType.NOTEBOOK_2:
+            df = ar_common.extract_coords_lr(df, ["lat"])
+            df = ar_common.convert_lat(df)
+            df = ar_notebook.fill_blanks(
+                df,
+                [
+                    ("over", pl.Boolean),
+                    ("lon_left", pl.UInt16),
+                    ("lon_right", pl.UInt16),
+                    ("lat_left_sign", pl.Categorical),
+                    ("lat_right_sign", pl.Categorical),
+                    ("lon_left_sign", pl.Categorical),
+                    ("lon_right_sign", pl.Categorical),
+                    ("lat_question", pl.Categorical),
+                    ("lon_question", pl.Categorical),
+                ],
+            )
+        case ar_type.SchemaType.NOTEBOOK_3:
+            df = ar_common.extract_coords_lr(df, ["lat"])
+            df = ar_common.extract_coords_sign(df, ["lat"])
+            df = ar_common.convert_lat(df)
+            df = ar_notebook.fill_blanks(
+                df,
+                [
+                    ("over", pl.Boolean),
+                    ("lon_left", pl.UInt16),
+                    ("lon_right", pl.UInt16),
+                    ("lon_left_sign", pl.Categorical),
+                    ("lon_right_sign", pl.Categorical),
+                    ("lat_question", pl.Categorical),
+                    ("lon_question", pl.Categorical),
+                ],
+            )
+        case ar_type.SchemaType.OLD | ar_type.SchemaType.NEW:
+            df = ar_common.detect_coords_over(df)
+            df = ar_common.extract_coords_qm(df)
+            df = ar_common.extract_coords_lr(df)
+            df = ar_common.extract_coords_sign(df)
+            df = ar_common.convert_lat(df)
+            df = ar_common.convert_lon(df)
+    return df
+
+
+def main() -> None:
     # 入出力先のフォルダのパス
     # 出力先のフォルダがない場合は作成
     data_path = Path("data/fujimori_ar")
@@ -19,106 +105,33 @@ def main() -> None:  # noqa: C901, PLR0915
     output_path.mkdir(parents=True, exist_ok=True)
 
     # 形式ごとに日付の計算
-    dfl_by_schema: dict[ar_type.SchemaType, list[pl.LazyFrame]] = {
-        schema_type: [] for schema_type in ar_type.SchemaType
-    }
+    dfl_by_schema = defaultdict(list)
     for path in data_path.glob("*-*.csv"):
         year, month = map(int, path.stem.split("-"))
         if (schema_type := ar_type.detect_schema_type(year, month)) is None:
             print(f"Err: not supported date for {year}/{month}")
             continue
         df = pl.scan_csv(path, dtypes=ar_type.detect_dtypes(schema_type))
-        match schema_type:
-            case (
-                ar_type.SchemaType.NOTEBOOK_1
-                | ar_type.SchemaType.NOTEBOOK_2
-                | ar_type.SchemaType.NOTEBOOK_3
-            ):
-                df = ar_notebook.calc_obs_date(df, year, month)
-            case ar_type.SchemaType.OLD:
-                df = ar_old.calc_obs_date(df, year, month)
-            case ar_type.SchemaType.NEW:
-                df = ar_new.calc_obs_date(df, year, month)
+        df = calc_obs_date(df, year, month)
         dfl_by_schema[schema_type].append(df)
 
     # 形式ごとに一つのデータフレームへ結合
-    df_by_schema: dict[ar_type.SchemaType, pl.LazyFrame] = {}
-    for schema_type, dfl in dfl_by_schema.items():
-        df_by_schema[schema_type] = pl.concat(dfl)
+    df_by_schema = {
+        schema_type: pl.concat(dfl)
+        for schema_type, dfl in dfl_by_schema.items()
+    }
 
     # 形式ごとに通し番号の計算
-    for schema_type in df_by_schema:
-        df = df_by_schema[schema_type]
-        match schema_type:
-            case ar_type.SchemaType.NOTEBOOK_1:
-                df = ar_common.convert_no(df)
-            case ar_type.SchemaType.NOTEBOOK_3:
-                df = ar_common.extract_ns(df)
-                df = ar_notebook.concat_no(df)
-                df = ar_common.convert_no(df)
-            case (
-                ar_type.SchemaType.NOTEBOOK_2
-                | ar_type.SchemaType.OLD
-                | ar_type.SchemaType.NEW
-            ):
-                df = ar_common.extract_ns(df)
-                df = ar_common.convert_no(df)
-        df_by_schema[schema_type] = df
+    df_by_schema = {
+        schema_type: calc_no(df, schema_type)
+        for schema_type, df in df_by_schema.items()
+    }
 
     # 形式ごとに経緯度の計算
-    for schema_type in df_by_schema:
-        df = df_by_schema[schema_type]
-        match schema_type:
-            case ar_type.SchemaType.NOTEBOOK_1 | ar_type.SchemaType.NOTEBOOK_2:
-                df = ar_common.extract_coords_lr(df, ["lat"])
-                df = ar_common.convert_lat(df)
-            case ar_type.SchemaType.NOTEBOOK_3:
-                df = ar_common.extract_coords_lr(df, ["lat"])
-                df = ar_common.extract_coords_sign(df, ["lat"])
-                df = ar_common.convert_lat(df)
-            case ar_type.SchemaType.OLD | ar_type.SchemaType.NEW:
-                df = ar_common.detect_coords_over(df)
-                df = ar_common.extract_coords_qm(df)
-                df = ar_common.extract_coords_lr(df)
-                df = ar_common.extract_coords_sign(df)
-                df = ar_common.convert_lat(df)
-                df = ar_common.convert_lon(df)
-        df_by_schema[schema_type] = df
-
-    for schema_type in df_by_schema:
-        df = df_by_schema[schema_type]
-        match schema_type:
-            case ar_type.SchemaType.NOTEBOOK_1 | ar_type.SchemaType.NOTEBOOK_2:
-                df = ar_notebook.fill_blanks(
-                    df,
-                    [
-                        ("last", pl.Date),
-                        ("over", pl.Boolean),
-                        ("lon_left", pl.UInt16),
-                        ("lon_right", pl.UInt16),
-                        ("lat_left_sign", pl.Categorical),
-                        ("lat_right_sign", pl.Categorical),
-                        ("lon_left_sign", pl.Categorical),
-                        ("lon_right_sign", pl.Categorical),
-                        ("lat_question", pl.Categorical),
-                        ("lon_question", pl.Categorical),
-                    ],
-                )
-            case ar_type.SchemaType.NOTEBOOK_3:
-                df = ar_notebook.fill_blanks(
-                    df,
-                    [
-                        ("last", pl.Date),
-                        ("over", pl.Boolean),
-                        ("lon_left", pl.UInt16),
-                        ("lon_right", pl.UInt16),
-                        ("lon_left_sign", pl.Categorical),
-                        ("lon_right_sign", pl.Categorical),
-                        ("lat_question", pl.Categorical),
-                        ("lon_question", pl.Categorical),
-                    ],
-                )
-        df_by_schema[schema_type] = df
+    df_by_schema = {
+        schema_type: calc_coords(df, schema_type)
+        for schema_type, df in df_by_schema.items()
+    }
 
     # 複数のシートに跨って存在するデータを一つに結合
     df_merged = ar_merge.merge(

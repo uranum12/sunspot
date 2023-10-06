@@ -4,11 +4,33 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+contourpy==1.1.1
+    # via matplotlib
+cycler==0.12.0
+    # via matplotlib
+fonttools==4.43.1
+    # via matplotlib
+kiwisolver==1.4.5
+    # via matplotlib
+matplotlib==3.8.0
+    # via -r requirements.in
+numpy==1.26.0
+    # via
+    #   -r requirements.in
+    #   contourpy
+    #   matplotlib
+packaging==23.2
+    # via matplotlib
+pillow==10.0.1
+    # via matplotlib
 polars==0.19.7
     # via -r requirements.in
+pyparsing==3.1.1
+    # via matplotlib
 python-dateutil==2.8.2
     # via
     #   -r requirements.in
+    #   matplotlib
     #   suntime
 six==1.16.0
     # via python-dateutil

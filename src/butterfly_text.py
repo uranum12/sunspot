@@ -5,7 +5,7 @@ from typing import TextIO
 import polars as pl
 from dateutil.relativedelta import relativedelta
 
-import butter_common
+import butterfly_common
 
 
 def merge_data(df: pl.DataFrame) -> pl.DataFrame:
@@ -95,12 +95,12 @@ def main() -> None:
         pl.col("lat_left", "lat_right").cast(pl.Int8),
     )
 
-    df_file = butter_common.reverse_south(df_file)
-    df_file = butter_common.reverse_minus(df_file)
-    df_file = butter_common.fix_order(df_file)
-    df_file = butter_common.extract_date(df_file)
+    df_file = butterfly_common.reverse_south(df_file)
+    df_file = butterfly_common.reverse_minus(df_file)
+    df_file = butterfly_common.fix_order(df_file)
+    df_file = butterfly_common.extract_date(df_file)
 
-    start, end = butter_common.calc_start_end(df_file, replace=True)
+    start, end = butterfly_common.calc_start_end(df_file, replace=True)
 
     with (output_path / "butter.txt").open("w") as file:
         # ヘッダの情報の書き込み
@@ -108,7 +108,7 @@ def main() -> None:
 
         current = start
         while current <= end:
-            df = butter_common.filter_data(df_file, current).collect()
+            df = butterfly_common.filter_data(df_file, current).collect()
 
             if df.height != 0:  # データが存在するか
                 df = merge_data(df)

@@ -4,7 +4,7 @@ from io import StringIO
 import polars as pl
 import pytest
 
-import butter_text
+import butterfly_text
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def test_merge_data(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butter_text.merge_data(df_in)
+    df_out = butterfly_text.merge_data(df_in)
     assert df_out.get_column("min").to_list() == out_min
     assert df_out.get_column("max").to_list() == out_max
 
@@ -122,7 +122,7 @@ def test_split_data(
             "min": pl.Int8,
         },
     )
-    df_out_n, df_out_s = butter_text.split_data(df_in)
+    df_out_n, df_out_s = butterfly_text.split_data(df_in)
     assert df_out_n.get_column("min").to_list() == out_n_min
     assert df_out_n.get_column("max").to_list() == out_n_max
     assert df_out_s.get_column("min").to_list() == out_s_min
@@ -164,7 +164,7 @@ def test_convert_to_str(
             "max": pl.Int8,
         },
     )
-    assert butter_text.convert_to_str(df_in) == out_str
+    assert butterfly_text.convert_to_str(df_in) == out_str
 
 
 @pytest.mark.parametrize(
@@ -188,7 +188,7 @@ def test_convert_to_str(
 )
 def test_write_header(in_start: date, in_end: date, out_file: str) -> None:
     vfile = StringIO()
-    butter_text.write_header(vfile, in_start, in_end)
+    butterfly_text.write_header(vfile, in_start, in_end)
     assert vfile.getvalue() == out_file
 
 
@@ -222,5 +222,5 @@ def test_write_data(
     out_file: str,
 ) -> None:
     vfile = StringIO()
-    butter_text.write_data(vfile, in_date, in_data_n, in_data_s)
+    butterfly_text.write_data(vfile, in_date, in_data_n, in_data_s)
     assert vfile.getvalue() == out_file

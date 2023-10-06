@@ -3,7 +3,7 @@ from datetime import date
 import polars as pl
 import pytest
 
-import butter_common
+import butterfly_common
 
 
 @pytest.mark.parametrize(
@@ -34,7 +34,7 @@ def test_reverse_south(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butter_common.reverse_south(df_in).collect()
+    df_out = butterfly_common.reverse_south(df_in).collect()
     assert df_out.item(0, "lat_left") == out_lat_left
     assert df_out.item(0, "lat_right") == out_lat_right
 
@@ -76,7 +76,7 @@ def test_reverse_minus(
             "lat_right_sign": pl.Categorical,
         },
     )
-    df_out = butter_common.reverse_minus(df_in).collect()
+    df_out = butterfly_common.reverse_minus(df_in).collect()
     assert df_out.item(0, "lat_left") == out_lat_left
     assert df_out.item(0, "lat_right") == out_lat_right
 
@@ -108,7 +108,7 @@ def test_fix_order(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butter_common.fix_order(df_in).collect()
+    df_out = butterfly_common.fix_order(df_in).collect()
     assert df_out.item(0, "lat_left") == out_lat_left
     assert df_out.item(0, "lat_right") == out_lat_right
 
@@ -146,7 +146,7 @@ def test_extract_date(
             "last": pl.Date,
         },
     )
-    df_out = butter_common.extract_date(df_in).collect()
+    df_out = butterfly_common.extract_date(df_in).collect()
     assert df_out.item(0, "first_year") == out_first_year
     assert df_out.item(0, "first_month") == out_first_month
     assert df_out.item(0, "last_year") == out_last_year
@@ -230,7 +230,7 @@ def test_filter_data(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butter_common.filter_data(df_in, in_date).collect()
+    df_out = butterfly_common.filter_data(df_in, in_date).collect()
     assert df_out.get_column("lat_left").to_list() == out_lat_left
     assert df_out.get_column("lat_right").to_list() == out_lat_right
 
@@ -276,6 +276,6 @@ def test_calc_start_end(
     out_end: date,
 ) -> None:
     df_in = pl.LazyFrame({"first": in_first, "last": in_last})
-    start, end = butter_common.calc_start_end(df_in, replace=in_replace)
+    start, end = butterfly_common.calc_start_end(df_in, replace=in_replace)
     assert start == out_start
     assert end == out_end

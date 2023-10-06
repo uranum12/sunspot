@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 
-import butter_common
+import butterfly_common
 
 if TYPE_CHECKING:
     from datetime import date
@@ -20,12 +20,12 @@ def main() -> None:
     df_file = (
         pl.scan_parquet(data_file)
         .with_columns(pl.col("lat_left", "lat_right").cast(pl.Int8))
-        .pipe(butter_common.reverse_south)
-        .pipe(butter_common.reverse_minus)
-        .pipe(butter_common.fix_order)
+        .pipe(butterfly_common.reverse_south)
+        .pipe(butterfly_common.reverse_minus)
+        .pipe(butterfly_common.fix_order)
     )
 
-    start, end = butter_common.calc_start_end(df_file)
+    start, end = butterfly_common.calc_start_end(df_file)
 
     data: list[np.ndarray] = []
     index: list[date] = []

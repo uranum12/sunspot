@@ -8,7 +8,7 @@ profile = "black"
 [tool.ruff]
 src = ["src"]
 target-version = "py310"
-format = "grouped"
+output-format = "grouped"
 select = ["ALL"]
 ignore = ["D", "FA", "T20", "INP", "PD"]
 unfixable = ["I", "ERA"]

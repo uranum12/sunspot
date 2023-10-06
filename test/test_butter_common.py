@@ -1,10 +1,9 @@
 from datetime import date
-from io import StringIO
 
 import polars as pl
 import pytest
 
-import convert_ar_to_butter
+import butter_common
 
 
 @pytest.mark.parametrize(
@@ -35,7 +34,7 @@ def test_reverse_south(
             "lat_right": pl.Int8,
         },
     )
-    df_out = convert_ar_to_butter.reverse_south(df_in).collect()
+    df_out = butter_common.reverse_south(df_in).collect()
     assert df_out.item(0, "lat_left") == out_lat_left
     assert df_out.item(0, "lat_right") == out_lat_right
 
@@ -77,7 +76,7 @@ def test_reverse_minus(
             "lat_right_sign": pl.Categorical,
         },
     )
-    df_out = convert_ar_to_butter.reverse_minus(df_in).collect()
+    df_out = butter_common.reverse_minus(df_in).collect()
     assert df_out.item(0, "lat_left") == out_lat_left
     assert df_out.item(0, "lat_right") == out_lat_right
 
@@ -109,7 +108,7 @@ def test_fix_order(
             "lat_right": pl.Int8,
         },
     )
-    df_out = convert_ar_to_butter.fix_order(df_in).collect()
+    df_out = butter_common.fix_order(df_in).collect()
     assert df_out.item(0, "lat_left") == out_lat_left
     assert df_out.item(0, "lat_right") == out_lat_right
 
@@ -147,7 +146,7 @@ def test_extract_date(
             "last": pl.Date,
         },
     )
-    df_out = convert_ar_to_butter.extract_date(df_in).collect()
+    df_out = butter_common.extract_date(df_in).collect()
     assert df_out.item(0, "first_year") == out_first_year
     assert df_out.item(0, "first_month") == out_first_month
     assert df_out.item(0, "last_year") == out_last_year
@@ -231,228 +230,9 @@ def test_filter_data(
             "lat_right": pl.Int8,
         },
     )
-    df_out = convert_ar_to_butter.filter_data(df_in, in_date).collect()
+    df_out = butter_common.filter_data(df_in, in_date).collect()
     assert df_out.get_column("lat_left").to_list() == out_lat_left
     assert df_out.get_column("lat_right").to_list() == out_lat_right
-
-
-@pytest.mark.parametrize(
-    ("in_lat_left", "in_lat_right", "out_min", "out_max"),
-    [
-        (
-            [12, 15, 23],
-            [12, 15, 23],
-            [12, 15, 23],
-            [12, 15, 23],
-        ),
-        (
-            [12, 14, 23, 24, 30, 31],
-            [15, 18, 25, 25, 35, 32],
-            [12, 23, 30],
-            [18, 25, 35],
-        ),
-        (
-            [12, 13, 13, 23, 25, 26],
-            [13, 13, 15, 25, 26, 27],
-            [12, 13, 13, 23, 25, 26],
-            [13, 13, 15, 25, 26, 27],
-        ),
-    ],
-)
-def test_merge_data(
-    in_lat_left: list[int],
-    in_lat_right: list[int],
-    out_min: list[int],
-    out_max: list[int],
-) -> None:
-    df_in = pl.DataFrame(
-        {
-            "lat_left": in_lat_left,
-            "lat_right": in_lat_right,
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
-    )
-    df_out = convert_ar_to_butter.merge_data(df_in)
-    assert df_out.get_column("min").to_list() == out_min
-    assert df_out.get_column("max").to_list() == out_max
-
-
-@pytest.mark.parametrize(
-    ("in_min", "in_max", "out_n_min", "out_n_max", "out_s_min", "out_s_max"),
-    [
-        (
-            [-10, -6, 4, 8],
-            [-8, -5, 6, 11],
-            [4, 8],
-            [6, 11],
-            [5, 8],
-            [6, 10],
-        ),
-        (
-            [-11, -6, 10],
-            [-11, 5, 10],
-            [0, 10],
-            [5, 10],
-            [0, 11],
-            [6, 11],
-        ),
-        (
-            [0, 5],
-            [2, 7],
-            [0, 5],
-            [2, 7],
-            [0],
-            [0],
-        ),
-        (
-            [-10],
-            [0],
-            [0],
-            [0],
-            [0],
-            [10],
-        ),
-        (
-            [3],
-            [10],
-            [3],
-            [10],
-            [],
-            [],
-        ),
-        (
-            [-10],
-            [-3],
-            [],
-            [],
-            [3],
-            [10],
-        ),
-    ],
-)
-def test_split_data(
-    in_min: list[int],
-    in_max: list[int],
-    out_n_min: list[int],
-    out_n_max: list[int],
-    out_s_min: list[int],
-    out_s_max: list[int],
-) -> None:
-    df_in = pl.DataFrame(
-        {
-            "max": in_max,
-            "min": in_min,
-        },
-        schema={
-            "max": pl.Int8,
-            "min": pl.Int8,
-        },
-    )
-    df_out_n, df_out_s = convert_ar_to_butter.split_data(df_in)
-    assert df_out_n.get_column("min").to_list() == out_n_min
-    assert df_out_n.get_column("max").to_list() == out_n_max
-    assert df_out_s.get_column("min").to_list() == out_s_min
-    assert df_out_s.get_column("max").to_list() == out_s_max
-
-
-@pytest.mark.parametrize(
-    ("in_min", "in_max", "out_str"),
-    [
-        (
-            [12, 18, 23],
-            [15, 20, 23],
-            "12-15 18-20 23-23",
-        ),
-        (
-            [12],
-            [15],
-            "12-15",
-        ),
-        (
-            [],
-            [],
-            "",
-        ),
-    ],
-)
-def test_convert_to_str(
-    in_min: list[str],
-    in_max: list[int],
-    out_str: str,
-) -> None:
-    df_in = pl.DataFrame(
-        {
-            "min": in_min,
-            "max": in_max,
-        },
-        schema={
-            "min": pl.Int8,
-            "max": pl.Int8,
-        },
-    )
-    assert convert_ar_to_butter.convert_to_str(df_in) == out_str
-
-
-@pytest.mark.parametrize(
-    ("in_start", "in_end", "out_file"),
-    [
-        (
-            date(1960, 1, 1),
-            date(1965, 5, 1),
-            "//Data File for Butterfly Diagram\n"
-            ">>1960/01-1965/05\n\n"
-            "<----data---->\n",
-        ),
-        (
-            date(2000, 1, 1),
-            date(2010, 12, 1),
-            "//Data File for Butterfly Diagram\n"
-            ">>2000/01-2010/12\n\n"
-            "<----data---->\n",
-        ),
-    ],
-)
-def test_write_header(in_start: date, in_end: date, out_file: str) -> None:
-    vfile = StringIO()
-    convert_ar_to_butter.write_header(vfile, in_start, in_end)
-    assert vfile.getvalue() == out_file
-
-
-@pytest.mark.parametrize(
-    ("in_date", "in_data_n", "in_data_s", "out_file"),
-    [
-        (
-            date(1963, 4, 1),
-            "12-15 23-27",
-            "2-3",
-            "1963/04/N:12-15 23-27\n1963/04/S:2-3\n",
-        ),
-        (
-            date(2010, 11, 1),
-            "0-0 1-2 3-4",
-            "",
-            "2010/11/N:0-0 1-2 3-4\n2010/11/S:\n",
-        ),
-        (
-            date(2000, 1, 1),
-            "",
-            "",
-            "2000/01/N:\n2000/01/S:\n",
-        ),
-    ],
-)
-def test_write_data(
-    in_date: date,
-    in_data_n: str,
-    in_data_s: str,
-    out_file: str,
-) -> None:
-    vfile = StringIO()
-    convert_ar_to_butter.write_data(vfile, in_date, in_data_n, in_data_s)
-    assert vfile.getvalue() == out_file
 
 
 @pytest.mark.parametrize(
@@ -496,6 +276,6 @@ def test_calc_start_end(
     out_end: date,
 ) -> None:
     df_in = pl.LazyFrame({"first": in_first, "last": in_last})
-    start, end = convert_ar_to_butter.calc_start_end(df_in, replace=in_replace)
+    start, end = butter_common.calc_start_end(df_in, replace=in_replace)
     assert start == out_start
     assert end == out_end

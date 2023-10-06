@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import polars as pl
+from suntime import Sun
 
 
 def filter_df(lf: pl.LazyFrame, expr: pl.Expr) -> pl.DataFrame | None:
@@ -62,6 +64,31 @@ def check_by_total(
     )
 
 
+def is_sun_rised(sun: Sun, dt: datetime) -> bool:
+    sr = sun.get_local_sunrise_time(dt.date() - timedelta(days=1))
+    ss = sun.get_local_sunset_time(dt.date())
+    return sr <= dt <= ss
+
+
+def check_sun_rised(
+    lf: pl.LazyFrame,
+    lat: int = 35,
+    lon: int = 135,
+) -> pl.DataFrame | None:
+    sun = Sun(lat, lon)
+
+    def _is_sun_rised(x: datetime) -> bool:
+        return is_sun_rised(sun, x)
+
+    return filter_df(
+        lf,
+        ~pl.col("date")
+        .dt.combine(pl.col("time"))
+        .dt.replace_time_zone("Asia/Tokyo")
+        .map_elements(_is_sun_rised),
+    )
+
+
 def main() -> None:
     file = pl.scan_parquet(Path("out/sn/all.parquet"))
     index = pl.scan_parquet(Path("out/sn/index.parquet"))
@@ -78,6 +105,9 @@ def main() -> None:
             print(checked)
         if (checked := check_by_total(file, index)) is not None:
             print("total check failed")
+            print(checked)
+        if (checked := check_sun_rised(file)) is not None:
+            print("sunrise/sunset check failed")
             print(checked)
 
 

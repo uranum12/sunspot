@@ -4,9 +4,13 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-polars==0.19.3
+polars==0.19.7
     # via -r requirements.in
 python-dateutil==2.8.2
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   suntime
 six==1.16.0
     # via python-dateutil
+suntime==1.2.5
+    # via -r requirements.in

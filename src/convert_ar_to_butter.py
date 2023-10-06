@@ -161,6 +161,29 @@ def write_data(file: TextIO, date: date, data_n: str, data_s: str) -> None:
     file.write(f"{date.year}/{date.month:0{2}}/S:{data_s}\n")
 
 
+def calc_start_end(
+    lf: pl.LazyFrame,
+    *,
+    replace: bool = False,
+) -> tuple[date, date]:
+    df = (
+        lf.select(
+            pl.col("first", "last").min().suffix("_min"),
+            pl.col("first", "last").max().suffix("_max"),
+        )
+        .collect()
+        .transpose()
+    )
+    start: date = df.min().item()
+    end: date = df.max().item()
+
+    if replace:
+        start = start.replace(day=1)
+        end = end.replace(day=1)
+
+    return start, end
+
+
 def main() -> None:
     df_file = pl.scan_parquet(Path("out/ar/all.parquet")).with_columns(
         # 符号あり整数値へ変換
@@ -172,8 +195,7 @@ def main() -> None:
     df_file = fix_order(df_file)
     df_file = extract_date(df_file)
 
-    start = date(1953, 3, 1)
-    end = date(2016, 6, 1)
+    start, end = calc_start_end(df_file, replace=True)
 
     with Path("out/butter.txt").open("w") as file:
         # ヘッダの情報の書き込み

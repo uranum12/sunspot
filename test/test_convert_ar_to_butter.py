@@ -453,3 +453,49 @@ def test_write_data(
     vfile = StringIO()
     convert_ar_to_butter.write_data(vfile, in_date, in_data_n, in_data_s)
     assert vfile.getvalue() == out_file
+
+
+@pytest.mark.parametrize(
+    ("in_first", "in_last", "in_replace", "out_start", "out_end"),
+    [
+        (
+            [date(1956, 4, 5), date(1956, 5, 4)],
+            [date(1956, 4, 7), date(1956, 5, 6)],
+            False,
+            date(1956, 4, 5),
+            date(1956, 5, 6),
+        ),
+        (
+            [date(2020, 11, 15), date(2020, 12, 30)],
+            [date(2020, 11, 17), date(2021, 1, 3)],
+            False,
+            date(2020, 11, 15),
+            date(2021, 1, 3),
+        ),
+        (
+            [date(2020, 11, 15), date(2020, 12, 30)],
+            [None, date(2021, 1, 3)],
+            False,
+            date(2020, 11, 15),
+            date(2021, 1, 3),
+        ),
+        (
+            [date(2020, 11, 15), date(2020, 12, 30)],
+            [date(2020, 11, 17), date(2021, 1, 3)],
+            True,
+            date(2020, 11, 1),
+            date(2021, 1, 1),
+        ),
+    ],
+)
+def test_calc_start_end(
+    in_first: list[date],
+    in_last: list[date | None],
+    in_replace: bool,
+    out_start: date,
+    out_end: date,
+) -> None:
+    df_in = pl.LazyFrame({"first": in_first, "last": in_last})
+    start, end = convert_ar_to_butter.calc_start_end(df_in, replace=in_replace)
+    assert start == out_start
+    assert end == out_end

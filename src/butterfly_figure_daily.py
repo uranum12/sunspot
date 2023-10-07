@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def main() -> None:
     data_file = Path("out/ar/all.parquet")
-    output_path = Path("out/butter")
+    output_path = Path("out/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
     df_file = (

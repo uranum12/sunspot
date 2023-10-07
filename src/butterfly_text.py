@@ -87,7 +87,7 @@ def write_data(file: TextIO, date: date, data_n: str, data_s: str) -> None:
 
 def main() -> None:
     data_file = Path("out/ar/all.parquet")
-    output_path = Path("out/butter")
+    output_path = Path("out/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
     df_file = pl.scan_parquet(data_file).with_columns(

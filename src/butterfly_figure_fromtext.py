@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 def main() -> None:
     data_file = Path("data/seiryo/1950-2023.txt")
-    output_path = Path("out/butter")
+    output_path = Path("out/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
     with data_file.open() as f:

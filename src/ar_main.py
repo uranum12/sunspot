@@ -156,6 +156,11 @@ def main() -> None:
     )
 
     with pl.StringCache():
+        # 中間結果を計算し保存
+        for schema_type, df in df_by_schema.items():
+            file_name = output_path / f"{schema_type.name.lower()}.parquet"
+            df.collect().write_parquet(file_name)
+        df_merged.collect().write_parquet(output_path / "merged.parquet")
         # プロファイルとともに計算
         df_all, profile = df_sorted.profile()
 

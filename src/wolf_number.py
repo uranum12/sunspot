@@ -4,6 +4,26 @@ from pprint import pprint
 import polars as pl
 
 
+def calc_wolf_number(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.with_columns(
+        (pl.col("ng") + pl.col("sg")).alias("tg"),
+        (pl.col("nf") + pl.col("sf")).alias("tf"),
+    ).with_columns(
+        # R = 10g + f
+        (pl.col("ng").cast(pl.UInt16) * 10 + pl.col("nf")).alias("nr"),
+        (pl.col("sg").cast(pl.UInt16) * 10 + pl.col("sf")).alias("sr"),
+        (pl.col("tg").cast(pl.UInt16) * 10 + pl.col("tf")).alias("tr"),
+    )
+
+
+def agg_monthly(df: pl.LazyFrame) -> pl.LazyFrame:
+    return (
+        df.with_columns(pl.col("date").dt.truncate("1mo"))
+        .group_by("date")
+        .mean()
+    )
+
+
 def main() -> None:
     data_file = Path("out/sn/all.parquet")
     output_path = Path("out/wolf")
@@ -12,15 +32,7 @@ def main() -> None:
     df = (
         pl.scan_parquet(data_file)
         .drop("remarks")
-        .with_columns(
-            pl.col("ng").add(pl.col("sg")).alias("tg"),
-            pl.col("nf").add(pl.col("sf")).alias("tf"),
-        )
-        .with_columns(
-            pl.col("nf").add(pl.col("ng") * 10).alias("nr"),
-            pl.col("sf").add(pl.col("sg") * 10).alias("sr"),
-            pl.col("tf").add(pl.col("tg") * 10).alias("tr"),
-        )
+        .pipe(calc_wolf_number)
         .collect()
     )
 
@@ -29,15 +41,7 @@ def main() -> None:
     print(df)
     df.write_parquet(output_path / "fujimori.parquet")
 
-    df = (
-        df.lazy()
-        .with_columns(pl.col("date").dt.truncate("1mo"))
-        .drop("time")
-        .group_by("date")
-        .mean()
-        .sort("date")
-        .collect()
-    )
+    df = df.lazy().drop("time").pipe(agg_monthly).sort("date").collect()
 
     print("=== monthly ===")
     pprint(df.schema)

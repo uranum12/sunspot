@@ -16,7 +16,7 @@ def main() -> None:
 
     df_file = (
         pl.scan_parquet(data_file)
-        .with_columns(pl.col("lat_left", "lat_right").cast(pl.Int8))
+        .pipe(butterfly_common.cast_lat_sign)
         .pipe(butterfly_common.reverse_south)
         .pipe(butterfly_common.reverse_minus)
         .pipe(butterfly_common.fix_order)
@@ -34,7 +34,11 @@ def main() -> None:
     )
 
     for current in (i.astype(date) for i in index):
-        df = butterfly_common.filter_data(df_file.lazy(), current).collect()
+        df = (
+            df_file.lazy()
+            .pipe(butterfly_common.filter_data_monthly, date=current)
+            .collect()
+        )
 
         line = np.zeros(201, dtype=np.uint8)
         for i in df.iter_rows(named=True):

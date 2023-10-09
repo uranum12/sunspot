@@ -21,7 +21,6 @@ def main() -> None:
                 pl.col("txt").str.extract_all(r"(\d+-\d+)").alias("data"),
             )
             .with_columns(
-                pl.col("date").str.strptime(pl.Date, "%Y/%m"),
                 pl.when(pl.col("ns").eq("N"))
                 .then(
                     pl.col("data").map_elements(
@@ -36,14 +35,13 @@ def main() -> None:
                     ),
                 ),
             )
-            .group_by("date")
-            .agg(pl.col("data").flatten().drop_nulls())
             .explode("data")
-            .with_columns(
-                pl.col("data").list.get(0).alias("lat_left"),
-                pl.col("data").list.get(1).alias("lat_right"),
+            .select(
+                pl.col("date").str.strptime(pl.Date, "%Y/%m"),
+                pl.col("data").list.get(0).alias("min"),
+                pl.col("data").list.get(1).alias("max"),
             )
-            .drop("data")
+            .drop_nulls()
             .collect()
         )
 
@@ -62,14 +60,13 @@ def main() -> None:
             df_file.lazy()
             .filter(pl.col("date").eq(current))
             .drop("date")
-            .drop_nulls()
             .collect()
         )
 
         line = np.zeros(201, dtype=np.uint8)
         for i in df.iter_rows(named=True):
-            i_min = 100 + 2 * i["lat_left"]
-            i_max = 100 + 2 * i["lat_right"]
+            i_min = 100 + 2 * i["min"]
+            i_max = 100 + 2 * i["max"]
             line[i_min:i_max] = 1
         data.append(line.reshape(-1, 1))
 

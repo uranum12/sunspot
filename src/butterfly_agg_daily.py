@@ -15,7 +15,7 @@ def main() -> None:
 
     df_file = (
         pl.scan_parquet(data_file)
-        .with_columns(pl.col("lat_left", "lat_right").cast(pl.Int8))
+        .pipe(butterfly_common.cast_lat_sign)
         .pipe(butterfly_common.reverse_south)
         .pipe(butterfly_common.reverse_minus)
         .pipe(butterfly_common.fix_order)
@@ -34,18 +34,7 @@ def main() -> None:
     for current in (i.astype(date) for i in index):
         df = (
             df_file.lazy()
-            .filter(
-                pl.when(pl.col("last").is_null())
-                .then(pl.col("first").eq(current.replace(day=1)))
-                .otherwise(
-                    pl.lit(current).is_between(
-                        pl.col("first"),
-                        pl.col("last"),
-                    ),
-                ),
-            )
-            .select("lat_left", "lat_right")
-            .drop_nulls()
+            .pipe(butterfly_common.filter_data_daily, date=current)
             .collect()
         )
 

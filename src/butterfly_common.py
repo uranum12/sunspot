@@ -3,6 +3,13 @@ from datetime import date
 import polars as pl
 
 
+def cast_lat_sign(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.with_columns(
+        # 符号あり整数値へ変換
+        pl.col("lat_left", "lat_right").cast(pl.Int8),
+    )
+
+
 def reverse_south(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         [
@@ -56,7 +63,26 @@ def extract_date(df: pl.LazyFrame) -> pl.LazyFrame:
     )
 
 
-def filter_data(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
+def filter_data_daily(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
+    return (
+        df.filter(
+            # 一日ごと区切る
+            # 手帳形式では日付が月までしか存在しない
+            pl.when(pl.col("last").is_null())
+            .then(pl.col("first").eq(date.replace(day=1)))
+            .otherwise(
+                pl.lit(date).is_between(
+                    pl.col("first"),
+                    pl.col("last"),
+                ),
+            ),
+        )
+        .select("lat_left", "lat_right")
+        .drop_nulls()
+    )
+
+
+def filter_data_monthly(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
     return (
         df.filter(
             # 一月ごとに区切る
@@ -72,12 +98,8 @@ def filter_data(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
         )
         # 必要なデータを選択
         .select("lat_left", "lat_right")
-        # 被りを削除
-        .unique()
         # null値を削除 for 1959/11 2059
         .drop_nulls()
-        # ソート
-        .sort("lat_left", "lat_right")
     )
 
 

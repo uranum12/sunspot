@@ -9,6 +9,8 @@ import butterfly_common
 
 
 def merge_data(df: pl.DataFrame) -> pl.DataFrame:
+    # 被りを削除し、ソート
+    df = df.unique().sort("lat_left", "lat_right")
     # 重なっている範囲を結合
     merged: list[list[int]] = []
     for row in df.iter_rows(named=True):
@@ -90,17 +92,17 @@ def main() -> None:
     output_path = Path("out/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
-    df_file = pl.scan_parquet(data_file).with_columns(
-        # 符号あり整数値へ変換
-        pl.col("lat_left", "lat_right").cast(pl.Int8),
+    df_file = (
+        pl.scan_parquet(data_file)
+        .pipe(butterfly_common.cast_lat_sign)
+        .pipe(butterfly_common.reverse_south)
+        .pipe(butterfly_common.reverse_minus)
+        .pipe(butterfly_common.fix_order)
+        .pipe(butterfly_common.extract_date)
+        .collect()
     )
 
-    df_file = butterfly_common.reverse_south(df_file)
-    df_file = butterfly_common.reverse_minus(df_file)
-    df_file = butterfly_common.fix_order(df_file)
-    df_file = butterfly_common.extract_date(df_file)
-
-    start, end = butterfly_common.calc_start_end(df_file, replace=True)
+    start, end = butterfly_common.calc_start_end(df_file.lazy(), replace=True)
 
     with (output_path / "butter.txt").open("w") as file:
         # ヘッダの情報の書き込み
@@ -108,7 +110,11 @@ def main() -> None:
 
         current = start
         while current <= end:
-            df = butterfly_common.filter_data(df_file, current).collect()
+            df = (
+                df_file.lazy()
+                .pipe(butterfly_common.filter_data_monthly, date=current)
+                .collect()
+            )
 
             if df.height != 0:  # データが存在するか
                 df = merge_data(df)

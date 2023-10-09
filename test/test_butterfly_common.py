@@ -321,11 +321,11 @@ def test_filter_data_monthly(
         },
     )
     df_out = butterfly_common.filter_data_monthly(df_in, in_date).collect()
-    assert (
-        df_out.get_column("lat_left").to_list().sort() == out_lat_left.sort()
+    assert sorted(df_out.get_column("lat_left").to_list()) == sorted(
+        out_lat_left,
     )
-    assert (
-        df_out.get_column("lat_right").to_list().sort() == out_lat_right.sort()
+    assert sorted(df_out.get_column("lat_right").to_list()) == sorted(
+        out_lat_right,
     )
 
 

@@ -43,7 +43,7 @@ def main() -> None:
         line = np.zeros(201, dtype=np.uint8)
         for i in df.iter_rows(named=True):
             i_min = 100 + 2 * i["lat_left"]
-            i_max = 100 + 2 * i["lat_right"]
+            i_max = 101 + 2 * i["lat_right"]
             line[i_min:i_max] = 1
         data.append(line.reshape(-1, 1))
 

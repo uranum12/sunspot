@@ -39,8 +39,8 @@ def main() -> None:
             .explode("data")
             .select(
                 pl.col("date").str.strptime(pl.Date, "%Y/%m"),
-                pl.col("data").list.get(0).alias("min"),
-                pl.col("data").list.get(1).alias("max"),
+                pl.col("data").list.get(0).alias("lat_left"),
+                pl.col("data").list.get(1).alias("lat_right"),
             )
             .drop_nulls()
             .collect()
@@ -53,7 +53,7 @@ def main() -> None:
     lat_s_max = 50
 
     data: list[npt.NDArray[np.uint8]] = []
-    date_index = butterfly_agg_common.create_date_index(start, end, "D")
+    date_index = butterfly_agg_common.create_date_index(start, end, "M")
     lat_index = butterfly_agg_common.create_lat_index(lat_n_max, lat_s_max)
 
     for i in date_index:

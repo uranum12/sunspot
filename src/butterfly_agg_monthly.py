@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 import polars as pl
-from dateutil.relativedelta import relativedelta
 
+import butterfly_agg_common
 import butterfly_common
 
 
@@ -30,29 +30,21 @@ def main() -> None:
     lat_s_max = 50
 
     data: list[npt.NDArray[np.uint8]] = []
-    date_index = np.arange(
-        start,
-        end + relativedelta(months=1),
-        dtype="datetime64[M]",
-    )
-    lat_index = np.insert(
-        np.abs(np.arange(-lat_n_max, lat_s_max + 1, dtype=np.int8)),
-        np.arange(1, lat_n_max + lat_s_max + 1),
-        -1,
-    )
+    date_index = butterfly_agg_common.create_date_index(start, end, "M")
+    lat_index = butterfly_agg_common.create_lat_index(lat_n_max, lat_s_max)
 
-    for current in (i.astype(date) for i in date_index):
+    for i in date_index:
         df = (
             df_file.lazy()
-            .pipe(butterfly_common.filter_data_monthly, date=current)
+            .pipe(butterfly_common.filter_data_monthly, date=i.astype(date))
             .collect()
         )
 
-        line = np.zeros(2 * (lat_n_max + lat_s_max) + 1, dtype=np.uint8)
-        for i in df.iter_rows(named=True):
-            i_min = 2 * (lat_n_max + i["lat_left"])
-            i_max = 2 * (lat_n_max + i["lat_right"]) + 1
-            line[i_min:i_max] = 1
+        line = butterfly_agg_common.create_line(
+            df.to_dicts(),
+            lat_n_max,
+            lat_s_max,
+        )
         data.append(line.reshape(-1, 1))
 
     img = np.hstack(data)

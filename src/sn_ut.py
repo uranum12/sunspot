@@ -10,7 +10,7 @@ def calc_time(df: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("time").str.extract_all(r"\d+").cast(pl.List(pl.UInt8)),
         )
         .with_columns(
-            pl.when(pl.col("time_minus") & pl.col("time").list.lengths().eq(1))
+            pl.when(pl.col("time_minus") & pl.col("time").list.len().eq(1))
             .then(
                 # 「-分」の場合
                 pl.time(8, 60 - pl.col("time").list.get(0)),

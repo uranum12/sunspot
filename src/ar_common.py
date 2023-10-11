@@ -65,7 +65,7 @@ def extract_coords_lr(
             # 経緯度の右の数値
             # 存在しない場合はここで左の数値を持ってくる
             [
-                pl.when(pl.col(coord).list.lengths().eq(2))
+                pl.when(pl.col(coord).list.len().eq(2))
                 .then(pl.col(coord).list.get(1))
                 .otherwise(pl.col(f"{coord}_left"))
                 .suffix("_right")

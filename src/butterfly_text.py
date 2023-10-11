@@ -72,6 +72,8 @@ def convert_to_str(df: pl.DataFrame) -> str:
         .get_column("merged")
         .str.concat(" ")
         .item()
+        if df.height != 0
+        else ""
     )
 
 

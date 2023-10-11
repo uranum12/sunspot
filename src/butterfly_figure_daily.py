@@ -9,13 +9,16 @@ def main() -> None:
 
     with np.load(data_file) as f:
         img = f["img"]
-        index = f["index"]
+        xindex = f["date"]
+        yindex = f["lat"]
 
-    label = [
+    xlabel = [
         (i, str(d.year))
-        for i, d in enumerate(item.item() for item in index)
+        for i, d in enumerate(item.item() for item in xindex)
         if d.day == 1 and d.month == 1 and d.year % 10 == 0
     ]
+
+    ylabel = [(i, n) for i, n in enumerate(yindex) if n % 10 == 0]
 
     fig = plt.figure(figsize=(12, 5))
     ax = fig.add_subplot(111)
@@ -25,12 +28,12 @@ def main() -> None:
     ax.set_title("butterfly diagram")
 
     ax.set_xlabel("date")
-    ax.set_xticks([i[0] for i in label])
-    ax.set_xticklabels([i[1] for i in label])
+    ax.set_xticks([i[0] for i in xlabel])
+    ax.set_xticklabels([i[1] for i in xlabel])
 
     ax.set_ylabel("latitude")
-    ax.set_yticks(range(0, 200 + 1, 20))
-    ax.set_yticklabels(str(abs(x)) for x in range(-50, 50 + 1, 10))
+    ax.set_yticks([i[0] for i in ylabel])
+    ax.set_yticklabels([i[1] for i in ylabel])
 
     for s in ".pdf", ".png":
         fig.savefig(

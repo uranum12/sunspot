@@ -48,14 +48,22 @@ def main() -> None:
     start = df_file.select("date").min().item()
     end = df_file.select("date").max().item()
 
+    lat_n_max = 50
+    lat_s_max = 50
+
     data: list[npt.NDArray[np.uint8]] = []
-    index = np.arange(
+    date_index = np.arange(
         start,
         end + relativedelta(months=1),
         dtype="datetime64[M]",
     )
+    lat_index = np.insert(
+        np.abs(np.arange(-lat_n_max, lat_s_max + 1, dtype=np.int8)),
+        np.arange(1, lat_n_max + lat_s_max + 1),
+        -1,
+    )
 
-    for current in (i.astype(date) for i in index):
+    for current in (i.astype(date) for i in date_index):
         df = (
             df_file.lazy()
             .filter(pl.col("date").eq(current))
@@ -63,20 +71,21 @@ def main() -> None:
             .collect()
         )
 
-        line = np.zeros(201, dtype=np.uint8)
+        line = np.zeros(2 * (lat_n_max + lat_s_max) + 1, dtype=np.uint8)
         for i in df.iter_rows(named=True):
-            i_min = 100 + 2 * i["min"]
-            i_max = 101 + 2 * i["max"]
+            i_min = 2 * (lat_n_max + i["min"])
+            i_max = 2 * (lat_n_max + i["max"]) + 1
             line[i_min:i_max] = 1
         data.append(line.reshape(-1, 1))
 
     img = np.hstack(data)
 
     print(img)
-    print(index)
+    print(date_index)
+    print(lat_index)
 
     with (output_path / "seiryo.npz").open("wb") as f:
-        np.savez_compressed(f, img=img, index=index)
+        np.savez_compressed(f, img=img, date=date_index, lat=lat_index)
 
 
 if __name__ == "__main__":

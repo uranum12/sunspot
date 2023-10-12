@@ -25,12 +25,12 @@ def main() -> None:
 
     start, end = butterfly_common.calc_start_end(df_file.lazy())
 
-    lat_n_max = 50
-    lat_s_max = 50
+    lat_max = 50
+    lat_min = -50
 
     data: list[npt.NDArray[np.uint8]] = []
-    date_index = butterfly_agg_common.create_date_index(start, end, "D")
-    lat_index = butterfly_agg_common.create_lat_index(lat_n_max, lat_s_max)
+    date_index = butterfly_agg_common.create_date_index_daily(start, end)
+    lat_index = butterfly_agg_common.create_lat_index(lat_min, lat_max)
 
     for i in date_index:
         df = (
@@ -39,10 +39,12 @@ def main() -> None:
             .collect()
         )
 
+        df_data = df.to_dict(as_series=False)
         line = butterfly_agg_common.create_line(
-            df.to_dicts(),
-            lat_n_max,
-            lat_s_max,
+            df_data["lat_left"],
+            df_data["lat_right"],
+            lat_min,
+            lat_max,
         )
         data.append(line.reshape(-1, 1))
 

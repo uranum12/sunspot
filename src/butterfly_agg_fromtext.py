@@ -39,8 +39,8 @@ def main() -> None:
             .explode("data")
             .select(
                 pl.col("date").str.strptime(pl.Date, "%Y/%m"),
-                pl.col("data").list.get(0).alias("lat_left"),
-                pl.col("data").list.get(1).alias("lat_right"),
+                pl.col("data").list.get(0).alias("min"),
+                pl.col("data").list.get(1).alias("max"),
             )
             .drop_nulls()
             .collect()
@@ -49,12 +49,12 @@ def main() -> None:
     start = df_file.select("date").min().item()
     end = df_file.select("date").max().item()
 
-    lat_n_max = 50
-    lat_s_max = 50
+    lat_max = 50
+    lat_min = -50
 
     data: list[npt.NDArray[np.uint8]] = []
-    date_index = butterfly_agg_common.create_date_index(start, end, "M")
-    lat_index = butterfly_agg_common.create_lat_index(lat_n_max, lat_s_max)
+    date_index = butterfly_agg_common.create_date_index_monthly(start, end)
+    lat_index = butterfly_agg_common.create_lat_index(lat_min, lat_max)
 
     for i in date_index:
         df = (
@@ -64,10 +64,12 @@ def main() -> None:
             .collect()
         )
 
+        df_data = df.to_dict(as_series=False)
         line = butterfly_agg_common.create_line(
-            df.to_dicts(),
-            lat_n_max,
-            lat_s_max,
+            df_data["min"],
+            df_data["max"],
+            lat_min,
+            lat_max,
         )
         data.append(line.reshape(-1, 1))
 

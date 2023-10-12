@@ -7,7 +7,7 @@ import butterfly_agg_common
 
 
 @pytest.mark.parametrize(
-    ("in_data_min", "in_data_max", "in_lat_n_max", "in_lat_s_max", "out_line"),
+    ("in_data_min", "in_data_max", "in_lat_min", "in_lat_max", "out_line"),
     [
         (
             [2, -3, 4],
@@ -15,7 +15,7 @@ import butterfly_agg_common
             -5,
             5,
             # 5    4     3     2     1     0     1     2     3     4     5
-            [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0],
+            [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
         ),
         (
             [-5, -4, -1, 2, 3],
@@ -23,7 +23,7 @@ import butterfly_agg_common
             -5,
             5,
             # 5    4     3     2     1     0     1     2     3     4     5
-            [1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
         ),
         (
             [-8, -6, 0, 2, 3],
@@ -31,7 +31,7 @@ import butterfly_agg_common
             -5,
             5,
             # 5    4     3     2     1     0     1     2     3     4     5
-            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
         ),
         (
             [-2, 1],
@@ -39,22 +39,46 @@ import butterfly_agg_common
             -2,
             3,
             # 3    2     1     0     1     2
-            [0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1],
+        ),
+        (
+            [4],
+            [4],
+            2,
+            5,
+            # 5    4     3     2
+            [0, 0, 1, 0, 0, 0, 0],
+        ),
+        (
+            [4, -1],
+            [1, -4],
+            -1,
+            1,
+            # 1    0     1
+            [1, 0, 0, 0, 1],
+        ),
+        (
+            [4, -4],
+            [4, -4],
+            -1,
+            1,
+            # 1    0     1
+            [0, 0, 0, 0, 0],
         ),
     ],
 )
 def test_create_line(
     in_data_min: list[int],
     in_data_max: list[int],
-    in_lat_n_max: int,
-    in_lat_s_max: int,
+    in_lat_min: int,
+    in_lat_max: int,
     out_line: list[int],
 ) -> None:
     out = butterfly_agg_common.create_line(
         in_data_min,
         in_data_max,
-        in_lat_n_max,
-        in_lat_s_max,
+        in_lat_min,
+        in_lat_max,
     )
     np.testing.assert_equal(out, out_line)
 

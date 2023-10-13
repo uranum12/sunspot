@@ -8,7 +8,7 @@ import butterfly_text
 
 
 @pytest.mark.parametrize(
-    ("in_lat_left", "in_lat_right", "out_min", "out_max"),
+    ("in_lat_min", "in_lat_max", "out_min", "out_max"),
     [
         (
             [12, 15, 23],
@@ -43,19 +43,19 @@ import butterfly_text
     ],
 )
 def test_merge_data(
-    in_lat_left: list[int],
-    in_lat_right: list[int],
+    in_lat_min: list[int],
+    in_lat_max: list[int],
     out_min: list[int],
     out_max: list[int],
 ) -> None:
     df_in = pl.DataFrame(
         {
-            "lat_left": in_lat_left,
-            "lat_right": in_lat_right,
+            "lat_min": in_lat_min,
+            "lat_max": in_lat_max,
         },
         schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
+            "lat_min": pl.Int8,
+            "lat_max": pl.Int8,
         },
     )
     df_out = butterfly_text.merge_data(df_in)

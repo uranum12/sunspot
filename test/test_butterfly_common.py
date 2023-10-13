@@ -21,6 +21,22 @@ def test_cast_lat_sign() -> None:
     assert df_out.schema == {"lat_left": pl.Int8, "lat_right": pl.Int8}
 
 
+def test_drop_lat_null() -> None:
+    df_in = pl.LazyFrame(
+        {
+            "lat_left": [4, None],
+            "lat_right": [12, None],
+        },
+        schema={
+            "lat_left": pl.Int8,
+            "lat_right": pl.Int8,
+        },
+    )
+    df_out = butterfly_common.drop_lat_null(df_in).collect()
+    assert df_out.get_column("lat_left").to_list() == [4]
+    assert df_out.get_column("lat_right").to_list() == [12]
+
+
 @pytest.mark.parametrize(
     ("in_ns", "in_lat_left", "in_lat_right", "out_lat_left", "out_lat_right"),
     [
@@ -97,7 +113,7 @@ def test_reverse_minus(
 
 
 @pytest.mark.parametrize(
-    ("in_lat_left", "in_lat_right", "out_lat_left", "out_lat_right"),
+    ("in_lat_left", "in_lat_right", "out_lat_min", "out_lat_max"),
     [
         (12, 12, 12, 12),
         (12, 15, 12, 15),
@@ -110,8 +126,8 @@ def test_reverse_minus(
 def test_fix_order(
     in_lat_left: int,
     in_lat_right: int,
-    out_lat_left: int,
-    out_lat_right: int,
+    out_lat_min: int,
+    out_lat_max: int,
 ) -> None:
     df_in = pl.LazyFrame(
         {
@@ -124,32 +140,23 @@ def test_fix_order(
         },
     )
     df_out = butterfly_common.fix_order(df_in).collect()
-    assert df_out.item(0, "lat_left") == out_lat_left
-    assert df_out.item(0, "lat_right") == out_lat_right
+    assert df_out.item(0, "lat_min") == out_lat_min
+    assert df_out.item(0, "lat_max") == out_lat_max
 
 
 @pytest.mark.parametrize(
-    (
-        "in_first",
-        "in_last",
-        "out_first_year",
-        "out_first_month",
-        "out_last_year",
-        "out_last_month",
-    ),
+    ("in_first", "in_last", "out_last"),
     [
-        (date(1960, 12, 25), date(1961, 1, 7), 1960, 12, 1961, 1),
-        (date(2000, 4, 4), date(2000, 4, 4), 2000, 4, 2000, 4),
-        (date(2010, 11, 11), date(2010, 12, 3), 2010, 11, 2010, 12),
+        (date(1956, 8, 1), None, date(1956, 8, 31)),
+        (date(2020, 5, 5), date(2020, 5, 7), date(2020, 5, 7)),
+        (date(1964, 2, 1), None, date(1964, 2, 29)),
+        (date(1965, 2, 1), None, date(1965, 2, 28)),
     ],
 )
-def test_extract_date(
+def test_complement_last(
     in_first: date,
-    in_last: date,
-    out_first_year: int,
-    out_first_month: int,
-    out_last_year: int,
-    out_last_month: int,
+    in_last: date | None,
+    out_last: date,
 ) -> None:
     df_in = pl.LazyFrame(
         {
@@ -161,11 +168,47 @@ def test_extract_date(
             "last": pl.Date,
         },
     )
-    df_out = butterfly_common.extract_date(df_in).collect()
-    assert df_out.item(0, "first_year") == out_first_year
-    assert df_out.item(0, "first_month") == out_first_month
-    assert df_out.item(0, "last_year") == out_last_year
-    assert df_out.item(0, "last_month") == out_last_month
+    df_out = butterfly_common.complement_last(df_in).collect()
+    assert df_out.item(0, "first") == in_first
+    assert df_out.item(0, "last") == out_last
+
+
+@pytest.mark.parametrize(
+    ("in_first", "in_last", "out_first", "out_last"),
+    [
+        (
+            date(1956, 5, 5),
+            date(1956, 5, 30),
+            date(1956, 5, 1),
+            date(1956, 5, 1),
+        ),
+        (
+            date(2020, 8, 30),
+            date(2020, 9, 5),
+            date(2020, 8, 1),
+            date(2020, 9, 1),
+        ),
+    ],
+)
+def test_truncate_day(
+    in_first: date,
+    in_last: date,
+    out_first: date,
+    out_last: date,
+) -> None:
+    df_in = pl.LazyFrame(
+        {
+            "first": [in_first],
+            "last": [in_last],
+        },
+        schema={
+            "first": pl.Date,
+            "last": pl.Date,
+        },
+    )
+    df_out = butterfly_common.truncate_day(df_in).collect()
+    assert df_out.item(0, "first") == out_first
+    assert df_out.item(0, "last") == out_last
 
 
 @pytest.mark.parametrize(
@@ -211,7 +254,7 @@ def test_extract_date(
         ),
     ],
 )
-def test_filter_data_daily(
+def test_filter_data(
     in_date: date,
     in_first: list[date],
     in_last: list[date | None],
@@ -234,98 +277,12 @@ def test_filter_data_daily(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butterfly_common.filter_data_daily(df_in, in_date).collect()
+    df_out = butterfly_common.filter_data(df_in, in_date).collect()
     assert (
         df_out.get_column("lat_left").to_list().sort() == out_lat_left.sort()
     )
     assert (
         df_out.get_column("lat_right").to_list().sort() == out_lat_right.sort()
-    )
-
-
-@pytest.mark.parametrize(
-    (
-        "in_date",
-        "in_first_year",
-        "in_first_month",
-        "in_last_year",
-        "in_last_month",
-        "in_lat_left",
-        "in_lat_right",
-        "out_lat_left",
-        "out_lat_right",
-    ),
-    [
-        (
-            date(1960, 1, 1),
-            [1959, 1959, 1960, 1960, 1960],
-            [12, 12, 1, 1, 2],
-            [1959, 1960, 1960, 1960, 1960],
-            [12, 1, 1, 2, 2],
-            [12, -12, 15, -3, 4],
-            [15, -4, 18, 5, 4],
-            [-12, -3, 15],
-            [-4, 5, 18],
-        ),
-        (
-            date(2000, 12, 1),
-            [2000, 2000, 2000, 2000, 2001],
-            [11, 12, 12, 12, 1],
-            [2000, 2000, 2000, 2001, 20001],
-            [12, 12, 12, 1, 1],
-            [12, -4, 8, -15, 23],
-            [15, 5, 8, -12, 24],
-            [-15, -4, 8, 12],
-            [-12, 5, 8, 15],
-        ),
-        (
-            date(2010, 3, 1),
-            [2010, 2010, 2010, 2010, 2010, 2010, 2010, 2010],
-            [3, 3, 3, 3, 3, 3, 3, 3],
-            [2010, 2010, 2010, 2010, 2010, 2010, 2010, 2010],
-            [3, 3, 3, 3, 3, 3, 3, 3],
-            [4, 0, 23, -14, -4, 12, 0, 12],
-            [4, 0, 23, -12, 0, 13, 4, 12],
-            [-14, -4, 0, 0, 4, 12, 12, 23],
-            [-12, 0, 0, 4, 4, 12, 13, 23],
-        ),
-    ],
-)
-def test_filter_data_monthly(
-    in_date: date,
-    in_first_year: list[int],
-    in_first_month: list[int],
-    in_last_year: list[int],
-    in_last_month: list[int],
-    in_lat_left: list[int],
-    in_lat_right: list[int],
-    out_lat_left: list[int],
-    out_lat_right: list[int],
-) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "first_year": in_first_year,
-            "first_month": in_first_month,
-            "last_year": in_last_year,
-            "last_month": in_last_month,
-            "lat_left": in_lat_left,
-            "lat_right": in_lat_right,
-        },
-        schema={
-            "first_year": pl.Int32,
-            "first_month": pl.UInt32,
-            "last_year": pl.Int32,
-            "last_month": pl.UInt32,
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
-    )
-    df_out = butterfly_common.filter_data_monthly(df_in, in_date).collect()
-    assert sorted(df_out.get_column("lat_left").to_list()) == sorted(
-        out_lat_left,
-    )
-    assert sorted(df_out.get_column("lat_right").to_list()) == sorted(
-        out_lat_right,
     )
 
 

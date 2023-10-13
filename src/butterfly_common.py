@@ -10,6 +10,13 @@ def cast_lat_sign(df: pl.LazyFrame) -> pl.LazyFrame:
     )
 
 
+def drop_lat_null(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.filter(
+        # 緯度の空白値を削除
+        pl.all_horizontal(pl.col("lat_left", "lat_right").is_not_null()),
+    )
+
+
 def reverse_south(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         [
@@ -43,63 +50,36 @@ def fix_order(df: pl.LazyFrame) -> pl.LazyFrame:
             pl.when(pl.col("lat_left") > pl.col("lat_right"))
             .then(pl.col("lat_right"))
             .otherwise(pl.col("lat_left"))
-            .alias("lat_left"),
+            .alias("lat_min"),
             pl.when(pl.col("lat_left") > pl.col("lat_right"))
             .then(pl.col("lat_left"))
             .otherwise(pl.col("lat_right"))
-            .alias("lat_right"),
+            .alias("lat_max"),
         ],
-    )
+    ).drop("lat_left", "lat_right")
 
 
-def extract_date(df: pl.LazyFrame) -> pl.LazyFrame:
+def complement_last(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
-        # 観測日から年と月を抽出
-        *[pl.col(col).dt.year().suffix("_year") for col in ["first", "last"]],
-        *[
-            pl.col(col).dt.month().suffix("_month")
-            for col in ["first", "last"]
-        ],
+        # 最終観測日が空白の場合、初観測日の月の最終日を最終観測日として補完
+        pl.when(pl.col("last").is_null())
+        .then(pl.col("first").dt.month_end())
+        .otherwise(pl.col("last"))
+        .alias("last"),
     )
 
 
-def filter_data_daily(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
-    return (
-        df.filter(
-            # 一日ごと区切る
-            # 手帳形式では日付が月までしか存在しない
-            pl.when(pl.col("last").is_null())
-            .then(pl.col("first").eq(date.replace(day=1)))
-            .otherwise(
-                pl.lit(date).is_between(
-                    pl.col("first"),
-                    pl.col("last"),
-                ),
-            ),
-        )
-        .select("lat_left", "lat_right")
-        .drop_nulls()
+def truncate_day(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.with_columns(
+        # 観測日の日付を月単位で切り捨てる
+        pl.col("first", "last").dt.truncate("1mo"),
     )
 
 
-def filter_data_monthly(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
-    return (
-        df.filter(
-            # 一月ごとに区切る
-            # この時、first, last どちらかでも範囲に入っていれば対象とする
-            (
-                pl.col("first_year").eq(date.year)
-                & pl.col("first_month").eq(date.month)
-            )
-            | (
-                pl.col("last_year").eq(date.year)
-                & pl.col("last_month").eq(date.month)
-            ),
-        )
-        # 必要なデータを選択
-        .select("lat_left", "lat_right")
-        # null値を削除 for 1959/11 2059
-        .drop_nulls()
+def filter_data(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
+    return df.filter(
+        # データが初観測日と最終観測日の間に存在するか
+        pl.lit(date).is_between(pl.col("first"), pl.col("last")),
     )
 
 

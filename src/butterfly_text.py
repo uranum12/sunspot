@@ -10,17 +10,17 @@ import butterfly_common
 
 def merge_data(df: pl.DataFrame) -> pl.DataFrame:
     # 被りを削除し、ソート
-    df = df.unique().sort("lat_left", "lat_right")
+    df = df.unique().sort("lat_min", "lat_max")
     # 重なっている範囲を結合
     merged: list[list[int]] = []
     for row in df.iter_rows(named=True):
         if len(merged) == 0:
-            merged.append([row["lat_left"], row["lat_right"]])
+            merged.append([row["lat_min"], row["lat_max"]])
             continue
-        if row["lat_left"] < merged[-1][1]:
-            merged[-1][1] = max(merged[-1][1], row["lat_right"])
+        if row["lat_min"] < merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], row["lat_max"])
         else:
-            merged.append([row["lat_left"], row["lat_right"]])
+            merged.append([row["lat_min"], row["lat_max"]])
 
     # データフレームへ変換
     return pl.DataFrame({"merged": merged}).select(
@@ -97,10 +97,12 @@ def main() -> None:
     df_file = (
         pl.scan_parquet(data_file)
         .pipe(butterfly_common.cast_lat_sign)
+        .pipe(butterfly_common.drop_lat_null)
         .pipe(butterfly_common.reverse_south)
         .pipe(butterfly_common.reverse_minus)
         .pipe(butterfly_common.fix_order)
-        .pipe(butterfly_common.extract_date)
+        .pipe(butterfly_common.complement_last)
+        .pipe(butterfly_common.truncate_day)
         .collect()
     )
 
@@ -114,7 +116,8 @@ def main() -> None:
         while current <= end:
             df = (
                 df_file.lazy()
-                .pipe(butterfly_common.filter_data_monthly, date=current)
+                .pipe(butterfly_common.filter_data, date=current)
+                .select("lat_min", "lat_max")
                 .collect()
             )
 

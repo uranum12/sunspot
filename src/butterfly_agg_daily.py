@@ -17,9 +17,11 @@ def main() -> None:
     df_file = (
         pl.scan_parquet(data_file)
         .pipe(butterfly_common.cast_lat_sign)
+        .pipe(butterfly_common.drop_lat_null)
         .pipe(butterfly_common.reverse_south)
         .pipe(butterfly_common.reverse_minus)
         .pipe(butterfly_common.fix_order)
+        .pipe(butterfly_common.complement_last)
         .collect()
     )
 
@@ -35,14 +37,15 @@ def main() -> None:
     for i in date_index:
         df = (
             df_file.lazy()
-            .pipe(butterfly_common.filter_data_daily, date=i.astype(date))
+            .pipe(butterfly_common.filter_data, date=i.astype(date))
+            .select("lat_min", "lat_max")
             .collect()
         )
 
         df_data = df.to_dict(as_series=False)
         line = butterfly_agg_common.create_line(
-            df_data["lat_left"],
-            df_data["lat_right"],
+            df_data["lat_min"],
+            df_data["lat_max"],
             lat_min,
             lat_max,
         )

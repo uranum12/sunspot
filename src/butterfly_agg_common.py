@@ -16,12 +16,11 @@ def create_line(
     arr_max = np.array(data_max)
 
     # 範囲外のインデックス
-    index_outer_min = (arr_min < lat_min) | (lat_max < arr_min)
-    index_outer_max = (arr_max < lat_min) | (lat_max < arr_max)
+    index_outer = (arr_max < lat_min) | (lat_max < arr_min)
 
     # 範囲外のデータを除去
-    arr_min = arr_min[~(index_outer_min & index_outer_max)]
-    arr_max = arr_max[~(index_outer_min & index_outer_max)]
+    arr_min = arr_min[~index_outer]
+    arr_max = arr_max[~index_outer]
 
     # 緯度のインデックスの最大値
     max_index = 2 * (lat_max - lat_min)

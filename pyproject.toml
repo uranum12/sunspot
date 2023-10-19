@@ -1,3 +1,23 @@
+[project]
+name = "sunspot"
+version = "0.1.0"
+description = "sunspot code written in python"
+requires-python = ">=3.10"
+dependencies = ["polars", "python-dateutil", "suntime", "numpy", "matplotlib"]
+
+[project.optional-dependencies]
+dev = [
+    "taskipy",
+    "pre-commit",
+    "black",
+    "isort",
+    "ruff",
+    "mypy",
+    "types-python-dateutil",
+    "pytest",
+    "pytest-cov",
+]
+
 [tool.black]
 target-version = ["py310"]
 line-length = 79
@@ -27,11 +47,12 @@ pythonpath = "src"
 testpaths = ["test"]
 
 [tool.taskipy.tasks]
-lock = "pip-compile -U requirements.in -o requirements.txt"
+lock = "pip-compile -U pyproject.toml -o requirements.txt"
 sync = "pip-sync requirements.txt"
-install = "pip install -r requirements.txt"
-update = "task lock && task install"
-update-dev = "pip install -Ur dev-requirements.txt"
+update = "task lock && task sync"
+lock-dev = "pip-compile -U --all-extras pyproject.toml -o dev-requirements.txt"
+sync-dev = "pip-sync dev-requirements.txt"
+update-dev = "task lock-dev && task sync-dev"
 
 black = "black src test"
 black-check = "black --check src test"

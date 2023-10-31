@@ -6,6 +6,12 @@
 pip install -r requirements.txt
 ```
 
+## application
+
+```sh
+streamlit run app/main.py
+```
+
 ## develop
 
 ```sh

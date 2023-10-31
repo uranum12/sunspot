@@ -2,10 +2,11 @@
 name = "sunspot"
 version = "0.1.0"
 description = "sunspot code written in python"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.12"
 dependencies = ["polars", "python-dateutil", "suntime", "numpy", "matplotlib"]
 
 [project.optional-dependencies]
+app = ["streamlit", "watchdog"]
 dev = [
     "taskipy",
     "pre-commit",
@@ -23,10 +24,11 @@ target-version = ["py310"]
 line-length = 79
 
 [tool.isort]
+src_paths = ["app", "src"]
 profile = "black"
 
 [tool.ruff]
-src = ["src"]
+src = ["src", "app"]
 target-version = "py310"
 output-format = "grouped"
 select = ["ALL"]
@@ -54,12 +56,14 @@ lock-dev = "pip-compile -U --all-extras pyproject.toml -o dev-requirements.txt"
 sync-dev = "pip-sync dev-requirements.txt"
 update-dev = "task lock-dev && task sync-dev"
 
-black = "black src test"
-black-check = "black --check src test"
-isort = "isort src test"
-ruff = "ruff src test"
-ruff-fix = "ruff --fix src test"
-mypy = "mypy src test"
+app-run = "streamlit run app/main.py --server.headless true"
+
+black = "black app src test"
+black-check = "black --check app src test"
+isort = "isort app src test"
+ruff = "ruff app src test"
+ruff-fix = "ruff --fix app src test"
+mypy = "mypy app src test"
 pytest = "pytest test"
 pytest-v = "pytest -v test"
 pytest-cov = "pytest --cov src --cov-branch --cov-report=term-missing test"

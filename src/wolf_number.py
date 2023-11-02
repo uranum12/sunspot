@@ -31,7 +31,8 @@ def main() -> None:
 
     df = (
         pl.scan_parquet(data_file)
-        .drop("remarks")
+        .drop("time", "remarks")
+        .drop_nulls()
         .pipe(calc_wolf_number)
         .collect()
     )

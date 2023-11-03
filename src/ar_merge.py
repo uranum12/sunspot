@@ -40,7 +40,7 @@ def get_not_null(df: pl.LazyFrame) -> pl.LazyFrame:
         df.with_columns(
             # リストを列二つへ分解
             [
-                pl.col(col).list.get(n).suffix(f"_{n}")
+                pl.col(col).list.get(n).name.suffix(f"_{n}")
                 for col in cols
                 for n in [0, 1]
             ],

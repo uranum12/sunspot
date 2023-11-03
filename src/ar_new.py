@@ -26,8 +26,11 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
                 },
             )
             .cast(pl.UInt8)
-            .suffix("_month"),
-            pl.col("first", "last").list.get(1).cast(pl.UInt8).suffix("_day"),
+            .name.suffix("_month"),
+            pl.col("first", "last")
+            .list.get(1)
+            .cast(pl.UInt8)
+            .name.suffix("_day"),
         )
         .with_columns(
             # 12月で翌年の1月までが範囲の場合、年をひとつ加算

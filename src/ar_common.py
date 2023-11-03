@@ -38,7 +38,7 @@ def extract_coords_qm(
         pl.col(coords)
         .str.extract(r"(\?)")
         .cast(pl.Categorical)
-        .suffix("_question"),
+        .name.suffix("_question"),
         # 経緯度からはてなマーク削除
         pl.col(coords).str.replace(r"\?", ""),
     )
@@ -59,7 +59,7 @@ def extract_coords_lr(
             # 経緯度の左の数値
             pl.col(coords)
             .list.get(0)
-            .suffix("_left"),
+            .name.suffix("_left"),
         )
         .with_columns(
             # 経緯度の右の数値
@@ -68,7 +68,7 @@ def extract_coords_lr(
                 pl.when(pl.col(coord).list.len().eq(2))
                 .then(pl.col(coord).list.get(1))
                 .otherwise(pl.col(f"{coord}_left"))
-                .suffix("_right")
+                .name.suffix("_right")
                 for coord in coords
             ],
         )
@@ -90,7 +90,7 @@ def extract_coords_sign(
         .str.extract(r"([p-])")
         .str.replace(r"(p)", "+")
         .cast(pl.Categorical)
-        .suffix("_sign"),
+        .name.suffix("_sign"),
         # 経緯度の左右の数値から符号を削除
         pl.col(
             [f"{coord}_{lr}" for coord in coords for lr in ["left", "right"]],

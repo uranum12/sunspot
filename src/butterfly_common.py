@@ -90,8 +90,8 @@ def calc_start_end(
 ) -> tuple[date, date]:
     df = (
         lf.select(
-            pl.col("first", "last").min().suffix("_min"),
-            pl.col("first", "last").max().suffix("_max"),
+            pl.col("first", "last").min().name.suffix("_min"),
+            pl.col("first", "last").max().name.suffix("_max"),
         )
         .collect()
         .transpose()

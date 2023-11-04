@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import butterfly_agg_common
+import butterfly_type
 
 
 @pytest.mark.parametrize(
@@ -153,6 +154,91 @@ def test_create_line(
             in_lat_step,
         )
     np.testing.assert_equal(out, out_line)
+
+
+@pytest.mark.parametrize(
+    ("in_start", "in_end", "in_step", "out_index"),
+    [
+        (
+            date(2020, 4, 4),
+            date(2020, 4, 6),
+            butterfly_type.DateDelta(days=1),
+            [
+                np.datetime64("2020-04-04"),
+                np.datetime64("2020-04-05"),
+                np.datetime64("2020-04-06"),
+            ],
+        ),
+        (
+            date(2020, 2, 28),
+            date(2020, 3, 5),
+            butterfly_type.DateDelta(days=2),
+            [
+                np.datetime64("2020-02-28"),
+                np.datetime64("2020-03-01"),
+                np.datetime64("2020-03-03"),
+                np.datetime64("2020-03-05"),
+            ],
+        ),
+        (
+            date(2021, 2, 28),
+            date(2021, 3, 4),
+            butterfly_type.DateDelta(days=3),
+            [
+                np.datetime64("2021-02-28"),
+                np.datetime64("2021-03-03"),
+            ],
+        ),
+        (
+            date(2020, 4, 4),
+            date(2020, 7, 16),
+            butterfly_type.DateDelta(months=2),
+            [
+                np.datetime64("2020-04-04"),
+                np.datetime64("2020-06-04"),
+            ],
+        ),
+        (
+            date(1969, 11, 1),
+            date(1970, 2, 2),
+            butterfly_type.DateDelta(months=1),
+            [
+                np.datetime64("1969-11-01"),
+                np.datetime64("1969-12-01"),
+                np.datetime64("1970-01-01"),
+                np.datetime64("1970-02-01"),
+            ],
+        ),
+        (
+            date(2020, 2, 28),
+            date(2020, 4, 1),
+            butterfly_type.DateDelta(months=1, days=1),
+            [
+                np.datetime64("2020-02-28"),
+                np.datetime64("2020-03-29"),
+            ],
+        ),
+        (
+            date(2020, 4, 1),
+            date(2023, 12, 4),
+            butterfly_type.DateDelta(years=1, months=2, days=3),
+            [
+                np.datetime64("2020-04-01"),
+                np.datetime64("2021-06-04"),
+                np.datetime64("2022-08-07"),
+                np.datetime64("2023-10-10"),
+            ],
+        ),
+    ],
+)
+def test_create_date_index(
+    in_start: date,
+    in_end: date,
+    in_step: butterfly_type.DateDelta,
+    out_index: list[date],
+) -> None:
+    out = butterfly_agg_common.create_date_index(in_start, in_end, in_step)
+    np.testing.assert_equal(out, out_index)
 
 
 @pytest.mark.parametrize(

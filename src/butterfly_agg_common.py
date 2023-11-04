@@ -1,8 +1,10 @@
-from datetime import date, timedelta
+from datetime import date
 
 import numpy as np
 import numpy.typing as npt
-from dateutil.relativedelta import relativedelta
+import polars as pl
+
+import butterfly_type
 
 
 def create_line(
@@ -50,25 +52,38 @@ def create_line(
     return line
 
 
+def create_date_index(
+    start: date,
+    end: date,
+    step: butterfly_type.DateDelta,
+) -> npt.NDArray[np.datetime64]:
+    years = f"{step.years}y" if step.years is not None else ""
+    months = f"{step.months}mo" if step.months is not None else ""
+    days = f"{step.days}d" if step.days is not None else ""
+    interval = f"{years}{months}{days}"
+    return pl.date_range(
+        start,
+        end,
+        interval=interval,
+        eager=True,
+    ).to_numpy()
+
+
 def create_date_index_daily(
     start: date,
     end: date,
 ) -> npt.NDArray[np.datetime64]:
-    return np.arange(
-        start,
-        end + timedelta(days=1),
-        dtype="datetime64[D]",
-    )
+    return create_date_index(start, end, butterfly_type.DateDelta(days=1))
 
 
 def create_date_index_monthly(
     start: date,
     end: date,
 ) -> npt.NDArray[np.datetime64]:
-    return np.arange(
-        start,
-        end + relativedelta(months=1),
-        dtype="datetime64[M]",
+    return create_date_index(
+        start.replace(day=1),
+        end,
+        butterfly_type.DateDelta(months=1),
     )
 
 

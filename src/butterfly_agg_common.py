@@ -10,10 +10,17 @@ def create_line(
     data_max: list[int],
     lat_min: int,
     lat_max: int,
+    lat_step: int = 1,
 ) -> npt.NDArray[np.uint8]:
     # numpy配列に変換
     arr_min = np.array(data_min)
     arr_max = np.array(data_max)
+
+    # ステップごとの数値へ変換
+    arr_min //= lat_step
+    arr_max //= lat_step
+    lat_min //= lat_step
+    lat_max //= lat_step
 
     # 範囲外のインデックス
     index_outer = (arr_max < lat_min) | (lat_max < arr_min)
@@ -38,7 +45,7 @@ def create_line(
 
     # 行を埋める
     line = np.zeros(max_index + 1, dtype=np.uint8)
-    for i_min, i_max in zip(index_min, index_max, strict=False):
+    for i_min, i_max in zip(index_min, index_max, strict=True):
         line[i_min:i_max] = 1
     return line
 
@@ -65,6 +72,10 @@ def create_date_index_monthly(
     )
 
 
-def create_lat_index(lat_min: int, lat_max: int) -> npt.NDArray[np.int8]:
-    lat_range = np.arange(lat_min, lat_max + 1, dtype=np.int8)[::-1]
+def create_lat_index(
+    lat_min: int,
+    lat_max: int,
+    lat_step: int = 1,
+) -> npt.NDArray[np.int8]:
+    lat_range = np.arange(lat_min, lat_max + 1, lat_step, dtype=np.int8)[::-1]
     return np.insert(np.abs(lat_range), np.arange(1, len(lat_range)), -1)

@@ -22,8 +22,8 @@ def detect_coords_over(df: pl.LazyFrame) -> pl.LazyFrame:
         # 経緯度が先月からの続きであるかどうか
         # 続きであった場合、それを示す行を追加し、元データ削除
         ((pl.col("lat") == "/") | (pl.col("lon") == "/")).alias("over"),
-        pl.when(pl.col("lat") != "/").then(pl.col("lat")),
-        pl.when(pl.col("lon") != "/").then(pl.col("lon")),
+        pl.when(pl.col("lat") != "/").then(pl.col("lat")).alias("lat"),
+        pl.when(pl.col("lon") != "/").then(pl.col("lon")).alias("lon"),
     )
 
 

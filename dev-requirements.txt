@@ -4,7 +4,7 @@
 #
 #    pip-compile --all-extras --output-file=dev-requirements.txt pyproject.toml
 #
-black==23.10.1
+black==23.11.0
     # via sunspot (pyproject.toml)
 cfgv==3.4.0
     # via pre-commit
@@ -12,7 +12,7 @@ click==8.1.7
     # via black
 colorama==0.4.6
     # via taskipy
-contourpy==1.1.1
+contourpy==1.2.0
     # via matplotlib
 coverage[toml]==7.3.2
     # via
@@ -24,7 +24,7 @@ distlib==0.3.7
     # via virtualenv
 filelock==3.13.1
     # via virtualenv
-fonttools==4.43.1
+fonttools==4.44.0
     # via matplotlib
 identify==2.5.31
     # via pre-commit
@@ -36,7 +36,7 @@ kiwisolver==1.4.5
     # via matplotlib
 matplotlib==3.8.1
     # via sunspot (pyproject.toml)
-mypy==1.6.1
+mypy==1.7.0
     # via sunspot (pyproject.toml)
 mypy-extensions==1.0.0
     # via
@@ -64,7 +64,7 @@ platformdirs==3.11.0
     #   virtualenv
 pluggy==1.3.0
     # via pytest
-polars==0.19.12
+polars==0.19.13
     # via sunspot (pyproject.toml)
 pre-commit==3.5.0
     # via sunspot (pyproject.toml)
@@ -85,7 +85,7 @@ python-dateutil==2.8.2
     #   suntime
 pyyaml==6.0.1
     # via pre-commit
-ruff==0.1.3
+ruff==0.1.5
     # via sunspot (pyproject.toml)
 six==1.16.0
     # via python-dateutil

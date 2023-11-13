@@ -2,6 +2,7 @@ from datetime import time
 
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal
 
 import sn_jst
 
@@ -19,6 +20,21 @@ def test_calc_time(in_time: str, out_time: time) -> None:
         {
             "time": [in_time],
         },
+        schema={
+            "time": pl.Utf8,
+        },
     )
-    df_out = sn_jst.calc_time(df_in).collect()
-    assert df_out.item(0, "time") == out_time
+    df_expected = pl.LazyFrame(
+        {
+            "time": [out_time],
+        },
+        schema={
+            "time": pl.Time,
+        },
+    )
+    df_out = sn_jst.calc_time(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )

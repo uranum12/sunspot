@@ -1,8 +1,8 @@
 from datetime import date
-from math import isclose
 
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal
 
 import wolf_number
 
@@ -50,12 +50,36 @@ def test_calc_wolf_number(
             "sf": pl.UInt16,
         },
     )
-    df_out = wolf_number.calc_wolf_number(df_in).collect()
-    assert df_out.item(0, "tg") == out_tg
-    assert df_out.item(0, "tf") == out_tf
-    assert df_out.item(0, "nr") == out_nr
-    assert df_out.item(0, "sr") == out_sr
-    assert df_out.item(0, "tr") == out_tr
+    df_expeted = pl.LazyFrame(
+        {
+            "ng": [in_ng],
+            "nf": [in_nf],
+            "sg": [in_sg],
+            "sf": [in_sf],
+            "tg": [out_tg],
+            "tf": [out_tf],
+            "nr": [out_nr],
+            "sr": [out_sr],
+            "tr": [out_tr],
+        },
+        schema={
+            "ng": pl.UInt8,
+            "nf": pl.UInt16,
+            "sg": pl.UInt8,
+            "sf": pl.UInt16,
+            "tg": pl.UInt8,
+            "tf": pl.UInt16,
+            "nr": pl.UInt16,
+            "sr": pl.UInt16,
+            "tr": pl.UInt16,
+        },
+    )
+    df_out = wolf_number.calc_wolf_number(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expeted,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -91,14 +115,20 @@ def test_agg_monthly(
             "data": pl.UInt16,
         },
     )
-    df_out = wolf_number.agg_monthly(df_in).collect()
-    print(df_out)
-    assert sorted(df_out.get_column("date").to_list()) == sorted(out_date)
-    assert all(
-        isclose(x, y)
-        for x, y in zip(
-            sorted(df_out.get_column("data").to_list()),
-            sorted(out_data),
-            strict=True,
-        )
+    df_expected = pl.LazyFrame(
+        {
+            "date": out_date,
+            "data": out_data,
+        },
+        schema={
+            "date": pl.Date,
+            "data": pl.Float64,
+        },
+    )
+    df_out = wolf_number.agg_monthly(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+        check_row_order=False,
     )

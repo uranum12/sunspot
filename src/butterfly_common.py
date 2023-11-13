@@ -24,6 +24,7 @@ def reverse_south(df: pl.LazyFrame) -> pl.LazyFrame:
             pl.when(pl.col("ns").eq("S"))
             .then(-pl.col(col))
             .otherwise(pl.col(col))
+            .cast(df.schema[col])
             .alias(col)
             for col in ["lat_left", "lat_right"]
         ],
@@ -37,10 +38,11 @@ def reverse_minus(df: pl.LazyFrame) -> pl.LazyFrame:
             pl.when(pl.col(f"{col}_sign").eq("-"))
             .then(-pl.col(col))
             .otherwise(pl.col(col))
+            .cast(df.schema[col])
             .alias(col)
             for col in ["lat_left", "lat_right"]
         ],
-    )
+    ).drop([f"{col}_sign" for col in ["lat_left", "lat_right"]])
 
 
 def fix_order(df: pl.LazyFrame) -> pl.LazyFrame:
@@ -80,7 +82,7 @@ def filter_data(df: pl.LazyFrame, date: date) -> pl.LazyFrame:
     return df.filter(
         # データが初観測日と最終観測日の間に存在するか
         pl.lit(date).is_between(pl.col("first"), pl.col("last")),
-    )
+    ).drop("first", "last")
 
 
 def calc_start_end(

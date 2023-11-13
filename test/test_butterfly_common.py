@@ -2,6 +2,7 @@ from datetime import date
 
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal
 
 import butterfly_common
 
@@ -17,8 +18,22 @@ def test_cast_lat_sign() -> None:
             "lat_right": pl.UInt8,
         },
     )
+    df_expected = pl.LazyFrame(
+        {
+            "lat_left": [12],
+            "lat_right": [12],
+        },
+        schema={
+            "lat_left": pl.Int8,
+            "lat_right": pl.Int8,
+        },
+    )
     df_out = butterfly_common.cast_lat_sign(df_in)
-    assert df_out.schema == {"lat_left": pl.Int8, "lat_right": pl.Int8}
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 def test_drop_lat_null() -> None:
@@ -32,9 +47,22 @@ def test_drop_lat_null() -> None:
             "lat_right": pl.Int8,
         },
     )
-    df_out = butterfly_common.drop_lat_null(df_in).collect()
-    assert df_out.get_column("lat_left").to_list() == [4]
-    assert df_out.get_column("lat_right").to_list() == [12]
+    df_expected = pl.LazyFrame(
+        {
+            "lat_left": [4],
+            "lat_right": [12],
+        },
+        schema={
+            "lat_left": pl.Int8,
+            "lat_right": pl.Int8,
+        },
+    )
+    df_out = butterfly_common.drop_lat_null(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -65,9 +93,25 @@ def test_reverse_south(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butterfly_common.reverse_south(df_in).collect()
-    assert df_out.item(0, "lat_left") == out_lat_left
-    assert df_out.item(0, "lat_right") == out_lat_right
+    df_expected = pl.LazyFrame(
+        {
+            "ns": [in_ns],
+            "lat_left": [out_lat_left],
+            "lat_right": [out_lat_right],
+        },
+        schema={
+            "ns": pl.Categorical,
+            "lat_left": pl.Int8,
+            "lat_right": pl.Int8,
+        },
+    )
+    df_out = butterfly_common.reverse_south(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+        categorical_as_str=True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -107,9 +151,22 @@ def test_reverse_minus(
             "lat_right_sign": pl.Categorical,
         },
     )
-    df_out = butterfly_common.reverse_minus(df_in).collect()
-    assert df_out.item(0, "lat_left") == out_lat_left
-    assert df_out.item(0, "lat_right") == out_lat_right
+    df_expected = pl.LazyFrame(
+        {
+            "lat_left": [out_lat_left],
+            "lat_right": [out_lat_right],
+        },
+        schema={
+            "lat_left": pl.Int8,
+            "lat_right": pl.Int8,
+        },
+    )
+    df_out = butterfly_common.reverse_minus(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -139,9 +196,22 @@ def test_fix_order(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butterfly_common.fix_order(df_in).collect()
-    assert df_out.item(0, "lat_min") == out_lat_min
-    assert df_out.item(0, "lat_max") == out_lat_max
+    df_expected = pl.LazyFrame(
+        {
+            "lat_min": [out_lat_min],
+            "lat_max": [out_lat_max],
+        },
+        schema={
+            "lat_min": pl.Int8,
+            "lat_max": pl.Int8,
+        },
+    )
+    df_out = butterfly_common.fix_order(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -168,9 +238,22 @@ def test_complement_last(
             "last": pl.Date,
         },
     )
-    df_out = butterfly_common.complement_last(df_in).collect()
-    assert df_out.item(0, "first") == in_first
-    assert df_out.item(0, "last") == out_last
+    df_expected = pl.LazyFrame(
+        {
+            "first": [in_first],
+            "last": [out_last],
+        },
+        schema={
+            "first": pl.Date,
+            "last": pl.Date,
+        },
+    )
+    df_out = butterfly_common.complement_last(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -206,9 +289,22 @@ def test_truncate_day(
             "last": pl.Date,
         },
     )
-    df_out = butterfly_common.truncate_day(df_in).collect()
-    assert df_out.item(0, "first") == out_first
-    assert df_out.item(0, "last") == out_last
+    df_expected = pl.LazyFrame(
+        {
+            "first": [out_first],
+            "last": [out_last],
+        },
+        schema={
+            "first": pl.Date,
+            "last": pl.Date,
+        },
+    )
+    df_out = butterfly_common.truncate_day(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -225,7 +321,7 @@ def test_truncate_day(
         (
             date(1954, 5, 5),
             [date(1954, 4, 1), date(1954, 5, 1), date(1954, 5, 1)],
-            [None, None, None],
+            [date(1954, 4, 30), date(1954, 5, 31), date(1954, 5, 31)],
             [12, 23, 34],
             [13, 24, 35],
             [23, 34],
@@ -257,7 +353,7 @@ def test_truncate_day(
 def test_filter_data(
     in_date: date,
     in_first: list[date],
-    in_last: list[date | None],
+    in_last: list[date],
     in_lat_left: list[int],
     in_lat_right: list[int],
     out_lat_left: list[int],
@@ -277,12 +373,22 @@ def test_filter_data(
             "lat_right": pl.Int8,
         },
     )
-    df_out = butterfly_common.filter_data(df_in, in_date).collect()
-    assert (
-        df_out.get_column("lat_left").to_list().sort() == out_lat_left.sort()
+    df_expected = pl.LazyFrame(
+        {
+            "lat_left": out_lat_left,
+            "lat_right": out_lat_right,
+        },
+        schema={
+            "lat_left": pl.Int8,
+            "lat_right": pl.Int8,
+        },
     )
-    assert (
-        df_out.get_column("lat_right").to_list().sort() == out_lat_right.sort()
+    df_out = butterfly_common.filter_data(df_in, in_date)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+        check_row_order=False,
     )
 
 

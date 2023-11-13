@@ -3,6 +3,7 @@ from io import StringIO
 
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal
 
 import butterfly_text
 
@@ -58,9 +59,22 @@ def test_merge_data(
             "lat_max": pl.Int8,
         },
     )
+    df_expected = pl.DataFrame(
+        {
+            "min": out_min,
+            "max": out_max,
+        },
+        schema={
+            "min": pl.Int64,
+            "max": pl.Int64,
+        },
+    )
     df_out = butterfly_text.merge_data(df_in)
-    assert df_out.get_column("min").to_list() == out_min
-    assert df_out.get_column("max").to_list() == out_max
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(
@@ -134,11 +148,37 @@ def test_split_data(
             "min": pl.Int8,
         },
     )
+    df_expected_n = pl.DataFrame(
+        {
+            "min": out_n_min,
+            "max": out_n_max,
+        },
+        schema={
+            "min": pl.Int8,
+            "max": pl.Int8,
+        },
+    )
+    df_expected_s = pl.DataFrame(
+        {
+            "min": out_s_min,
+            "max": out_s_max,
+        },
+        schema={
+            "min": pl.Int8,
+            "max": pl.Int8,
+        },
+    )
     df_out_n, df_out_s = butterfly_text.split_data(df_in)
-    assert df_out_n.get_column("min").to_list() == out_n_min
-    assert df_out_n.get_column("max").to_list() == out_n_max
-    assert df_out_s.get_column("min").to_list() == out_s_min
-    assert df_out_s.get_column("max").to_list() == out_s_max
+    assert_frame_equal(
+        df_out_n,
+        df_expected_n,
+        check_column_order=False,
+    )
+    assert_frame_equal(
+        df_out_s,
+        df_expected_s,
+        check_column_order=False,
+    )
 
 
 @pytest.mark.parametrize(

@@ -38,7 +38,6 @@ def main() -> None:
         df = (
             df_file.lazy()
             .pipe(butterfly_common.filter_data, date=i.astype(date))
-            .select("lat_min", "lat_max")
             .collect()
         )
 

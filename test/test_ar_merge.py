@@ -2,6 +2,7 @@ from datetime import date
 
 import polars as pl
 import pytest
+from polars.testing import assert_frame_equal, assert_series_equal
 
 import ar_merge
 
@@ -46,9 +47,14 @@ def test_extract_over_no(
             "no": in_no,
             "over": in_over,
         },
+        schema={
+            "no": pl.UInt32,
+            "over": pl.Boolean,
+        },
     )
+    s_expected = pl.Series("no", out_no, dtype=pl.UInt32)
     s_out = ar_merge.extract_over_no(df_in)
-    assert s_out.to_list() == out_no
+    assert_series_equal(s_out, s_expected)
 
 
 @pytest.mark.parametrize(
@@ -86,11 +92,30 @@ def test_get_obs_date(
             "first": in_first,
             "last": in_last,
         },
+        schema={
+            "no": pl.UInt32,
+            "first": pl.Date,
+            "last": pl.Date,
+        },
     )
-    df_out = ar_merge.get_obs_date(df_in).collect()
-    assert df_out.get_column("no").to_list() == out_no
-    assert df_out.get_column("first").to_list() == out_first
-    assert df_out.get_column("last").to_list() == out_last
+    df_expected = pl.LazyFrame(
+        {
+            "no": out_no,
+            "first": out_first,
+            "last": out_last,
+        },
+        schema={
+            "no": pl.UInt32,
+            "first": pl.Date,
+            "last": pl.Date,
+        },
+    )
+    df_out = ar_merge.get_obs_date(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 def test_get_not_null() -> None:
@@ -109,20 +134,57 @@ def test_get_not_null() -> None:
             "lon_left_sign": [[None, "-"]],
             "lon_right_sign": [[None, None]],
         },
+        schema={
+            "no": pl.UInt32,
+            "ns": pl.List(pl.Utf8),
+            "lat_left": pl.List(pl.UInt8),
+            "lat_right": pl.List(pl.UInt8),
+            "lat_question": pl.List(pl.Utf8),
+            "lat_left_sign": pl.List(pl.Utf8),
+            "lat_right_sign": pl.List(pl.Utf8),
+            "lon_left": pl.List(pl.UInt16),
+            "lon_right": pl.List(pl.UInt16),
+            "lon_question": pl.List(pl.Utf8),
+            "lon_left_sign": pl.List(pl.Utf8),
+            "lon_right_sign": pl.List(pl.Utf8),
+        },
     )
-    df_out = ar_merge.get_not_null(df_in).collect()
-    assert df_out.item(0, "no") == 1
-    assert df_out.item(0, "ns") == "N"
-    assert df_out.item(0, "lat_left") == 12
-    assert df_out.item(0, "lat_right") == 12
-    assert df_out.item(0, "lat_question") is None
-    assert df_out.item(0, "lat_left_sign") == "+"
-    assert df_out.item(0, "lat_right_sign") == "-"
-    assert df_out.item(0, "lon_left") == 123
-    assert df_out.item(0, "lon_right") == 132
-    assert df_out.item(0, "lon_question") == "?"
-    assert df_out.item(0, "lon_left_sign") == "-"
-    assert df_out.item(0, "lon_right_sign") is None
+    df_expected = pl.LazyFrame(
+        {
+            "no": [1],
+            "ns": ["N"],
+            "lat_left": [12],
+            "lat_right": [12],
+            "lat_question": [None],
+            "lat_left_sign": ["+"],
+            "lat_right_sign": ["-"],
+            "lon_left": [123],
+            "lon_right": [132],
+            "lon_question": ["?"],
+            "lon_left_sign": ["-"],
+            "lon_right_sign": [None],
+        },
+        schema={
+            "no": pl.UInt32,
+            "ns": pl.Utf8,
+            "lat_left": pl.UInt8,
+            "lat_right": pl.UInt8,
+            "lat_question": pl.Utf8,
+            "lat_left_sign": pl.Utf8,
+            "lat_right_sign": pl.Utf8,
+            "lon_left": pl.UInt16,
+            "lon_right": pl.UInt16,
+            "lon_question": pl.Utf8,
+            "lon_left_sign": pl.Utf8,
+            "lon_right_sign": pl.Utf8,
+        },
+    )
+    df_out = ar_merge.get_not_null(df_in)
+    assert_frame_equal(
+        df_out,
+        df_expected,
+        check_column_order=False,
+    )
 
 
 def test_merge() -> None:
@@ -157,7 +219,7 @@ def test_merge() -> None:
             "over": [False, True, False, False, True],
         },
     )
-    df_correct = pl.DataFrame(
+    df_correct = pl.LazyFrame(
         {
             "ns": ["N", "N", "S"],
             "no": [1, 2, 1],
@@ -184,10 +246,5 @@ def test_merge() -> None:
             "over": [False, False, False],
         },
     )
-    df_out = ar_merge.merge(df_in).collect()
-    for row_out, row_correct in zip(
-        df_out.iter_rows(named=True),
-        df_correct.iter_rows(named=True),
-        strict=True,
-    ):
-        assert row_out == row_correct
+    df_out = ar_merge.merge(df_in)
+    assert_frame_equal(df_out, df_correct)

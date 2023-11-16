@@ -3,7 +3,15 @@ name = "sunspot"
 version = "0.1.0"
 description = "sunspot code written in python"
 requires-python = ">=3.10"
-dependencies = ["polars", "python-dateutil", "suntime", "numpy", "matplotlib"]
+dependencies = [
+    "polars",
+    "python-dateutil",
+    "suntime",
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "scikit-learn",
+]
 
 [project.optional-dependencies]
 dev = [

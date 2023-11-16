@@ -8,7 +8,7 @@ def main() -> None:
     data_file = Path("out/sn/all.parquet")
     output_path = Path("out/sn")
 
-    df_without_null = (
+    df = (
         pl.scan_parquet(data_file)
         .filter(
             pl.all_horizontal(pl.col("ng", "nf", "sg", "sf").is_not_null()),
@@ -18,26 +18,17 @@ def main() -> None:
         .group_by("date")
         .count()
         .sort("date")
+        .select(
+            pl.col("date"),
+            pl.when(pl.col("date").lt(1971))
+            .then(pl.col("count"))
+            .alias("100mm"),
+            pl.when(pl.col("date").ge(1971))
+            .then(pl.col("count"))
+            .alias("80mm"),
+        )
+        .collect()
     )
-
-    df_with_null = (
-        pl.scan_parquet(data_file)
-        .filter(pl.col("time").is_not_null())
-        .select("date")
-        .with_columns(pl.col("date").dt.truncate("1y").dt.year())
-        .group_by("date")
-        .count()
-        .sort("date")
-    )
-
-    print(df_with_null.collect())
-    print(df_without_null.collect())
-
-    df = df_without_null.select(
-        pl.col("date"),
-        pl.when(pl.col("date").lt(1971)).then(pl.col("count")).alias("100mm"),
-        pl.when(pl.col("date").ge(1971)).then(pl.col("count")).alias("80mm"),
-    ).collect()
     print(df)
 
     fig = plt.figure(figsize=(8, 5))

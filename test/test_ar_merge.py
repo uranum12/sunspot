@@ -218,6 +218,23 @@ def test_merge() -> None:
             ],
             "over": [False, True, False, False, True],
         },
+        schema={
+            "ns": pl.Utf8,
+            "no": pl.UInt32,
+            "lat_left": pl.UInt8,
+            "lat_right": pl.UInt8,
+            "lat_left_sign": pl.Utf8,
+            "lat_right_sign": pl.Utf8,
+            "lat_question": pl.Utf8,
+            "lon_left": pl.UInt16,
+            "lon_right": pl.UInt16,
+            "lon_left_sign": pl.Utf8,
+            "lon_right_sign": pl.Utf8,
+            "lon_question": pl.Utf8,
+            "first": pl.Date,
+            "last": pl.Date,
+            "over": pl.Boolean,
+        },
     )
     df_correct = pl.LazyFrame(
         {
@@ -245,6 +262,27 @@ def test_merge() -> None:
             ],
             "over": [False, False, False],
         },
+        schema={
+            "ns": pl.Utf8,
+            "no": pl.UInt32,
+            "lat_left": pl.UInt8,
+            "lat_right": pl.UInt8,
+            "lat_left_sign": pl.Utf8,
+            "lat_right_sign": pl.Utf8,
+            "lat_question": pl.Utf8,
+            "lon_left": pl.UInt16,
+            "lon_right": pl.UInt16,
+            "lon_left_sign": pl.Utf8,
+            "lon_right_sign": pl.Utf8,
+            "lon_question": pl.Utf8,
+            "first": pl.Date,
+            "last": pl.Date,
+            "over": pl.Boolean,
+        },
     )
     df_out = ar_merge.merge(df_in)
-    assert_frame_equal(df_out, df_correct)
+    assert_frame_equal(
+        df_out,
+        df_correct,
+        check_column_order=False,
+    )

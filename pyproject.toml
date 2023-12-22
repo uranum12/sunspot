@@ -24,6 +24,7 @@ dev = [
     "types-python-dateutil",
     "pytest",
     "pytest-cov",
+    "tox",
 ]
 
 [tool.black]
@@ -52,7 +53,26 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 pythonpath = "src"
-testpaths = ["test"]
+addopts = ["--import-mode=importlib"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py310,py311,py312,lint
+skipsdist = true
+skip_missing_interpreters = true
+
+[testenv]
+deps = -rdev-requirements.txt
+commands = pytest test
+
+[testenv:lint]
+skip_install = true
+commands =
+    black --check src test
+    ruff check src test
+    mypy src test
+"""
 
 [tool.taskipy.tasks]
 lock = "pip-compile -U pyproject.toml -o requirements.txt"
@@ -61,18 +81,9 @@ update = "task lock && task sync"
 lock-dev = "pip-compile -U --all-extras pyproject.toml -o dev-requirements.txt"
 sync-dev = "pip-sync dev-requirements.txt"
 update-dev = "task lock-dev && task sync-dev"
-
-black = "black src test"
-black-check = "black --check src test"
-isort = "isort src test"
-ruff = "ruff src test"
-ruff-fix = "ruff --fix src test"
-mypy = "mypy src test"
-pytest = "pytest test"
-pytest-v = "pytest -v test"
-pytest-cov = "pytest --cov src --cov-branch --cov-report=term-missing test"
-format = "task black && task isort"
-lint = "task black-check && task ruff && task mypy"
-test = "task pytest"
-test-cov = "task pytest-cov"
-fix = "task ruff-fix"
+format = "black src test && isort src test"
+lint = "black --check src test && ruff check src test && mypy src test"
+test = "pytest test"
+test-doc = "pytest --doctest-modules --doctest-continue-on-failure src"
+test-cov = "pytest --cov src --cov-branch --cov-report=term-missing src test"
+test-all = "tox"

@@ -1,25 +1,31 @@
 repos:
+  - repo: https://gitlab.com/vojko.pribudic/pre-commit-update
+    rev: v0.1.0
+    hooks:
+      - id: pre-commit-update
+        args: [--dry-run]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
+  - repo: https://github.com/pdm-project/pdm
+    rev: 2.11.1
+    hooks:
+      - id: pdm-export
+        args: [-o, requirements.txt, --production, --without-hashes]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
+    rev: 23.12.1
     hooks:
       - id: black
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.291
+    rev: v0.1.9
     hooks:
       - id: ruff
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.8.0
     hooks:
       - id: mypy
         additional_dependencies: ["types-python-dateutil"]

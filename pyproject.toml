@@ -13,19 +13,29 @@ dependencies = [
     "scikit-learn",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "taskipy",
-    "pre-commit",
-    "black",
-    "isort",
-    "ruff",
-    "mypy",
-    "types-python-dateutil",
-    "pytest",
-    "pytest-cov",
-    "tox",
-]
+[tool.pdm]
+package-type = "application"
+
+[tool.pdm.dev-dependencies]
+dev = ["pre-commit", "black", "isort", "ruff", "mypy", "types-python-dateutil"]
+test = ["pytest", "pytest-cov", "tox", "tox-pdm"]
+
+[tool.pdm.scripts]
+black = "black src test"
+isort = "isort src test"
+format = { composite = ["black", "isort"] }
+black_check = "black --check src test"
+ruff = "ruff check src test"
+mypy = "mypy src test"
+lint = { composite = ["black_check", "ruff", "mypy"] }
+test = "pytest src test"
+test-cov = "pytest --cov src --cov-branch --cov-report=term-missing test"
+test-all = "tox"
+
+[[tool.pdm.autoexport]]
+filename = "requirements.txt"
+groups = ["default"]
+without-hashes = true
 
 [tool.black]
 target-version = ["py310"]
@@ -37,6 +47,7 @@ profile = "black"
 [tool.ruff]
 src = ["src"]
 target-version = "py310"
+line-length = 79
 output-format = "grouped"
 select = ["ALL"]
 ignore = ["D", "FA", "T20", "INP", "PD"]
@@ -53,37 +64,25 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 pythonpath = "src"
-addopts = ["--import-mode=importlib"]
+addopts = [
+    "--import-mode=importlib",
+    "--doctest-modules",
+    "--doctest-continue-on-failure",
+]
 
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py310,py311,py312,lint
+envlist = py3{10,11,12},lint
 skipsdist = true
 skip_missing_interpreters = true
 
 [testenv]
-deps = -rdev-requirements.txt
-commands = pytest test
+groups = test
+commands = test
 
 [testenv:lint]
 skip_install = true
-commands =
-    black --check src test
-    ruff check src test
-    mypy src test
+groups = dev
+commands = lint
 """
-
-[tool.taskipy.tasks]
-lock = "pip-compile -U pyproject.toml -o requirements.txt"
-sync = "pip-sync requirements.txt"
-update = "task lock && task sync"
-lock-dev = "pip-compile -U --all-extras pyproject.toml -o dev-requirements.txt"
-sync-dev = "pip-sync dev-requirements.txt"
-update-dev = "task lock-dev && task sync-dev"
-format = "black src test && isort src test"
-lint = "black --check src test && ruff check src test && mypy src test"
-test = "pytest test"
-test-doc = "pytest --doctest-modules --doctest-continue-on-failure src"
-test-cov = "pytest --cov src --cov-branch --cov-report=term-missing src test"
-test-all = "tox"

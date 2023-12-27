@@ -9,8 +9,10 @@ pip install -r requirements.txt
 ## develop
 
 ```sh
-pip install pip-tools taskipy
-task sync-dev
-task format
-task lint
+pdm sync --clean
+pdm format
+pdm lint
+pdm test
+pdm test-cov
+pdm test-all
 ```

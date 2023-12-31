@@ -1,6 +1,6 @@
 repos:
   - repo: https://gitlab.com/vojko.pribudic/pre-commit-update
-    rev: v0.1.0
+    rev: v0.1.1
     hooks:
       - id: pre-commit-update
         args: [--dry-run]

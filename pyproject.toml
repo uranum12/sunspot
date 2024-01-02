@@ -19,6 +19,7 @@ package-type = "application"
 [tool.pdm.dev-dependencies]
 dev = ["pre-commit", "black", "isort", "ruff", "mypy", "types-python-dateutil"]
 test = ["pytest", "pytest-cov", "tox", "tox-pdm"]
+# docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
 
 [tool.pdm.scripts]
 black = "black src test"
@@ -29,7 +30,7 @@ ruff = "ruff check src test"
 mypy = "mypy src test"
 lint = { composite = ["black_check", "ruff", "mypy"] }
 test = "pytest src test"
-test-cov = "pytest --cov src --cov-branch --cov-report=term-missing test"
+test-cov = "pytest --cov src --cov-report=term-missing --cov-report=html test"
 test-all = "tox"
 
 [[tool.pdm.autoexport]]
@@ -69,6 +70,12 @@ addopts = [
     "--doctest-modules",
     "--doctest-continue-on-failure",
 ]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["if __name__ == .__main__.:"]
 
 [tool.tox]
 legacy_tox_ini = """

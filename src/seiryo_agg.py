@@ -31,9 +31,11 @@ def convert_coord(
 ) -> pl.LazyFrame:
     pat_left_sign = r"(?P<left_sign>[nsewpm+-]?)"
     pat_left = r"(?P<left>\d{1,2}(?:\.\d+)?)"
+    pat_left = f"{pat_left_sign}{pat_left}"
     pat_right_sign = r"(?P<right_sign>[nsewpm+-]?)"
     pat_right = r"(?P<right>\d{1,2}(?:\.\d+)?)"
-    pat = rf"(?i){pat_left_sign}{pat_left}(?:~{pat_right_sign}{pat_right})?"
+    pat_right = f"{pat_right_sign}{pat_right}"
+    pat = f"(?i)(?:ND|{pat_left}(?:~{pat_right})?)"
     return (
         df.with_columns(
             # 正規表現で構造体へ分解

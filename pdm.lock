@@ -957,7 +957,7 @@ files = [
 
 [[package]]
 name = "tox-pdm"
-version = "0.7.0"
+version = "0.7.2"
 requires_python = ">=3.7"
 summary = "A plugin for tox that utilizes PDM as the package manager and installer"
 groups = ["test"]
@@ -966,8 +966,8 @@ dependencies = [
     "tox>=4.0",
 ]
 files = [
-    {file = "tox_pdm-0.7.0-py3-none-any.whl", hash = "sha256:13b36536b29c94943ff2d2ae65eaf81ca6c7afbb5b7ba2ad7cb3738fc726d662"},
-    {file = "tox_pdm-0.7.0.tar.gz", hash = "sha256:8ecc5d04df73a329f435574222de632dc0ded36b79f27e55d6dab92e9d1741f5"},
+    {file = "tox_pdm-0.7.2-py3-none-any.whl", hash = "sha256:12f6215416b7acd00a80a9e7128f3dc3e3c89308d60707f5d0a24abdf83ac104"},
+    {file = "tox_pdm-0.7.2.tar.gz", hash = "sha256:a841a7e1e942a71805624703b9a6d286663bd6af79bba6130ba756975c315308"},
 ]
 
 [[package]]

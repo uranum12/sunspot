@@ -1,0 +1,685 @@
+from datetime import date
+
+import numpy as np
+import polars as pl
+import pytest
+from polars.testing import assert_frame_equal
+
+import seiryo_butterfly
+
+
+@pytest.mark.parametrize(
+    (
+        "in_years",
+        "in_months",
+        "in_days",
+        "out_dict",
+        "out_interval",
+        "out_isoformat",
+    ),
+    [
+        (0, 1, 0, {"years": 0, "months": 1, "days": 0}, "1mo", "P1M"),
+        (1, 2, 3, {"years": 1, "months": 2, "days": 3}, "1y2mo3d", "P1Y2M3D"),
+    ],
+)
+def test_date_delta(
+    in_years: int,
+    in_months: int,
+    in_days: int,
+    out_dict: dict,
+    out_interval: str,
+    out_isoformat: str,
+) -> None:
+    date_delta = seiryo_butterfly.DateDelta(
+        years=in_years,
+        months=in_months,
+        days=in_days,
+    )
+    assert date_delta.to_dict() == out_dict
+    assert date_delta.to_interval() == out_interval
+    assert date_delta.isoformat() == out_isoformat
+
+
+@pytest.mark.parametrize(
+    ("in_years", "in_months", "in_days", "out_error_msg"),
+    [
+        (0, 0, 0, "all parameters cannot be zero"),
+        (-1, 1, 1, "parameters cannot be negative"),
+    ],
+)
+def test_date_delta_whith_error(
+    in_years: int,
+    in_months: int,
+    in_days: int,
+    out_error_msg: str,
+) -> None:
+    with pytest.raises(ValueError, match=out_error_msg):
+        _ = seiryo_butterfly.DateDelta(
+            years=in_years,
+            months=in_months,
+            days=in_days,
+        )
+
+
+def test_butterfly_info() -> None:
+    info = seiryo_butterfly.ButterflyInfo(
+        -50,
+        50,
+        date(2020, 2, 2),
+        date(2020, 5, 5),
+        seiryo_butterfly.DateDelta(days=1),
+    )
+    dict_expected = {
+        "lat_min": -50,
+        "lat_max": 50,
+        "date_start": date(2020, 2, 2),
+        "date_end": date(2020, 5, 5),
+        "date_interval": seiryo_butterfly.DateDelta(days=1),
+    }
+    assert info.to_dict() == dict_expected
+
+
+@pytest.mark.parametrize(
+    (
+        "in_lat_min",
+        "in_lat_max",
+        "in_date_start",
+        "in_date_end",
+        "out_error_msg",
+    ),
+    [
+        (
+            5,
+            -5,
+            date(2020, 2, 2),
+            date(2020, 5, 5),
+            "latitude minimum value cannot be greater than maximum value",
+        ),
+        (
+            -50,
+            50,
+            date(2020, 5, 5),
+            date(2020, 2, 2),
+            "start date cannot be later than end date",
+        ),
+    ],
+)
+def test_butterfly_info_whith_error(
+    in_lat_min: int,
+    in_lat_max: int,
+    in_date_start: date,
+    in_date_end: date,
+    out_error_msg: str,
+) -> None:
+    with pytest.raises(ValueError, match=out_error_msg):
+        _ = seiryo_butterfly.ButterflyInfo(
+            in_lat_min,
+            in_lat_max,
+            in_date_start,
+            in_date_end,
+            seiryo_butterfly.DateDelta(years=1),
+        )
+
+
+@pytest.mark.parametrize(
+    ("in_date", "out_start", "out_end"),
+    [
+        (
+            [
+                date(2020, 2, 2),
+                date(2020, 1, 1),
+                date(2020, 3, 3),
+                date(2020, 5, 5),
+                date(2020, 4, 4),
+            ],
+            date(2020, 1, 1),
+            date(2020, 5, 5),
+        ),
+        (
+            [
+                date(2020, 3, 3),
+                date(2020, 3, 3),
+                date(2020, 5, 5),
+                date(2020, 3, 3),
+                date(2020, 12, 25),
+            ],
+            date(2020, 3, 3),
+            date(2020, 12, 25),
+        ),
+        (
+            [
+                date(2020, 2, 2),
+            ],
+            date(2020, 2, 2),
+            date(2020, 2, 2),
+        ),
+    ],
+)
+def test_calc_date_limit(
+    in_date: list[date],
+    out_start: date,
+    out_end: date,
+) -> None:
+    df = pl.LazyFrame(
+        {
+            "date": in_date,
+        },
+        schema={
+            "date": pl.Date,
+        },
+    )
+    start, end = seiryo_butterfly.calc_date_limit(df)
+    assert start == out_start
+    assert end == out_end
+
+
+@pytest.mark.parametrize(
+    ("in_start", "in_end", "out_start", "out_end"),
+    [
+        (
+            date(2020, 3, 3),
+            date(2020, 5, 5),
+            date(2020, 3, 1),
+            date(2020, 5, 1),
+        ),
+        (
+            date(2020, 1, 1),
+            date(2020, 2, 2),
+            date(2020, 1, 1),
+            date(2020, 2, 1),
+        ),
+        (
+            date(2020, 12, 25),
+            date(2021, 2, 1),
+            date(2020, 12, 1),
+            date(2021, 2, 1),
+        ),
+    ],
+)
+def test_adjust_dates(
+    in_start: date,
+    in_end: date,
+    out_start: date,
+    out_end: date,
+) -> None:
+    start, end = seiryo_butterfly.adjust_dates(in_start, in_end)
+    assert start == out_start
+    assert end == out_end
+
+
+@pytest.mark.parametrize(
+    (
+        "in_date",
+        "in_lat_min",
+        "in_lat_max",
+        "in_interval",
+        "out_date",
+        "out_min",
+        "out_max",
+    ),
+    [
+        (
+            [
+                date(2020, 2, 2),
+                date(2020, 2, 5),
+                date(2020, 2, 6),
+                date(2020, 2, 8),
+                date(2020, 2, 4),
+            ],
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+            "1mo",  # 1 month
+            [date(2020, 2, 1)],
+            [[1, 2, 3, 4, 5]],
+            [[6, 7, 8, 9, 10]],
+        ),
+        (
+            [
+                date(2020, 2, 2),
+                date(2020, 2, 5),
+                date(2020, 4, 6),
+                date(2020, 4, 8),
+                date(2020, 4, 4),
+            ],
+            [1, 2, 3, 4, 5],
+            [6, 7, 8, 9, 10],
+            "1mo",  # 1 month
+            [date(2020, 2, 1), date(2020, 4, 1)],
+            [[1, 2], [3, 4, 5]],
+            [[6, 7], [8, 9, 10]],
+        ),
+    ],
+)
+def test_agg_lat(
+    in_date: list[date],
+    in_lat_min: list[int],
+    in_lat_max: list[int],
+    in_interval: str,
+    out_date: list[date],
+    out_min: list[list[int]],
+    out_max: list[list[int]],
+) -> None:
+    df_in = pl.LazyFrame(
+        {
+            "date": in_date,
+            "lat_min": in_lat_min,
+            "lat_max": in_lat_max,
+        },
+        schema={
+            "date": pl.Date,
+            "lat_min": pl.Int8,
+            "lat_max": pl.Int8,
+        },
+    )
+    df_expected = pl.LazyFrame(
+        {
+            "date": out_date,
+            "min": out_min,
+            "max": out_max,
+        },
+        schema={
+            "date": pl.Date,
+            "min": pl.List(pl.Int8),
+            "max": pl.List(pl.Int8),
+        },
+    )
+    df_out = seiryo_butterfly.agg_lat(df_in, in_interval).sort("date")
+    assert_frame_equal(df_out, df_expected)
+
+
+@pytest.mark.parametrize(
+    (
+        "in_date",
+        "in_min",
+        "in_max",
+        "in_start",
+        "in_end",
+        "in_interval",
+        "out_date",
+        "out_min",
+        "out_max",
+    ),
+    [
+        (
+            [date(2020, 1, 1), date(2020, 2, 1), date(2020, 4, 1)],
+            [[1, 2], [3, 4], [5, 6]],
+            [[1, 2], [3, 4], [5, 6]],
+            date(2020, 1, 1),
+            date(2020, 5, 1),
+            "1mo",  # 1 month
+            [
+                date(2020, 1, 1),
+                date(2020, 2, 1),
+                date(2020, 3, 1),
+                date(2020, 4, 1),
+                date(2020, 5, 1),
+            ],
+            [[1, 2], [3, 4], [], [5, 6], []],
+            [[1, 2], [3, 4], [], [5, 6], []],
+        ),
+        (
+            [date(2020, 1, 1), date(2020, 2, 1), date(2020, 4, 1)],
+            [[1, 2], [3, 4], [5, 6]],
+            [[1, 2], [3, 4], [5, 6]],
+            date(2020, 2, 1),
+            date(2020, 6, 1),
+            "1mo",  # 1 month
+            [
+                date(2020, 2, 1),
+                date(2020, 3, 1),
+                date(2020, 4, 1),
+                date(2020, 5, 1),
+                date(2020, 6, 1),
+            ],
+            [[3, 4], [], [5, 6], [], []],
+            [[3, 4], [], [5, 6], [], []],
+        ),
+    ],
+)
+def test_fill_lat(
+    in_date: list[date],
+    in_min: list[list[int]],
+    in_max: list[list[int]],
+    in_start: date,
+    in_end: date,
+    in_interval: str,
+    out_date: list[date],
+    out_min: list[list[int]],
+    out_max: list[list[int]],
+) -> None:
+    df_in = pl.LazyFrame(
+        {
+            "date": in_date,
+            "min": in_min,
+            "max": in_max,
+        },
+        schema={
+            "date": pl.Date,
+            "min": pl.List(pl.Int8),
+            "max": pl.List(pl.Int8),
+        },
+    )
+    df_expected = pl.LazyFrame(
+        {
+            "date": out_date,
+            "min": out_min,
+            "max": out_max,
+        },
+        schema={
+            "date": pl.Date,
+            "min": pl.List(pl.Int8),
+            "max": pl.List(pl.Int8),
+        },
+    )
+    df_out = seiryo_butterfly.fill_lat(df_in, in_start, in_end, in_interval)
+    assert_frame_equal(df_out, df_expected)
+
+
+def test_calc_lat() -> None:
+    df_in = pl.LazyFrame(
+        {
+            "date": [date(2020, 2, 2), date(2020, 2, 20), date(2020, 3, 3)],
+            "lat_min": [1, 2, 3],
+            "lat_max": [4, 5, 6],
+        },
+        schema={
+            "date": pl.Date,
+            "lat_min": pl.Int8,
+            "lat_max": pl.Int8,
+        },
+    )
+    info = seiryo_butterfly.ButterflyInfo(
+        0,
+        0,
+        date(2020, 1, 1),
+        date(2020, 3, 1),
+        seiryo_butterfly.DateDelta(months=1),
+    )
+    df_expected = pl.DataFrame(
+        {
+            "date": [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
+            "min": [[], [1, 2], [3]],
+            "max": [[], [4, 5], [6]],
+        },
+        schema={
+            "date": pl.Date,
+            "min": pl.List(pl.Int8),
+            "max": pl.List(pl.Int8),
+        },
+    )
+    df_out = seiryo_butterfly.calc_lat(df_in, info)
+    assert_frame_equal(df_out, df_expected)
+
+
+@pytest.mark.parametrize(
+    (
+        "in_data_min",
+        "in_data_max",
+        "in_lat_min",
+        "in_lat_max",
+        "out_line",
+    ),
+    [
+        (
+            [2, -3, 4],
+            [3, -2, 4],
+            -5,
+            5,
+            # 5    4     3     2     1     0     1     2     3     4     5
+            [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        ),
+        (
+            [-5, -4, -1, 2, 3],
+            [-4, -3, 1, 4, 4],
+            -5,
+            5,
+            # 5    4     3     2     1     0     1     2     3     4     5
+            [0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+        ),
+        (
+            [-8, -6, 0, 2, 3],
+            [-7, -4, 0, 4, 10],
+            -5,
+            5,
+            # 5    4     3     2     1     0     1     2     3     4     5
+            [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+        ),
+        (
+            [-2, 1],
+            [-1, 1],
+            -2,
+            3,
+            # 3    2     1     0     1     2
+            [0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1],
+        ),
+        (
+            [4],
+            [4],
+            2,
+            5,
+            # 5    4     3     2
+            [0, 0, 1, 0, 0, 0, 0],
+        ),
+        (
+            [1, -4],
+            [4, -1],
+            -1,
+            1,
+            # 1    0     1
+            [1, 0, 0, 0, 1],
+        ),
+        (
+            [4, -4],
+            [4, -4],
+            -1,
+            1,
+            # 1    0     1
+            [0, 0, 0, 0, 0],
+        ),
+        (
+            [],
+            [],
+            -1,
+            1,
+            # 1    0     1
+            [0, 0, 0, 0, 0],
+        ),
+    ],
+)
+def test_create_line(
+    in_data_min: list[int],
+    in_data_max: list[int],
+    in_lat_min: int,
+    in_lat_max: int,
+    out_line: list[int],
+) -> None:
+    out = seiryo_butterfly.create_line(
+        in_data_min,
+        in_data_max,
+        in_lat_min,
+        in_lat_max,
+    )
+    np.testing.assert_equal(out, out_line)
+
+
+@pytest.mark.parametrize(
+    ("in_min", "in_max", "in_lat_min", "in_lat_max", "out_img"),
+    [
+        (
+            [[1, -2], [], [-1, 1]],
+            [[1, -1], [], [2, 4]],
+            -1,
+            1,
+            [
+                [1, 0, 1],  # +1
+                [0, 0, 1],
+                [0, 0, 1],  # 0
+                [0, 0, 1],
+                [1, 0, 1],  # -1
+            ],
+        ),
+        (
+            [[1, -2], [], [-1, 1]],
+            [[1, -1], [], [2, 4]],
+            -2,
+            2,
+            [
+                [0, 0, 1],  # +2
+                [0, 0, 1],
+                [1, 0, 1],  # +1
+                [0, 0, 1],
+                [0, 0, 1],  # 0
+                [0, 0, 1],
+                [1, 0, 1],  # -1
+                [1, 0, 0],
+                [1, 0, 0],  # -2
+            ],
+        ),
+    ],
+)
+def test_create_image(
+    in_min: list[list[int]],
+    in_max: list[list[int]],
+    in_lat_min: int,
+    in_lat_max: int,
+    out_img: list[list[int]],
+) -> None:
+    df_in = pl.DataFrame(
+        {
+            "min": in_min,
+            "max": in_max,
+        },
+        schema={
+            "min": pl.List(pl.Int8),
+            "max": pl.List(pl.Int8),
+        },
+    )
+    info = seiryo_butterfly.ButterflyInfo(
+        in_lat_min,
+        in_lat_max,
+        date(2020, 2, 2),
+        date(2020, 2, 2),
+        seiryo_butterfly.DateDelta(years=100),
+    )
+    out = seiryo_butterfly.create_image(df_in, info)
+    np.testing.assert_equal(out, out_img)
+
+
+@pytest.mark.parametrize(
+    ("in_start", "in_end", "in_interval", "out_index"),
+    [
+        (
+            date(2020, 4, 4),
+            date(2020, 4, 6),
+            "1d",
+            [
+                np.datetime64("2020-04-04"),
+                np.datetime64("2020-04-05"),
+                np.datetime64("2020-04-06"),
+            ],
+        ),
+        (
+            date(2020, 2, 28),
+            date(2020, 3, 5),
+            "2d",
+            [
+                np.datetime64("2020-02-28"),
+                np.datetime64("2020-03-01"),
+                np.datetime64("2020-03-03"),
+                np.datetime64("2020-03-05"),
+            ],
+        ),
+        (
+            date(2021, 2, 28),
+            date(2021, 3, 4),
+            "3d",
+            [
+                np.datetime64("2021-02-28"),
+                np.datetime64("2021-03-03"),
+            ],
+        ),
+        (
+            date(2020, 4, 4),
+            date(2020, 7, 16),
+            "2mo",
+            [
+                np.datetime64("2020-04-04"),
+                np.datetime64("2020-06-04"),
+            ],
+        ),
+        (
+            date(1969, 11, 1),
+            date(1970, 2, 2),
+            "1mo",
+            [
+                np.datetime64("1969-11-01"),
+                np.datetime64("1969-12-01"),
+                np.datetime64("1970-01-01"),
+                np.datetime64("1970-02-01"),
+            ],
+        ),
+        (
+            date(2020, 2, 28),
+            date(2020, 4, 1),
+            "1mo1d",
+            [
+                np.datetime64("2020-02-28"),
+                np.datetime64("2020-03-29"),
+            ],
+        ),
+        (
+            date(2020, 4, 1),
+            date(2023, 12, 4),
+            "1y2mo3d",
+            [
+                np.datetime64("2020-04-01"),
+                np.datetime64("2021-06-04"),
+                np.datetime64("2022-08-07"),
+                np.datetime64("2023-10-10"),
+            ],
+        ),
+    ],
+)
+def test_create_date_index(
+    in_start: date,
+    in_end: date,
+    in_interval: str,
+    out_index: list[date],
+) -> None:
+    out = seiryo_butterfly.create_date_index(in_start, in_end, in_interval)
+    np.testing.assert_equal(out, out_index)
+
+
+@pytest.mark.parametrize(
+    ("in_lat_min", "in_lat_max", "out_index"),
+    [
+        (-3, 2, [2, -1, 1, -1, 0, -1, 1, -1, 2, -1, 3]),  # S3 ~ N2
+        (1, 4, [4, -1, 3, -1, 2, -1, 1]),  # N1 ~ N4
+        (-3, -1, [1, -1, 2, -1, 3]),  # S3 ~ S1
+    ],
+)
+def test_create_lat_index(
+    in_lat_min: int,
+    in_lat_max: int,
+    out_index: list[int],
+) -> None:
+    out = seiryo_butterfly.create_lat_index(in_lat_min, in_lat_max)
+    np.testing.assert_equal(out, out_index)
+
+
+def test_draw_butterfly_diagram() -> None:
+    img = np.array(
+        [
+            [1, 1, 0],
+            [1, 0, 0],
+            [1, 1, 1],
+        ],
+    )
+    info = seiryo_butterfly.ButterflyInfo(
+        1,
+        2,
+        date(2020, 2, 1),
+        date(2020, 4, 1),
+        seiryo_butterfly.DateDelta(months=1),
+    )
+    _ = seiryo_butterfly.draw_butterfly_diagram(img, info)

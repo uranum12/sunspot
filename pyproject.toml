@@ -11,6 +11,7 @@ dependencies = [
     "matplotlib",
     "scipy",
     "scikit-learn",
+    "more-itertools",
 ]
 
 [tool.pdm]

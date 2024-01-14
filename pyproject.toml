@@ -19,7 +19,7 @@ package-type = "application"
 
 [tool.pdm.dev-dependencies]
 dev = ["pre-commit", "black", "isort", "ruff", "mypy", "types-python-dateutil"]
-test = ["pytest", "pytest-cov", "tox", "tox-pdm"]
+test = ["pytest", "pytest-mock", "pytest-cov", "tox", "tox-pdm"]
 # docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
 
 [tool.pdm.scripts]

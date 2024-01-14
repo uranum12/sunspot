@@ -44,7 +44,7 @@ def calc_sunspot_number(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
-    return (
+    df = (
         df_seiryo.lazy()
         .select("date", "total")
         .rename({"total": "seiryo"})
@@ -55,6 +55,10 @@ def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
         )
         .collect()
     )
+    if df.filter(pl.col("silso").is_null()).height != 0:
+        msg = "missing data for 'silso' on certain dates"
+        raise ValueError(msg)
+    return df
 
 
 def calc_factor(df: pl.DataFrame) -> float:

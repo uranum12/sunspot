@@ -268,27 +268,6 @@ def test_calc_sunspot_number(
             [1, 2, 3],
             [2, 4, 6],
         ),
-        pytest.param(
-            [
-                date(2020, 1, 1),
-                date(2020, 2, 1),
-                date(2020, 3, 1),
-                date(2020, 4, 1),
-                date(2020, 5, 1),
-            ],
-            [1, 2, 3, 4, 5],
-            [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
-            [2, 4, 6],
-            [
-                date(2020, 1, 1),
-                date(2020, 2, 1),
-                date(2020, 3, 1),
-                date(2020, 4, 1),
-                date(2020, 5, 1),
-            ],
-            [1, 2, 3, 4, 5],
-            [2, 4, 6, None, None],
-        ),
     ],
 )
 def test_join_data(
@@ -334,6 +313,61 @@ def test_join_data(
     )
     df_out = seiryo_sunspot_number.join_data(df_in_seiryo, df_in_silso)
     assert_frame_equal(df_out, df_expected)
+
+
+@pytest.mark.parametrize(
+    (
+        "in_seiryo_date",
+        "in_seiryo_total",
+        "in_silso_date",
+        "in_silso_total",
+    ),
+    [
+        pytest.param(
+            [
+                date(2020, 1, 1),
+                date(2020, 2, 1),
+                date(2020, 3, 1),
+                date(2020, 4, 1),
+                date(2020, 5, 1),
+            ],
+            [1, 2, 3, 4, 5],
+            [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
+            [2, 4, 6],
+        ),
+    ],
+)
+def test_join_data_with_error(
+    in_seiryo_date: list[date],
+    in_seiryo_total: list[float],
+    in_silso_date: list[date],
+    in_silso_total: list[float],
+) -> None:
+    df_in_seiryo = pl.DataFrame(
+        {
+            "date": in_seiryo_date,
+            "total": in_seiryo_total,
+        },
+        schema={
+            "date": pl.Date,
+            "total": pl.Float64,
+        },
+    )
+    df_in_silso = pl.DataFrame(
+        {
+            "date": in_silso_date,
+            "total": in_silso_total,
+        },
+        schema={
+            "date": pl.Date,
+            "total": pl.Float64,
+        },
+    )
+    with pytest.raises(
+        ValueError,
+        match="missing data for 'silso' on certain dates",
+    ):
+        _ = seiryo_sunspot_number.join_data(df_in_seiryo, df_in_silso)
 
 
 def test_calc_factor() -> None:

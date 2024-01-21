@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.pdm]
-package-type = "application"
+distribution = false
 
 [tool.pdm.dev-dependencies]
 dev = ["pre-commit", "black", "isort", "ruff", "mypy", "types-python-dateutil"]

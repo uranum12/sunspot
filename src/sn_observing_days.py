@@ -16,16 +16,14 @@ def main() -> None:
         .select("date")
         .with_columns(pl.col("date").dt.truncate("1y").dt.year())
         .group_by("date")
-        .count()
+        .len()
         .sort("date")
         .select(
             pl.col("date"),
             pl.when(pl.col("date").lt(1971))
-            .then(pl.col("count"))
+            .then(pl.col("len"))
             .alias("100mm"),
-            pl.when(pl.col("date").ge(1971))
-            .then(pl.col("count"))
-            .alias("80mm"),
+            pl.when(pl.col("date").ge(1971)).then(pl.col("len")).alias("80mm"),
         )
         .collect()
     )
@@ -46,10 +44,7 @@ def main() -> None:
         edgecolor="black",
         framealpha=1,
         loc="lower center",
-        bbox_to_anchor=(
-            0.5,
-            1.02,
-        ),
+        bbox_to_anchor=(0.5, 1.02),
         borderaxespad=0,
         ncol=2,
     )

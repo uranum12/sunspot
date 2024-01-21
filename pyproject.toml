@@ -12,6 +12,8 @@ dependencies = [
     "scipy",
     "scikit-learn",
     "more-itertools",
+    "plotly",
+    "kaleido==0.2.1",
 ]
 
 [tool.pdm]

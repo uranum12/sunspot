@@ -683,3 +683,4 @@ def test_draw_butterfly_diagram() -> None:
         seiryo_butterfly.DateDelta(months=1),
     )
     _ = seiryo_butterfly.draw_butterfly_diagram(img, info)
+    _ = seiryo_butterfly.draw_butterfly_diagram_plotly(img, info)

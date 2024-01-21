@@ -280,3 +280,4 @@ def test_draw_monthly_obs_days() -> None:
         },
     )
     _ = seiryo_obs_days.draw_monthly_obs_days(df)
+    _ = seiryo_obs_days.draw_monthly_obs_days_plotly(df)

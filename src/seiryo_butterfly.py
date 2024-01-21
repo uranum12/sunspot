@@ -7,6 +7,7 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+import plotly.graph_objects as go
 import polars as pl
 from matplotlib.figure import Figure
 
@@ -352,6 +353,65 @@ def draw_butterfly_diagram(
     return fig
 
 
+def draw_butterfly_diagram_plotly(
+    img: npt.NDArray[np.uint8],
+    info: ButterflyInfo,
+) -> go.Figure:
+    date_index = create_date_index(
+        info.date_start,
+        info.date_end,
+        info.date_interval.to_interval(),
+    )
+    lat_index = create_lat_index(info.lat_min, info.lat_max)
+
+    xlabel = [
+        (i, f"{d.year}")
+        for i, d in enumerate(item.item() for item in date_index)
+        if d.month == 1 and d.year % 2 == 0
+    ]
+    ylabel = [(i, n) for i, n in enumerate(lat_index) if n % 10 == 0]
+    return (
+        go.Figure()
+        .add_trace(
+            go.Heatmap(
+                z=img,
+                showscale=False,
+                colorscale=[
+                    [0, "white"],
+                    [1, "black"],
+                ],
+            ),
+        )
+        .update_layout(
+            {
+                "title": {
+                    "text": "butterfly diagram",
+                },
+                "xaxis": {
+                    "title": {
+                        "text": "date",
+                    },
+                    "constrain": "domain",
+                    "tickmode": "array",
+                    "tickvals": [i[0] for i in xlabel],
+                    "ticktext": [i[1] for i in xlabel],
+                },
+                "yaxis": {
+                    "title": {
+                        "text": "latitude",
+                    },
+                    "autorange": "reversed",
+                    "scaleanchor": "x",
+                    "constrain": "domain",
+                    "tickmode": "array",
+                    "tickvals": [i[0] for i in ylabel],
+                    "ticktext": [i[1] for i in ylabel],
+                },
+            },
+        )
+    )
+
+
 def main() -> None:
     data_path = Path("out/seiryo/ar.parquet")
     output_path = Path("out/seiryo")
@@ -375,19 +435,55 @@ def main() -> None:
     img = create_image(df, info)
     print(img)
 
-    fig = draw_butterfly_diagram(img, info)
-
     with (output_path / "butterfly.npz").open("wb") as f_img:
         np.savez_compressed(f_img, img=img)
 
     with (output_path / "butterfly.json").open("w") as f_info:
         json_dump(info.to_dict(), f_info, default=lambda o: o.isoformat())
 
-    for ext in "pdf", "png":
-        file_path = output_path / f"butterfly.{ext}"
-        fig.savefig(file_path, dpi=300, bbox_inches="tight", pad_inches=0.1)
+    fig = draw_butterfly_diagram_plotly(img, info)
+    fig.update_layout(
+        {
+            "template": "simple_white",
+            "font_family": "Century",
+            "title": {
+                "font_size": 24,
+                "x": 0.5,
+                "y": 0.9,
+                "xanchor": "center",
+                "yanchor": "middle",
+            },
+            "xaxis": {
+                "title_font_size": 20,
+                "tickfont_size": 16,
+                "linewidth": 1,
+                "mirror": True,
+                "ticks": "outside",
+            },
+            "yaxis": {
+                "title_font_size": 20,
+                "tickfont_size": 16,
+                "linewidth": 1,
+                "mirror": True,
+                "ticks": "outside",
+            },
+        },
+    )
 
-    plt.show()
+    fig.write_json(
+        output_path / "butterfly_diagram.json",
+        pretty=True,
+    )
+    for ext in "pdf", "png":
+        file_path = output_path / f"butterfly_diagram.{ext}"
+        fig.write_image(
+            file_path,
+            width=800,
+            height=500,
+            engine="kaleido",
+            scale=10,
+        )
+    fig.show()
 
 
 if __name__ == "__main__":

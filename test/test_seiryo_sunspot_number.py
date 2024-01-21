@@ -483,6 +483,7 @@ def test_draw_sunspot_number_whole_disk() -> None:
         },
     )
     _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk(df)
+    _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk_plotly(df)
 
 
 def test_draw_sunspot_number_hemispheric() -> None:
@@ -499,6 +500,7 @@ def test_draw_sunspot_number_hemispheric() -> None:
         },
     )
     _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric(df)
+    _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric_plotly(df)
 
 
 def test_draw_scatter() -> None:
@@ -517,6 +519,7 @@ def test_draw_scatter() -> None:
     factor = 0.5
     r2 = 1.0
     _ = seiryo_sunspot_number.draw_scatter(df, factor, r2)
+    _ = seiryo_sunspot_number.draw_scatter_plotly(df, factor, r2)
 
 
 def test_draw_ratio_and_diff() -> None:
@@ -534,3 +537,6 @@ def test_draw_ratio_and_diff() -> None:
     )
     factor = 0.48
     _ = seiryo_sunspot_number.draw_ratio_and_diff(df, factor)
+    _ = seiryo_sunspot_number.draw_ratio_plotly(df)
+    _ = seiryo_sunspot_number.draw_diff_plotly(df)
+    _ = seiryo_sunspot_number.draw_ratio_and_diff_plotly(df)

@@ -1,6 +1,6 @@
 repos:
   - repo: https://gitlab.com/vojko.pribudic/pre-commit-update
-    rev: v0.1.2
+    rev: v0.1.4
     hooks:
       - id: pre-commit-update
         args: [--dry-run]
@@ -17,7 +17,7 @@ repos:
       - id: pdm-export
         args: [-o, requirements.txt, --production, --without-hashes]
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.12.1
+    rev: 24.1.1
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit

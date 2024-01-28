@@ -22,3 +22,4 @@ six==1.16.0
 suntime==1.2.5
 tenacity==8.2.3
 threadpoolctl==3.2.0
+uncertainty @ git+https://github.com/sophiano/uncertainty@3bac3283c06fa3d0f9bb9b4929c313bb17bbc76c

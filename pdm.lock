@@ -5,7 +5,7 @@
 groups = ["default", "dev", "test"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:ccd3f902efc5e689ec174f28beaaf9e66d0ab9695f28392dc4ab51e8791270ee"
+content_hash = "sha256:ddf0082b7f27ac4f0a60163d7e790f4cf13e71b44383696ed7456cee406d50b3"
 
 [[package]]
 name = "black"
@@ -1082,6 +1082,21 @@ groups = ["dev"]
 files = [
     {file = "typing_extensions-4.9.0-py3-none-any.whl", hash = "sha256:af72aea155e91adfc61c3ae9e0e342dbc0cba726d6cba4b6c72c1f34e47291cd"},
     {file = "typing_extensions-4.9.0.tar.gz", hash = "sha256:23478f88c37f27d76ac8aee6c905017a143b0b1b886c3c9f66bc2fd94f9f5783"},
+]
+
+[[package]]
+name = "uncertainty"
+version = "0.0.2"
+requires_python = ">=3.6"
+git = "https://github.com/sophiano/uncertainty"
+revision = "3bac3283c06fa3d0f9bb9b4929c313bb17bbc76c"
+summary = "Model of the sunspot numbers"
+groups = ["default"]
+dependencies = [
+    "matplotlib>=3.3.3",
+    "numpy>=1.19.5",
+    "scikit-learn>=0.24.1",
+    "scipy>=1.6.0",
 ]
 
 [[package]]

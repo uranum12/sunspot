@@ -11,7 +11,7 @@ def main(argv: list[str]) -> None:
             pl.scan_parquet(path)
             .filter(~pl.all_horizontal(pl.all().is_null()))
             .collect()
-            .glimpse(return_as_string=True),
+            .glimpse(return_as_string=True)
         )
 
 

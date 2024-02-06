@@ -21,9 +21,7 @@ import ar_type
     ],
 )
 def test_detect_schema_type(
-    in_year: int,
-    in_month: int,
-    out_schema_type: ar_type.SchemaType | None,
+    in_year: int, in_month: int, out_schema_type: ar_type.SchemaType | None
 ) -> None:
     assert ar_type.detect_schema_type(in_year, in_month) == out_schema_type
 

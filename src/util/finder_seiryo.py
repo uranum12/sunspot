@@ -14,7 +14,7 @@ def main(argv: list[str]) -> None:
         r"(?:[-/\. ])"
         r"(?P<month>\d{1,2})"
         r"(?:[-/\. ])"
-        r"(?P<day>\d{1,2})",
+        r"(?P<day>\d{1,2})"
     )
     year, month, day = map(int, argv[1:])
 

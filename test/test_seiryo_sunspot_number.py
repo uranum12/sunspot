@@ -39,20 +39,7 @@ import seiryo_sunspot_number
                 date(2020, 11, 1),
                 date(2020, 12, 1),
             ],
-            [
-                6.2,
-                0.2,
-                1.5,
-                5.2,
-                0.2,
-                5.8,
-                6.1,
-                7.5,
-                0.6,
-                14.6,
-                34.5,
-                23.1,
-            ],
+            [6.2, 0.2, 1.5, 5.2, 0.2, 5.8, 6.1, 7.5, 0.6, 14.6, 34.5, 23.1],
         ),
         pytest.param(
             "2023 01 2023.042  144.4  29.4   968  \n"
@@ -108,23 +95,13 @@ def test_load_silso_data(
     mocker.patch("pathlib.Path.open", m)
 
     df_expected = pl.DataFrame(
-        {
-            "date": out_date,
-            "total": out_total,
-        },
-        schema={
-            "date": pl.Date,
-            "total": pl.Float64,
-        },
+        {"date": out_date, "total": out_total},
+        schema={"date": pl.Date, "total": pl.Float64},
     )
 
     df_out = seiryo_sunspot_number.load_silso_data(Path("dummy/path"))
 
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -280,48 +257,23 @@ def test_join_data(
     out_silso: list[float | None],
 ) -> None:
     df_in_seiryo = pl.DataFrame(
-        {
-            "date": in_seiryo_date,
-            "total": in_seiryo_total,
-        },
-        schema={
-            "date": pl.Date,
-            "total": pl.Float64,
-        },
+        {"date": in_seiryo_date, "total": in_seiryo_total},
+        schema={"date": pl.Date, "total": pl.Float64},
     )
     df_in_silso = pl.DataFrame(
-        {
-            "date": in_silso_date,
-            "total": in_silso_total,
-        },
-        schema={
-            "date": pl.Date,
-            "total": pl.Float64,
-        },
+        {"date": in_silso_date, "total": in_silso_total},
+        schema={"date": pl.Date, "total": pl.Float64},
     )
     df_expected = pl.DataFrame(
-        {
-            "date": out_date,
-            "seiryo": out_seiryo,
-            "silso": out_silso,
-        },
-        schema={
-            "date": pl.Date,
-            "seiryo": pl.Float64,
-            "silso": pl.Float64,
-        },
+        {"date": out_date, "seiryo": out_seiryo, "silso": out_silso},
+        schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
     df_out = seiryo_sunspot_number.join_data(df_in_seiryo, df_in_silso)
     assert_frame_equal(df_out, df_expected)
 
 
 @pytest.mark.parametrize(
-    (
-        "in_seiryo_date",
-        "in_seiryo_total",
-        "in_silso_date",
-        "in_silso_total",
-    ),
+    ("in_seiryo_date", "in_seiryo_total", "in_silso_date", "in_silso_total"),
     [
         pytest.param(
             [
@@ -334,7 +286,7 @@ def test_join_data(
             [1, 2, 3, 4, 5],
             [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             [2, 4, 6],
-        ),
+        )
     ],
 )
 def test_join_data_with_error(
@@ -344,42 +296,23 @@ def test_join_data_with_error(
     in_silso_total: list[float],
 ) -> None:
     df_in_seiryo = pl.DataFrame(
-        {
-            "date": in_seiryo_date,
-            "total": in_seiryo_total,
-        },
-        schema={
-            "date": pl.Date,
-            "total": pl.Float64,
-        },
+        {"date": in_seiryo_date, "total": in_seiryo_total},
+        schema={"date": pl.Date, "total": pl.Float64},
     )
     df_in_silso = pl.DataFrame(
-        {
-            "date": in_silso_date,
-            "total": in_silso_total,
-        },
-        schema={
-            "date": pl.Date,
-            "total": pl.Float64,
-        },
+        {"date": in_silso_date, "total": in_silso_total},
+        schema={"date": pl.Date, "total": pl.Float64},
     )
     with pytest.raises(
-        ValueError,
-        match="missing data for 'silso' on certain dates",
+        ValueError, match="missing data for 'silso' on certain dates"
     ):
         _ = seiryo_sunspot_number.join_data(df_in_seiryo, df_in_silso)
 
 
 def test_calc_factor() -> None:
     df_in = pl.DataFrame(
-        {
-            "seiryo": [1, 2, 3, 4, 5],
-            "silso": [2, 4, 6, 8, 10],
-        },
-        schema={
-            "seiryo": pl.Float64,
-            "silso": pl.Float64,
-        },
+        {"seiryo": [1, 2, 3, 4, 5], "silso": [2, 4, 6, 8, 10]},
+        schema={"seiryo": pl.Float64, "silso": pl.Float64},
     )
     factor_out = seiryo_sunspot_number.calc_factor(df_in)
     assert factor_out == pytest.approx(0.5)
@@ -387,14 +320,8 @@ def test_calc_factor() -> None:
 
 def test_calc_r2() -> None:
     df_in = pl.DataFrame(
-        {
-            "seiryo": [1, 2, 3, 4, 5],
-            "silso": [2, 4, 6, 8, 10],
-        },
-        schema={
-            "seiryo": pl.Float64,
-            "silso": pl.Float64,
-        },
+        {"seiryo": [1, 2, 3, 4, 5], "silso": [2, 4, 6, 8, 10]},
+        schema={"seiryo": pl.Float64, "silso": pl.Float64},
     )
     factor_in = 0.5
     r2_out = seiryo_sunspot_number.calc_r2(df_in, factor_in)
@@ -442,28 +369,12 @@ def test_calc_ratio_and_diff(
     out_diff: list[float],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "date": in_date,
-            "seiryo": in_seiryo,
-            "silso": in_silso,
-        },
-        schema={
-            "date": pl.Date,
-            "seiryo": pl.Float64,
-            "silso": pl.Float64,
-        },
+        {"date": in_date, "seiryo": in_seiryo, "silso": in_silso},
+        schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
     df_expected = pl.DataFrame(
-        {
-            "date": out_date,
-            "ratio": out_ratio,
-            "diff": out_diff,
-        },
-        schema={
-            "date": pl.Date,
-            "ratio": pl.Float64,
-            "diff": pl.Float64,
-        },
+        {"date": out_date, "ratio": out_ratio, "diff": out_diff},
+        schema={"date": pl.Date, "ratio": pl.Float64, "diff": pl.Float64},
     )
     df_out = seiryo_sunspot_number.calc_ratio_and_diff(df_in, in_factor)
     assert_frame_equal(df_out, df_expected)
@@ -476,11 +387,7 @@ def test_draw_sunspot_number_whole_disk() -> None:
             "seiryo": [1, 2, 3],
             "silso": [2, 4, 6],
         },
-        schema={
-            "date": pl.Date,
-            "seiryo": pl.Float64,
-            "silso": pl.Float64,
-        },
+        schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
     _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk(df)
     _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk_plotly(df)
@@ -493,11 +400,7 @@ def test_draw_sunspot_number_hemispheric() -> None:
             "north": [1, 2, 3],
             "south": [2, 1, 3],
         },
-        schema={
-            "date": pl.Date,
-            "north": pl.Float64,
-            "south": pl.Float64,
-        },
+        schema={"date": pl.Date, "north": pl.Float64, "south": pl.Float64},
     )
     _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric(df)
     _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric_plotly(df)
@@ -510,11 +413,7 @@ def test_draw_scatter() -> None:
             "seiryo": [1, 2, 3],
             "silso": [2, 4, 6],
         },
-        schema={
-            "date": pl.Date,
-            "seiryo": pl.Float64,
-            "silso": pl.Float64,
-        },
+        schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
     factor = 0.5
     r2 = 1.0
@@ -529,11 +428,7 @@ def test_draw_ratio_and_diff() -> None:
             "ratio": [0.4, 0.5, 0.45],
             "diff": [1, -2, 3],
         },
-        schema={
-            "date": pl.Date,
-            "ratio": pl.Float64,
-            "diff": pl.Float64,
-        },
+        schema={"date": pl.Date, "ratio": pl.Float64, "diff": pl.Float64},
     )
     factor = 0.48
     _ = seiryo_sunspot_number.draw_ratio_and_diff(df, factor)

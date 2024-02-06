@@ -12,25 +12,11 @@ import seiryo_agg
     ("in_date", "out_date"),
     [
         (
-            [
-                date(2020, 8, 10),
-                date(2020, 8, 20),
-                None,
-            ],
-            [
-                date(2020, 8, 10),
-                date(2020, 8, 20),
-                date(2020, 8, 20),
-            ],
+            [date(2020, 8, 10), date(2020, 8, 20), None],
+            [date(2020, 8, 10), date(2020, 8, 20), date(2020, 8, 20)],
         ),
         (
-            [
-                date(1965, 3, 20),
-                None,
-                None,
-                date(1970, 1, 1),
-                None,
-            ],
+            [date(1965, 3, 20), None, None, date(1970, 1, 1), None],
             [
                 date(1965, 3, 20),
                 date(1965, 3, 20),
@@ -42,28 +28,10 @@ import seiryo_agg
     ],
 )
 def test_fill_date(in_date: list[date | None], out_date: list[date]) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
-    df_expected = pl.LazyFrame(
-        {
-            "date": out_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
+    df_in = pl.LazyFrame({"date": in_date}, schema={"date": pl.Date})
+    df_expected = pl.LazyFrame({"date": out_date}, schema={"date": pl.Date})
     df_out = seiryo_agg.fill_date(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -76,37 +44,18 @@ def test_fill_date(in_date: list[date | None], out_date: list[date]) -> None:
     ],
 )
 def test_convert_number(
-    in_no: str,
-    in_num: str | None,
-    out_no: int,
-    out_num: int | None,
+    in_no: str, in_num: str | None, out_no: int, out_num: int | None
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "no": [in_no],
-            "num": [in_num],
-        },
-        schema={
-            "no": pl.Utf8,
-            "num": pl.Utf8,
-        },
+        {"no": [in_no], "num": [in_num]},
+        schema={"no": pl.Utf8, "num": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "no": [out_no],
-            "num": [out_num],
-        },
-        schema={
-            "no": pl.UInt8,
-            "num": pl.UInt16,
-        },
+        {"no": [out_no], "num": [out_num]},
+        schema={"no": pl.UInt8, "num": pl.UInt16},
     )
     df_out = seiryo_agg.convert_number(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -125,28 +74,10 @@ def test_convert_number(
     ],
 )
 def test_convert_date(in_date: str, out_date: date) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "date": [in_date],
-        },
-        schema={
-            "date": pl.Utf8,
-        },
-    )
-    df_expected = pl.LazyFrame(
-        {
-            "date": [out_date],
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
+    df_in = pl.LazyFrame({"date": [in_date]}, schema={"date": pl.Utf8})
+    df_expected = pl.LazyFrame({"date": [out_date]}, schema={"date": pl.Date})
     df_out = seiryo_agg.convert_date(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -277,30 +208,13 @@ def test_convert_coord(
     out_min: int,
     out_max: int,
 ) -> None:
-    df_in = pl.LazyFrame(
-        {
-            in_col: [in_data],
-        },
-        schema={
-            in_col: pl.Utf8,
-        },
-    )
+    df_in = pl.LazyFrame({in_col: [in_data]}, schema={in_col: pl.Utf8})
     df_expected = pl.LazyFrame(
-        {
-            f"{in_col}_min": [out_min],
-            f"{in_col}_max": [out_max],
-        },
-        schema={
-            f"{in_col}_min": in_dtype,
-            f"{in_col}_max": in_dtype,
-        },
+        {f"{in_col}_min": [out_min], f"{in_col}_max": [out_max]},
+        schema={f"{in_col}_min": in_dtype, f"{in_col}_max": in_dtype},
     )
     df_out = seiryo_agg.convert_coord(df_in, col=in_col, dtype=in_dtype)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -313,44 +227,19 @@ def test_convert_coord(
     ],
 )
 def test_split(
-    in_no: list[int],
-    out_no_spot: list[int],
-    out_no_nospot: list[int],
+    in_no: list[int], out_no_spot: list[int], out_no_nospot: list[int]
 ) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "no": in_no,
-        },
-        schema={
-            "no": pl.UInt8,
-        },
-    )
+    df_in = pl.LazyFrame({"no": in_no}, schema={"no": pl.UInt8})
     df_expected_spot = pl.LazyFrame(
-        {
-            "no": out_no_spot,
-        },
-        schema={
-            "no": pl.UInt8,
-        },
+        {"no": out_no_spot}, schema={"no": pl.UInt8}
     )
     df_expected_nospot = pl.LazyFrame(
-        {
-            "no": out_no_nospot,
-        },
-        schema={
-            "no": pl.UInt8,
-        },
+        {"no": out_no_nospot}, schema={"no": pl.UInt8}
     )
     df_out_spot, df_out_nospot = seiryo_agg.split(df_in)
+    assert_frame_equal(df_out_spot, df_expected_spot, check_column_order=False)
     assert_frame_equal(
-        df_out_spot,
-        df_expected_spot,
-        check_column_order=False,
-    )
-    assert_frame_equal(
-        df_out_nospot,
-        df_expected_nospot,
-        check_column_order=False,
+        df_out_nospot, df_expected_nospot, check_column_order=False
     )
 
 
@@ -369,29 +258,12 @@ def test_split(
 )
 def test_calc_lat(in_lat_min: int, in_lat_max: int, out_lat: str) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat_min": [in_lat_min],
-            "lat_max": [in_lat_max],
-        },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-        },
+        {"lat_min": [in_lat_min], "lat_max": [in_lat_max]},
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8},
     )
-    df_expected = pl.LazyFrame(
-        {
-            "lat": [out_lat],
-        },
-        schema={
-            "lat": pl.Utf8,
-        },
-    )
+    df_expected = pl.LazyFrame({"lat": [out_lat]}, schema={"lat": pl.Utf8})
     df_out = seiryo_agg.calc_lat(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -459,16 +331,8 @@ def test_calc_sn(
     out_tf: list[int],
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-            "lat": in_lat,
-            "num": in_num,
-        },
-        schema={
-            "date": pl.Date,
-            "lat": pl.Utf8,
-            "num": pl.UInt16,
-        },
+        {"date": in_date, "lat": in_lat, "num": in_num},
+        schema={"date": pl.Date, "lat": pl.Utf8, "num": pl.UInt16},
     )
     df_expected = pl.LazyFrame(
         {
@@ -492,10 +356,7 @@ def test_calc_sn(
     )
     df_out = seiryo_agg.calc_sn(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -508,14 +369,7 @@ def test_calc_sn(
     ],
 )
 def test_fill_sn(date_list: list[date]) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "date": date_list,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
+    df_in = pl.LazyFrame({"date": date_list}, schema={"date": pl.Date})
     df_expected = pl.LazyFrame(
         {
             "date": date_list,
@@ -538,25 +392,18 @@ def test_fill_sn(date_list: list[date]) -> None:
     )
     df_out = seiryo_agg.fill_sn(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
 def test_sort_ar_col_order() -> None:
     cols = ["date", "no", "lat_min", "lat_max", "lon_min", "lon_max"]
     df_in = pl.LazyFrame(
-        {col_name: [] for col_name in sample(cols, len(cols))},
+        {col_name: [] for col_name in sample(cols, len(cols))}
     )
     df_expected = pl.LazyFrame({col_name: [] for col_name in cols})
     df_out = seiryo_agg.sort_ar(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=True,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=True)
 
 
 @pytest.mark.parametrize(
@@ -590,46 +437,27 @@ def test_sort_ar_row_order(
 ) -> None:
     cols = ["lat_min", "lat_max", "lon_min", "lon_max"]
     df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-            "no": in_no,
-        },
-        schema={
-            "date": pl.Date,
-            "no": pl.UInt8,
-        },
+        {"date": in_date, "no": in_no},
+        schema={"date": pl.Date, "no": pl.UInt8},
     ).with_columns([pl.lit(None).alias(col) for col in cols])
     df_expected = pl.LazyFrame(
-        {
-            "date": out_date,
-            "no": out_no,
-        },
-        schema={
-            "date": pl.Date,
-            "no": pl.UInt8,
-        },
+        {"date": out_date, "no": out_no},
+        schema={"date": pl.Date, "no": pl.UInt8},
     ).with_columns([pl.lit(None).alias(col) for col in cols])
     df_out = seiryo_agg.sort_ar(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=True,
+        df_out, df_expected, check_column_order=False, check_row_order=True
     )
 
 
 def test_sort_sn_col_order() -> None:
     cols = ["date", "ng", "nf", "sg", "sf", "tg", "tf"]
     df_in = pl.LazyFrame(
-        {col_name: [] for col_name in sample(cols, len(cols))},
+        {col_name: [] for col_name in sample(cols, len(cols))}
     )
     df_expected = pl.LazyFrame({col_name: [] for col_name in cols})
     df_out = seiryo_agg.sort_sn(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=True,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=True)
 
 
 @pytest.mark.parametrize(
@@ -645,31 +473,15 @@ def test_sort_sn_col_order() -> None:
         ),
     ],
 )
-def test_sort_sn_row_order(
-    in_date: list[date],
-    out_date: list[date],
-) -> None:
+def test_sort_sn_row_order(in_date: list[date], out_date: list[date]) -> None:
     cols = ["ng", "nf", "sg", "sf", "tg", "tf"]
     df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
+        {"date": in_date}, schema={"date": pl.Date}
     ).with_columns([pl.lit(None).alias(col) for col in cols])
     df_expected = pl.LazyFrame(
-        {
-            "date": out_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
+        {"date": out_date}, schema={"date": pl.Date}
     ).with_columns([pl.lit(None).alias(col) for col in cols])
     df_out = seiryo_agg.sort_sn(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=True,
+        df_out, df_expected, check_column_order=False, check_row_order=True
     )

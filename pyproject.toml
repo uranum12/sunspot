@@ -21,18 +21,18 @@ dependencies = [
 distribution = false
 
 [tool.pdm.dev-dependencies]
-dev = ["pre-commit", "black", "isort", "ruff", "mypy", "types-python-dateutil"]
+dev = ["pre-commit", "ruff", "mypy", "types-python-dateutil"]
 test = ["pytest", "pytest-mock", "pytest-cov", "tox", "tox-pdm"]
 # docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
 
 [tool.pdm.scripts]
-black = "black src test"
-isort = "isort src test"
-format = { composite = ["black", "isort"] }
-black_check = "black --check src test"
-ruff = "ruff check src test"
+ruff_format = "ruff format src test"
+ruff_format_check = "ruff format src test --check"
+ruff_check = "ruff check src test"
+ruff_check_fix = "ruff check src test --fix-only --show-fixes"
 mypy = "mypy src test"
-lint = { composite = ["black_check", "ruff", "mypy"] }
+format = { composite = ["ruff_check_fix", "ruff_format"] }
+lint = { composite = ["ruff_format_check", "ruff_check", "mypy"] }
 test = "pytest src test"
 test-cov = "pytest --cov src --cov-report=term-missing --cov-report=html test"
 test-all = "tox"
@@ -42,26 +42,39 @@ filename = "requirements.txt"
 groups = ["default"]
 without-hashes = true
 
-[tool.black]
-target-version = ["py310"]
-line-length = 79
-
-[tool.isort]
-profile = "black"
-
 [tool.ruff]
 src = ["src"]
 target-version = "py310"
 line-length = 79
 output-format = "grouped"
 
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D", "FA", "T20", "INP", "PD"]
-unfixable = ["I", "ERA"]
+ignore = [
+    "COM812", # missing-trailing-comma
+    "ISC001", # single-line-implicit-string-concatenation
+    "D",      # pydocstyle
+    "T20",    # flake8-print
+    "INP",    # flake8-no-pep420
+    "PD",     # pandas-vet
+]
+unfixable = [
+    "ERA", # eradicate
+]
 
 [tool.ruff.lint.per-file-ignores]
-"test/*.py" = ["S101", "FBT001", "PLR0913", "PLR2004"]
+"test/*.py" = [
+    "S101",    # assert
+    "FBT001",  # boolean-type-hint-positional-argument
+    "PLR0913", # too-many-arguments
+    "PLR2004", # magic-value-comparison
+]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
 
 [tool.mypy]
 python_version = "3.10"

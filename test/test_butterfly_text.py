@@ -11,12 +11,7 @@ import butterfly_text
 @pytest.mark.parametrize(
     ("in_lat_min", "in_lat_max", "out_min", "out_max"),
     [
-        (
-            [12, 15, 23],
-            [12, 15, 23],
-            [12, 15, 23],
-            [12, 15, 23],
-        ),
+        ([12, 15, 23], [12, 15, 23], [12, 15, 23], [12, 15, 23]),
         (
             [12, 15, 15, 23, 23],
             [12, 15, 15, 23, 23],
@@ -50,84 +45,26 @@ def test_merge_data(
     out_max: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "lat_min": in_lat_min,
-            "lat_max": in_lat_max,
-        },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-        },
+        {"lat_min": in_lat_min, "lat_max": in_lat_max},
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8},
     )
     df_expected = pl.DataFrame(
-        {
-            "min": out_min,
-            "max": out_max,
-        },
-        schema={
-            "min": pl.Int64,
-            "max": pl.Int64,
-        },
+        {"min": out_min, "max": out_max},
+        schema={"min": pl.Int64, "max": pl.Int64},
     )
     df_out = butterfly_text.merge_data(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
     ("in_min", "in_max", "out_n_min", "out_n_max", "out_s_min", "out_s_max"),
     [
-        (
-            [-10, -6, 4, 8],
-            [-8, -5, 6, 11],
-            [4, 8],
-            [6, 11],
-            [5, 8],
-            [6, 10],
-        ),
-        (
-            [-11, -6, 10],
-            [-11, 5, 10],
-            [0, 10],
-            [5, 10],
-            [0, 11],
-            [6, 11],
-        ),
-        (
-            [0, 5],
-            [2, 7],
-            [0, 5],
-            [2, 7],
-            [0],
-            [0],
-        ),
-        (
-            [-10],
-            [0],
-            [0],
-            [0],
-            [0],
-            [10],
-        ),
-        (
-            [3],
-            [10],
-            [3],
-            [10],
-            [],
-            [],
-        ),
-        (
-            [-10],
-            [-3],
-            [],
-            [],
-            [3],
-            [10],
-        ),
+        ([-10, -6, 4, 8], [-8, -5, 6, 11], [4, 8], [6, 11], [5, 8], [6, 10]),
+        ([-11, -6, 10], [-11, 5, 10], [0, 10], [5, 10], [0, 11], [6, 11]),
+        ([0, 5], [2, 7], [0, 5], [2, 7], [0], [0]),
+        ([-10], [0], [0], [0], [0], [10]),
+        ([3], [10], [3], [10], [], []),
+        ([-10], [-3], [], [], [3], [10]),
     ],
 )
 def test_split_data(
@@ -139,82 +76,34 @@ def test_split_data(
     out_s_max: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "max": in_max,
-            "min": in_min,
-        },
-        schema={
-            "max": pl.Int8,
-            "min": pl.Int8,
-        },
+        {"max": in_max, "min": in_min}, schema={"max": pl.Int8, "min": pl.Int8}
     )
     df_expected_n = pl.DataFrame(
-        {
-            "min": out_n_min,
-            "max": out_n_max,
-        },
-        schema={
-            "min": pl.Int8,
-            "max": pl.Int8,
-        },
+        {"min": out_n_min, "max": out_n_max},
+        schema={"min": pl.Int8, "max": pl.Int8},
     )
     df_expected_s = pl.DataFrame(
-        {
-            "min": out_s_min,
-            "max": out_s_max,
-        },
-        schema={
-            "min": pl.Int8,
-            "max": pl.Int8,
-        },
+        {"min": out_s_min, "max": out_s_max},
+        schema={"min": pl.Int8, "max": pl.Int8},
     )
     df_out_n, df_out_s = butterfly_text.split_data(df_in)
-    assert_frame_equal(
-        df_out_n,
-        df_expected_n,
-        check_column_order=False,
-    )
-    assert_frame_equal(
-        df_out_s,
-        df_expected_s,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out_n, df_expected_n, check_column_order=False)
+    assert_frame_equal(df_out_s, df_expected_s, check_column_order=False)
 
 
 @pytest.mark.parametrize(
     ("in_min", "in_max", "out_str"),
     [
-        (
-            [12, 18, 23],
-            [15, 20, 23],
-            "12-15 18-20 23-23",
-        ),
-        (
-            [12],
-            [15],
-            "12-15",
-        ),
-        (
-            [],
-            [],
-            "",
-        ),
+        ([12, 18, 23], [15, 20, 23], "12-15 18-20 23-23"),
+        ([12], [15], "12-15"),
+        ([], [], ""),
     ],
 )
 def test_convert_to_str(
-    in_min: list[str],
-    in_max: list[int],
-    out_str: str,
+    in_min: list[str], in_max: list[int], out_str: str
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "min": in_min,
-            "max": in_max,
-        },
-        schema={
-            "min": pl.Int8,
-            "max": pl.Int8,
-        },
+        {"min": in_min, "max": in_max}, schema={"min": pl.Int8, "max": pl.Int8}
     )
     assert butterfly_text.convert_to_str(df_in) == out_str
 
@@ -259,19 +148,11 @@ def test_write_header(in_start: date, in_end: date, out_file: str) -> None:
             "",
             "2010/11/N:0-0 1-2 3-4\n2010/11/S:\n",
         ),
-        (
-            date(2000, 1, 1),
-            "",
-            "",
-            "2000/01/N:\n2000/01/S:\n",
-        ),
+        (date(2000, 1, 1), "", "", "2000/01/N:\n2000/01/S:\n"),
     ],
 )
 def test_write_data(
-    in_date: date,
-    in_data_n: str,
-    in_data_s: str,
-    out_file: str,
+    in_date: date, in_data_n: str, in_data_s: str, out_file: str
 ) -> None:
     vfile = StringIO()
     butterfly_text.write_data(vfile, in_date, in_data_n, in_data_s)

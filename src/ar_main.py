@@ -28,10 +28,7 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
     return df
 
 
-def calc_no(
-    df: pl.LazyFrame,
-    schema_type: ar_type.SchemaType,
-) -> pl.LazyFrame:
+def calc_no(df: pl.LazyFrame, schema_type: ar_type.SchemaType) -> pl.LazyFrame:
     match schema_type:
         case ar_type.SchemaType.NOTEBOOK_1:
             df = ar_common.convert_no(df)
@@ -50,8 +47,7 @@ def calc_no(
 
 
 def calc_coords(
-    df: pl.LazyFrame,
-    schema_type: ar_type.SchemaType,
+    df: pl.LazyFrame, schema_type: ar_type.SchemaType
 ) -> pl.LazyFrame:
     match schema_type:
         case ar_type.SchemaType.NOTEBOOK_1 | ar_type.SchemaType.NOTEBOOK_2:
@@ -139,8 +135,8 @@ def main() -> None:
             [
                 df_by_schema[ar_type.SchemaType.OLD],
                 df_by_schema[ar_type.SchemaType.NEW],
-            ],
-        ),
+            ]
+        )
     )
 
     # 全ての処理済みを一つのデータフレームへ結合しソート
@@ -151,8 +147,8 @@ def main() -> None:
                 df_by_schema[ar_type.SchemaType.NOTEBOOK_2],
                 df_by_schema[ar_type.SchemaType.NOTEBOOK_3],
                 df_merged,
-            ],
-        ),
+            ]
+        )
     )
 
     with pl.StringCache():

@@ -43,11 +43,11 @@ def get_not_null(df: pl.LazyFrame) -> pl.LazyFrame:
                 pl.col(col).list.get(n).name.suffix(f"_{n}")
                 for col in cols
                 for n in [0, 1]
-            ],
+            ]
         )
         .with_columns(
             # リストの中からnull値以外があれば取り出す
-            [pl.coalesce(f"{col}_0", f"{col}_1").alias(col) for col in cols],
+            [pl.coalesce(f"{col}_0", f"{col}_1").alias(col) for col in cols]
         )
         .drop([f"{col}_{n}" for col in cols for n in [0, 1]])
     )

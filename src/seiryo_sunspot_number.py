@@ -18,10 +18,10 @@ def load_silso_data(path: Path) -> pl.DataFrame:
                 "year": [int(i[0]) for i in data],
                 "month": [int(i[1]) for i in data],
                 "total": [float(i[3]) for i in data],
-            },
+            }
         )
         .with_columns(
-            pl.date(pl.col("year"), pl.col("month"), 1).alias("date"),
+            pl.date(pl.col("year"), pl.col("month"), 1).alias("date")
         )
         .drop("year", "month")
         .collect()
@@ -63,19 +63,12 @@ def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
 
 
 def calc_factor(df: pl.DataFrame) -> float:
-    popt, _ = optimize.curve_fit(
-        lambda x, a: x * a,
-        df["silso"],
-        df["seiryo"],
-    )
+    popt, _ = optimize.curve_fit(lambda x, a: x * a, df["silso"], df["seiryo"])
     return popt[0]
 
 
 def calc_r2(df: pl.DataFrame, factor: float) -> float:
-    r2 = metrics.r2_score(
-        df["seiryo"],
-        df["silso"] * factor,
-    )
+    r2 = metrics.r2_score(df["seiryo"], df["silso"] * factor)
     return float(r2)
 
 
@@ -127,32 +120,19 @@ def draw_sunspot_number_whole_disk_plotly(df: pl.DataFrame) -> go.Figure:
                 y=df["seiryo"],
                 mode="lines+markers",
                 name="seiryo",
-            ),
+            )
         )
         .add_trace(
             go.Scatter(
-                x=df["date"],
-                y=df["silso"],
-                mode="lines+markers",
-                name="silso",
-            ),
+                x=df["date"], y=df["silso"], mode="lines+markers", name="silso"
+            )
         )
         .update_layout(
             {
-                "title": {
-                    "text": "seiryo's whole-disk sunspot number",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "sunspot number",
-                    },
-                },
-            },
+                "title": {"text": "seiryo's whole-disk sunspot number"},
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "sunspot number"}},
+            }
         )
     )
 
@@ -188,36 +168,20 @@ def draw_sunspot_number_hemispheric_plotly(df: pl.DataFrame) -> go.Figure:
         go.Figure()
         .add_trace(
             go.Scatter(
-                x=df["date"],
-                y=df["north"],
-                mode="lines+markers",
-                name="north",
-            ),
+                x=df["date"], y=df["north"], mode="lines+markers", name="north"
+            )
         )
         .add_trace(
             go.Scatter(
-                x=df["date"],
-                y=df["south"],
-                mode="lines+markers",
-                name="south",
-            ),
+                x=df["date"], y=df["south"], mode="lines+markers", name="south"
+            )
         )
         .update_layout(
             {
-                "title": {
-                    "text": "seiryo's hemispheric sunspot number",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "sunspot number",
-                    },
-                },
-            },
+                "title": {"text": "seiryo's hemispheric sunspot number"},
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "sunspot number"}},
+            }
         )
     )
 
@@ -227,19 +191,9 @@ def draw_scatter(df: pl.DataFrame, factor: float, r2: float) -> Figure:
     ax = fig.add_subplot(111)
 
     ax.plot(
-        [0, 180],
-        np.poly1d([factor, 0])([0, 180]),
-        lw=1,
-        c="black",
-        zorder=1,
+        [0, 180], np.poly1d([factor, 0])([0, 180]), lw=1, c="black", zorder=1
     )
-    ax.scatter(
-        df["silso"],
-        df["seiryo"],
-        s=5,
-        edgecolors="none",
-        zorder=2,
-    )
+    ax.scatter(df["silso"], df["seiryo"], s=5, edgecolors="none", zorder=2)
     ax.text(150, 40, f"$y={factor:.5f}x$")
     ax.text(150, 30, f"$R^2={r2:.5f}$")
 
@@ -253,9 +207,7 @@ def draw_scatter(df: pl.DataFrame, factor: float, r2: float) -> Figure:
 
 
 def draw_scatter_plotly(
-    df: pl.DataFrame,
-    factor: float,
-    r2: float,
+    df: pl.DataFrame, factor: float, r2: float
 ) -> go.Figure:
     silso_max: float = df.select(pl.max("silso")).item()
     seiryo_max: float = df.select(pl.max("seiryo")).item()
@@ -269,7 +221,7 @@ def draw_scatter_plotly(
                 text=df["date"],
                 mode="markers",
                 name="sunspot number",
-            ),
+            )
         )
         .add_trace(
             go.Scatter(
@@ -278,7 +230,7 @@ def draw_scatter_plotly(
                 mode="lines",
                 name="scaling factor",
                 marker_color="black",
-            ),
+            )
         )
         .add_annotation(
             text=f"$y={factor:.5f}x$",
@@ -300,20 +252,10 @@ def draw_scatter_plotly(
         )
         .update_layout(
             {
-                "title": {
-                    "text": "silso and seiryo",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "silso",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "seiryo",
-                    },
-                },
-            },
+                "title": {"text": "silso and seiryo"},
+                "xaxis": {"title": {"text": "silso"}},
+                "yaxis": {"title": {"text": "seiryo"}},
+            }
         )
     )
 
@@ -348,28 +290,15 @@ def draw_ratio_plotly(df: pl.DataFrame) -> go.Figure:
         go.Figure()
         .add_trace(
             go.Scatter(
-                x=df["date"],
-                y=df["ratio"],
-                mode="lines+markers",
-                name="ratio",
-            ),
+                x=df["date"], y=df["ratio"], mode="lines+markers", name="ratio"
+            )
         )
         .update_layout(
             {
-                "title": {
-                    "text": "ratio: seiryo / silso",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "ratio",
-                    },
-                },
-            },
+                "title": {"text": "ratio: seiryo / silso"},
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "ratio"}},
+            }
         )
     )
 
@@ -379,28 +308,15 @@ def draw_diff_plotly(df: pl.DataFrame) -> go.Figure:
         go.Figure()
         .add_trace(
             go.Scatter(
-                x=df["date"],
-                y=df["diff"],
-                mode="lines+markers",
-                name="diff",
-            ),
+                x=df["date"], y=df["diff"], mode="lines+markers", name="diff"
+            )
         )
         .update_layout(
             {
-                "title": {
-                    "text": "difference: seiryo* - silso",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "difference",
-                    },
-                },
-            },
+                "title": {"text": "difference: seiryo* - silso"},
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "difference"}},
+            }
         )
     )
 
@@ -410,11 +326,8 @@ def draw_ratio_and_diff_plotly(df: pl.DataFrame) -> go.Figure:
         go.Figure()
         .add_trace(
             go.Scatter(
-                x=df["date"],
-                y=df["ratio"],
-                mode="lines+markers",
-                name="ratio",
-            ),
+                x=df["date"], y=df["ratio"], mode="lines+markers", name="ratio"
+            )
         )
         .add_trace(
             go.Scatter(
@@ -423,32 +336,19 @@ def draw_ratio_and_diff_plotly(df: pl.DataFrame) -> go.Figure:
                 yaxis="y2",
                 mode="lines+markers",
                 name="diff",
-            ),
+            )
         )
         .update_layout(
             {
-                "title": {
-                    "text": "ratio and difference",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "ratio",
-                    },
-                    "side": "left",
-                },
+                "title": {"text": "ratio and difference"},
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "ratio"}, "side": "left"},
                 "yaxis2": {
-                    "title": {
-                        "text": "difference",
-                    },
+                    "title": {"text": "difference"},
                     "overlaying": "y",
                     "side": "right",
                 },
-            },
+            }
         )
     )
 
@@ -503,20 +403,15 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
     fig1.write_json(
-        output_path / "sunspot_number_whole_disk.json",
-        pretty=True,
+        output_path / "sunspot_number_whole_disk.json", pretty=True
     )
     for ext in "pdf", "png":
         file_path = output_path / f"sunspot_number_whole_disk.{ext}"
         fig1.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
     fig2 = draw_sunspot_number_hemispheric_plotly(df_seiryo)
@@ -556,20 +451,15 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
     fig2.write_json(
-        output_path / "sunspot_number_hemispheric.json",
-        pretty=True,
+        output_path / "sunspot_number_hemispheric.json", pretty=True
     )
     for ext in "pdf", "png":
         file_path = output_path / f"sunspot_number_hemispheric.{ext}"
         fig2.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
     factor = calc_factor(df_joined)
@@ -615,20 +505,13 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
-    fig3.write_json(
-        output_path / "scatter.json",
-        pretty=True,
-    )
+    fig3.write_json(output_path / "scatter.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"scatter.{ext}"
         fig3.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
     df_ratio_diff = calc_ratio_and_diff(df_joined, factor)
@@ -662,20 +545,13 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
-    fig4.write_json(
-        output_path / "ratio.json",
-        pretty=True,
-    )
+    fig4.write_json(output_path / "ratio.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"ratio.{ext}"
         fig4.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
     fig5 = draw_diff_plotly(df_ratio_diff)
@@ -706,20 +582,13 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
-    fig5.write_json(
-        output_path / "diff.json",
-        pretty=True,
-    )
+    fig5.write_json(output_path / "diff.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"diff.{ext}"
         fig5.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
     fig6 = draw_ratio_and_diff_plotly(df_ratio_diff)
@@ -765,20 +634,13 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
-    fig6.write_json(
-        output_path / "ratio_and_diff.json",
-        pretty=True,
-    )
+    fig6.write_json(output_path / "ratio_and_diff.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"ratio_and_diff.{ext}"
         fig6.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
 

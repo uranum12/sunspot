@@ -32,28 +32,13 @@ import seiryo_obs_days
             date(2020, 3, 3),
             date(2020, 12, 25),
         ),
-        (
-            [
-                date(2020, 2, 2),
-            ],
-            date(2020, 2, 2),
-            date(2020, 2, 2),
-        ),
+        ([date(2020, 2, 2)], date(2020, 2, 2), date(2020, 2, 2)),
     ],
 )
 def test_calc_date_range(
-    in_date: list[date],
-    out_start: date,
-    out_end: date,
+    in_date: list[date], out_start: date, out_end: date
 ) -> None:
-    df = pl.LazyFrame(
-        {
-            "date": in_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
+    df = pl.LazyFrame({"date": in_date}, schema={"date": pl.Date})
     start, end = seiryo_obs_days.calc_date_range(df)
     assert start == out_start
     assert end == out_end
@@ -83,10 +68,7 @@ def test_calc_date_range(
     ],
 )
 def test_adjust_dates(
-    in_start: date,
-    in_end: date,
-    out_start: date,
-    out_end: date,
+    in_start: date, in_end: date, out_start: date, out_end: date
 ) -> None:
     start, end = seiryo_obs_days.adjust_dates(in_start, in_end)
     assert start == out_start
@@ -141,11 +123,7 @@ def test_adjust_dates(
             ],
             date(2020, 2, 3),
             date(2020, 2, 5),
-            [
-                date(2020, 2, 3),
-                date(2020, 2, 4),
-                date(2020, 2, 5),
-            ],
+            [date(2020, 2, 3), date(2020, 2, 4), date(2020, 2, 5)],
             [
                 0,  # 2/3
                 1,  # 2/4
@@ -161,23 +139,10 @@ def test_calc_dayly_obs(
     out_date: list[date],
     out_obs: list[int],
 ) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
+    df_in = pl.LazyFrame({"date": in_date}, schema={"date": pl.Date})
     df_expected = pl.LazyFrame(
-        {
-            "date": out_date,
-            "obs": out_obs,
-        },
-        schema={
-            "date": pl.Date,
-            "obs": pl.UInt8,
-        },
+        {"date": out_date, "obs": out_obs},
+        schema={"date": pl.Date, "obs": pl.UInt8},
     )
     df_out = seiryo_obs_days.calc_dayly_obs(df_in, in_start, in_end)
     assert_frame_equal(df_out, df_expected)
@@ -201,14 +166,8 @@ def test_calc_dayly_obs(
                 1,  # 6/2
                 0,  # 6/3
             ],
-            [
-                date(2020, 5, 1),
-                date(2020, 6, 1),
-            ],
-            [
-                2,
-                1,
-            ],
+            [date(2020, 5, 1), date(2020, 6, 1)],
+            [2, 1],
         ),
         (
             [
@@ -225,16 +184,8 @@ def test_calc_dayly_obs(
                 1,  # 8/7
                 0,  # 8/8
             ],
-            [
-                date(2020, 5, 1),
-                date(2020, 6, 1),
-                date(2020, 8, 1),
-            ],
-            [
-                2,
-                0,
-                1,
-            ],
+            [date(2020, 5, 1), date(2020, 6, 1), date(2020, 8, 1)],
+            [2, 0, 1],
         ),
     ],
 )
@@ -245,24 +196,12 @@ def test_calc_monthly_obs(
     out_obs: list[int],
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-            "obs": in_obs,
-        },
-        schema={
-            "date": pl.Date,
-            "obs": pl.UInt8,
-        },
+        {"date": in_date, "obs": in_obs},
+        schema={"date": pl.Date, "obs": pl.UInt8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "date": out_date,
-            "obs": out_obs,
-        },
-        schema={
-            "date": pl.Date,
-            "obs": pl.UInt8,
-        },
+        {"date": out_date, "obs": out_obs},
+        schema={"date": pl.Date, "obs": pl.UInt8},
     )
     df_out = seiryo_obs_days.calc_monthly_obs(df_in)
     assert_frame_equal(df_out, df_expected)
@@ -274,10 +213,7 @@ def test_draw_monthly_obs_days() -> None:
             "date": [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             "obs": [3, 0, 2],
         },
-        schema={
-            "date": pl.Date,
-            "obs": pl.UInt8,
-        },
+        schema={"date": pl.Date, "obs": pl.UInt8},
     )
     _ = seiryo_obs_days.draw_monthly_obs_days(df)
     _ = seiryo_obs_days.draw_monthly_obs_days_plotly(df)

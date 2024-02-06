@@ -37,26 +37,25 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
             # 12月で翌年の1月までが範囲の場合、年をひとつ加算
             [
                 pl.when(
-                    (month == 12)  # noqa: PLR2004
-                    & (pl.col(f"{obs_time}_month") == 1),
+                    (month == 12) & (pl.col(f"{obs_time}_month") == 1)  # noqa: PLR2004
                 )
                 .then(
                     pl.date(
                         year + 1,
                         pl.col(f"{obs_time}_month"),
                         pl.col(f"{obs_time}_day"),
-                    ),
+                    )
                 )
                 .otherwise(
                     pl.date(
                         year,
                         pl.col(f"{obs_time}_month"),
                         pl.col(f"{obs_time}_day"),
-                    ),
+                    )
                 )
                 .alias(obs_time)
                 for obs_time in ["first", "last"]
-            ],
+            ]
         )
         .drop("first_month", "first_day", "last_month", "last_day")
     )

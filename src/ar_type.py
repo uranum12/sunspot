@@ -33,17 +33,9 @@ def detect_schema_type(year: int, month: int) -> SchemaType | None:
 def detect_dtypes(schema_type: SchemaType) -> dict[str, pl.PolarsDataType]:
     match schema_type:
         case SchemaType.NOTEBOOK_1:
-            return {
-                "no": pl.UInt32,
-                "ns": pl.Categorical,
-                "lat": pl.Utf8,
-            }
+            return {"no": pl.UInt32, "ns": pl.Categorical, "lat": pl.Utf8}
         case SchemaType.NOTEBOOK_2 | SchemaType.NOTEBOOK_3:
-            return {
-                "no": pl.Utf8,
-                "ns": pl.Categorical,
-                "lat": pl.Utf8,
-            }
+            return {"no": pl.Utf8, "ns": pl.Categorical, "lat": pl.Utf8}
         case SchemaType.OLD:
             return {
                 "no": pl.Utf8,

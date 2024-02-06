@@ -140,18 +140,11 @@ def test_create_line(
 ) -> None:
     if in_lat_step is None:
         out = butterfly_agg_common.create_line(
-            in_data_min,
-            in_data_max,
-            in_lat_min,
-            in_lat_max,
+            in_data_min, in_data_max, in_lat_min, in_lat_max
         )
     else:
         out = butterfly_agg_common.create_line(
-            in_data_min,
-            in_data_max,
-            in_lat_min,
-            in_lat_max,
-            in_lat_step,
+            in_data_min, in_data_max, in_lat_min, in_lat_max, in_lat_step
         )
     np.testing.assert_equal(out, out_line)
 
@@ -184,19 +177,13 @@ def test_create_line(
             date(2021, 2, 28),
             date(2021, 3, 4),
             butterfly_type.DateDelta(days=3),
-            [
-                np.datetime64("2021-02-28"),
-                np.datetime64("2021-03-03"),
-            ],
+            [np.datetime64("2021-02-28"), np.datetime64("2021-03-03")],
         ),
         (
             date(2020, 4, 4),
             date(2020, 7, 16),
             butterfly_type.DateDelta(months=2),
-            [
-                np.datetime64("2020-04-04"),
-                np.datetime64("2020-06-04"),
-            ],
+            [np.datetime64("2020-04-04"), np.datetime64("2020-06-04")],
         ),
         (
             date(1969, 11, 1),
@@ -213,10 +200,7 @@ def test_create_line(
             date(2020, 2, 28),
             date(2020, 4, 1),
             butterfly_type.DateDelta(months=1, days=1),
-            [
-                np.datetime64("2020-02-28"),
-                np.datetime64("2020-03-29"),
-            ],
+            [np.datetime64("2020-02-28"), np.datetime64("2020-03-29")],
         ),
         (
             date(2020, 4, 1),
@@ -265,10 +249,7 @@ def test_create_date_index(
         (
             date(2021, 2, 28),
             date(2021, 3, 1),
-            [
-                np.datetime64("2021-02-28"),
-                np.datetime64("2021-03-01"),
-            ],
+            [np.datetime64("2021-02-28"), np.datetime64("2021-03-01")],
         ),
         (
             date(1969, 12, 30),
@@ -283,9 +264,7 @@ def test_create_date_index(
     ],
 )
 def test_create_date_index_dayly(
-    in_start: date,
-    in_end: date,
-    out_index: list[date],
+    in_start: date, in_end: date, out_index: list[date]
 ) -> None:
     out = butterfly_agg_common.create_date_index_daily(in_start, in_end)
     np.testing.assert_equal(out, out_index)
@@ -307,25 +286,17 @@ def test_create_date_index_dayly(
         (
             date(2020, 2, 28),
             date(2020, 3, 1),
-            [
-                np.datetime64("2020-02"),
-                np.datetime64("2020-03"),
-            ],
+            [np.datetime64("2020-02"), np.datetime64("2020-03")],
         ),
         (
             date(1969, 12, 30),
             date(1970, 1, 2),
-            [
-                np.datetime64("1969-12"),
-                np.datetime64("1970-01"),
-            ],
+            [np.datetime64("1969-12"), np.datetime64("1970-01")],
         ),
     ],
 )
 def test_create_date_index_monthly(
-    in_start: date,
-    in_end: date,
-    out_index: list[date],
+    in_start: date, in_end: date, out_index: list[date]
 ) -> None:
     out = butterfly_agg_common.create_date_index_monthly(in_start, in_end)
     np.testing.assert_equal(out, out_index)
@@ -353,8 +324,6 @@ def test_create_lat_index(
         out = butterfly_agg_common.create_lat_index(in_lat_min, in_lat_max)
     else:
         out = butterfly_agg_common.create_lat_index(
-            in_lat_min,
-            in_lat_max,
-            in_lat_step,
+            in_lat_min, in_lat_max, in_lat_step
         )
     np.testing.assert_equal(out, out_index)

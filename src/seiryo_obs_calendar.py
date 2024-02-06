@@ -21,10 +21,7 @@ class ObsCalendar(TypedDict):
 
 
 def create_calendar(
-    df: pl.DataFrame,
-    year: int,
-    month: int,
-    first_weekday: int = 0,
+    df: pl.DataFrame, year: int, month: int, first_weekday: int = 0
 ) -> ObsCalendar:
     c = Calendar(firstweekday=first_weekday)
 
@@ -51,7 +48,7 @@ def print_calendar(calendar: ObsCalendar) -> None:
             cycle(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]),
             calendar["first_weekday"],
             calendar["first_weekday"] + 7,
-        ),
+        )
     )
     for week in calendar["calendar"]:
         for day in week:

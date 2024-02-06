@@ -25,16 +25,16 @@ def main() -> None:
                 pl.when(pl.col("ns").eq("N"))
                 .then(
                     pl.col("data").map_elements(
-                        lambda a: [[int(a) for a in a.split("-")] for a in a],
-                    ),
+                        lambda a: [[int(a) for a in a.split("-")] for a in a]
+                    )
                 )
                 .otherwise(
                     pl.col("data").map_elements(
                         lambda a: [
                             [-int(a) for a in a.split("-")[::-1]] for a in a
-                        ],
-                    ),
-                ),
+                        ]
+                    )
+                )
             )
             .explode("data")
             .select(
@@ -66,10 +66,7 @@ def main() -> None:
 
         df_data = df.to_dict(as_series=False)
         line = butterfly_agg_common.create_line(
-            df_data["min"],
-            df_data["max"],
-            lat_min,
-            lat_max,
+            df_data["min"], df_data["max"], lat_min, lat_max
         )
         data.append(line.reshape(-1, 1))
 

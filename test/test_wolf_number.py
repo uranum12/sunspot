@@ -37,12 +37,7 @@ def test_calc_wolf_number(
     out_tr: int,
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "ng": [in_ng],
-            "nf": [in_nf],
-            "sg": [in_sg],
-            "sf": [in_sf],
-        },
+        {"ng": [in_ng], "nf": [in_nf], "sg": [in_sg], "sf": [in_sf]},
         schema={
             "ng": pl.UInt8,
             "nf": pl.UInt16,
@@ -75,11 +70,7 @@ def test_calc_wolf_number(
         },
     )
     df_out = wolf_number.calc_wolf_number(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expeted,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expeted, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -106,29 +97,14 @@ def test_agg_monthly(
     out_data: list[float],
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "date": in_date,
-            "data": in_data,
-        },
-        schema={
-            "date": pl.Date,
-            "data": pl.UInt16,
-        },
+        {"date": in_date, "data": in_data},
+        schema={"date": pl.Date, "data": pl.UInt16},
     )
     df_expected = pl.LazyFrame(
-        {
-            "date": out_date,
-            "data": out_data,
-        },
-        schema={
-            "date": pl.Date,
-            "data": pl.Float64,
-        },
+        {"date": out_date, "data": out_data},
+        schema={"date": pl.Date, "data": pl.Float64},
     )
     df_out = wolf_number.agg_monthly(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )

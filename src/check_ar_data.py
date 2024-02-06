@@ -54,8 +54,7 @@ def find_observation_reversals(lf: pl.LazyFrame) -> pl.DataFrame | None:
 
 
 def find_invalid_obs_range(
-    lf: pl.LazyFrame,
-    interval: int,
+    lf: pl.LazyFrame, interval: int
 ) -> pl.DataFrame | None:
     """
     初観測日時と最終観測日時の差が離れすぎていないか確認する関数
@@ -68,8 +67,7 @@ def find_invalid_obs_range(
 
 
 def find_invalid_lat_range(
-    lf: pl.LazyFrame,
-    threthold: int,
+    lf: pl.LazyFrame, threthold: int
 ) -> pl.DataFrame | None:
     """
     緯度の範囲が閾値までに収まってるか確認する関数

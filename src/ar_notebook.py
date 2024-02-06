@@ -8,15 +8,12 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
 
 
 def fill_blanks(
-    df: pl.LazyFrame,
-    cols: list[tuple[str, pl.PolarsDataType]],
+    df: pl.LazyFrame, cols: list[tuple[str, pl.PolarsDataType]]
 ) -> pl.LazyFrame:
     return df.with_columns(
-        [pl.lit(None).cast(dtype).alias(col) for col, dtype in cols],
+        [pl.lit(None).cast(dtype).alias(col) for col, dtype in cols]
     )
 
 
 def concat_no(df: pl.LazyFrame) -> pl.LazyFrame:
-    return df.with_columns(
-        pl.col("no").str.replace("_", ""),
-    )
+    return df.with_columns(pl.col("no").str.replace("_", ""))

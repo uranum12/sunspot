@@ -35,7 +35,7 @@ def check_raw(df: pl.DataFrame, pats: dict[str, str]) -> pl.DataFrame:
                 pl.col(col).str.count_matches(pat) != 1
                 for col, pat in pats.items()
             ],
-        ),
+        )
     )
 
 

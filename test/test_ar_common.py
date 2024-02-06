@@ -20,30 +20,14 @@ import ar_common
     ],
 )
 def test_extract_no(in_no: str, out_ns: str, out_no: str) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "no": [in_no],
-        },
-        schema={
-            "no": pl.Utf8,
-        },
-    )
+    df_in = pl.LazyFrame({"no": [in_no]}, schema={"no": pl.Utf8})
     df_expected = pl.LazyFrame(
-        {
-            "ns": [out_ns],
-            "no": [out_no],
-        },
-        schema={
-            "ns": pl.Categorical,
-            "no": pl.Utf8,
-        },
+        {"ns": [out_ns], "no": [out_no]},
+        schema={"ns": pl.Categorical, "no": pl.Utf8},
     )
     df_out = ar_common.extract_ns(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        categorical_as_str=True,
+        df_out, df_expected, check_column_order=False, categorical_as_str=True
     )
 
 
@@ -60,28 +44,10 @@ def test_extract_no(in_no: str, out_ns: str, out_no: str) -> None:
     ],
 )
 def test_convert_no(in_no: str, out_no: int) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "no": [in_no],
-        },
-        schema={
-            "no": pl.Utf8,
-        },
-    )
-    df_expected = pl.LazyFrame(
-        {
-            "no": [out_no],
-        },
-        schema={
-            "no": pl.UInt32,
-        },
-    )
+    df_in = pl.LazyFrame({"no": [in_no]}, schema={"no": pl.Utf8})
+    df_expected = pl.LazyFrame({"no": [out_no]}, schema={"no": pl.UInt32})
     df_out = ar_common.convert_no(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -101,33 +67,15 @@ def test_detect_coords_over(
     out_over: bool,
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat": [in_lat],
-            "lon": [in_lon],
-        },
-        schema={
-            "lat": pl.Utf8,
-            "lon": pl.Utf8,
-        },
+        {"lat": [in_lat], "lon": [in_lon]},
+        schema={"lat": pl.Utf8, "lon": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat": [out_lat],
-            "lon": [out_lon],
-            "over": [out_over],
-        },
-        schema={
-            "lat": pl.Utf8,
-            "lon": pl.Utf8,
-            "over": pl.Boolean,
-        },
+        {"lat": [out_lat], "lon": [out_lon], "over": [out_over]},
+        schema={"lat": pl.Utf8, "lon": pl.Utf8, "over": pl.Boolean},
     )
     df_out = ar_common.detect_coords_over(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -160,14 +108,8 @@ def test_extract_coords_qm(
     out_lon_question: str | None,
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat": [in_lat],
-            "lon": [in_lon],
-        },
-        schema={
-            "lat": pl.Utf8,
-            "lon": pl.Utf8,
-        },
+        {"lat": [in_lat], "lon": [in_lon]},
+        schema={"lat": pl.Utf8, "lon": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
         {
@@ -185,10 +127,7 @@ def test_extract_coords_qm(
     )
     df_out = ar_common.extract_coords_qm(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        categorical_as_str=True,
+        df_out, df_expected, check_column_order=False, categorical_as_str=True
     )
 
 
@@ -204,34 +143,16 @@ def test_extract_coords_qm(
     ],
 )
 def test_extract_coords_qm_lat_only(
-    in_lat: str,
-    out_lat: str,
-    out_lat_question: str | None,
+    in_lat: str, out_lat: str, out_lat_question: str | None
 ) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "lat": [in_lat],
-        },
-        schema={
-            "lat": pl.Utf8,
-        },
-    )
+    df_in = pl.LazyFrame({"lat": [in_lat]}, schema={"lat": pl.Utf8})
     df_expected = pl.LazyFrame(
-        {
-            "lat": [out_lat],
-            "lat_question": [out_lat_question],
-        },
-        schema={
-            "lat": pl.Utf8,
-            "lat_question": pl.Categorical,
-        },
+        {"lat": [out_lat], "lat_question": [out_lat_question]},
+        schema={"lat": pl.Utf8, "lat_question": pl.Categorical},
     )
     df_out = ar_common.extract_coords_qm(df_in, ["lat"])
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        categorical_as_str=True,
+        df_out, df_expected, check_column_order=False, categorical_as_str=True
     )
 
 
@@ -265,14 +186,8 @@ def test_extract_coords_lr(
     out_lon_right: str,
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat": [in_lat],
-            "lon": [in_lon],
-        },
-        schema={
-            "lat": pl.Utf8,
-            "lon": pl.Utf8,
-        },
+        {"lat": [in_lat], "lon": [in_lon]},
+        schema={"lat": pl.Utf8, "lon": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
         {
@@ -289,11 +204,7 @@ def test_extract_coords_lr(
         },
     )
     df_out = ar_common.extract_coords_lr(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -306,34 +217,15 @@ def test_extract_coords_lr(
     ],
 )
 def test_extract_coords_lr_lat_only(
-    in_lat: str,
-    out_lat_left: str,
-    out_lat_right: str,
+    in_lat: str, out_lat_left: str, out_lat_right: str
 ) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "lat": [in_lat],
-        },
-        schema={
-            "lat": pl.Utf8,
-        },
-    )
+    df_in = pl.LazyFrame({"lat": [in_lat]}, schema={"lat": pl.Utf8})
     df_expected = pl.LazyFrame(
-        {
-            "lat_left": [out_lat_left],
-            "lat_right": [out_lat_right],
-        },
-        schema={
-            "lat_left": pl.Utf8,
-            "lat_right": pl.Utf8,
-        },
+        {"lat_left": [out_lat_left], "lat_right": [out_lat_right]},
+        schema={"lat_left": pl.Utf8, "lat_right": pl.Utf8},
     )
     df_out = ar_common.extract_coords_lr(df_in, ["lat"])
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -434,10 +326,7 @@ def test_extract_coords_sign(
     )
     df_out = ar_common.extract_coords_sign(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        categorical_as_str=True,
+        df_out, df_expected, check_column_order=False, categorical_as_str=True
     )
 
 
@@ -466,14 +355,8 @@ def test_extract_coords_sign_lat_only(
     out_lat_right_sign: str | None,
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat_left": [in_lat_left],
-            "lat_right": [in_lat_right],
-        },
-        schema={
-            "lat_left": pl.Utf8,
-            "lat_right": pl.Utf8,
-        },
+        {"lat_left": [in_lat_left], "lat_right": [in_lat_right]},
+        schema={"lat_left": pl.Utf8, "lat_right": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
         {
@@ -491,93 +374,46 @@ def test_extract_coords_sign_lat_only(
     )
     df_out = ar_common.extract_coords_sign(df_in, ["lat"])
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        categorical_as_str=True,
+        df_out, df_expected, check_column_order=False, categorical_as_str=True
     )
 
 
 @pytest.mark.parametrize(
     ("in_lat_left", "in_lat_right", "out_lat_left", "out_lat_right"),
-    [
-        ("12", "12", 12, 12),
-        ("12", "15", 12, 15),
-    ],
+    [("12", "12", 12, 12), ("12", "15", 12, 15)],
 )
 def test_convert_lat(
-    in_lat_left: str,
-    in_lat_right: str,
-    out_lat_left: str,
-    out_lat_right: str,
+    in_lat_left: str, in_lat_right: str, out_lat_left: str, out_lat_right: str
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat_left": [in_lat_left],
-            "lat_right": [in_lat_right],
-        },
-        schema={
-            "lat_left": pl.Utf8,
-            "lat_right": pl.Utf8,
-        },
+        {"lat_left": [in_lat_left], "lat_right": [in_lat_right]},
+        schema={"lat_left": pl.Utf8, "lat_right": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat_left": [out_lat_left],
-            "lat_right": [out_lat_right],
-        },
-        schema={
-            "lat_left": pl.UInt8,
-            "lat_right": pl.UInt8,
-        },
+        {"lat_left": [out_lat_left], "lat_right": [out_lat_right]},
+        schema={"lat_left": pl.UInt8, "lat_right": pl.UInt8},
     )
     df_out = ar_common.convert_lat(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
     ("in_lon_left", "in_lon_right", "out_lon_left", "out_lon_right"),
-    [
-        ("123", "123", 123, 123),
-        ("123", "132", 123, 132),
-    ],
+    [("123", "123", 123, 123), ("123", "132", 123, 132)],
 )
 def test_convert_lon(
-    in_lon_left: str,
-    in_lon_right: str,
-    out_lon_left: str,
-    out_lon_right: str,
+    in_lon_left: str, in_lon_right: str, out_lon_left: str, out_lon_right: str
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lon_left": [in_lon_left],
-            "lon_right": [in_lon_right],
-        },
-        schema={
-            "lon_left": pl.Utf8,
-            "lon_right": pl.Utf8,
-        },
+        {"lon_left": [in_lon_left], "lon_right": [in_lon_right]},
+        schema={"lon_left": pl.Utf8, "lon_right": pl.Utf8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "lon_left": [out_lon_left],
-            "lon_right": [out_lon_right],
-        },
-        schema={
-            "lon_left": pl.UInt16,
-            "lon_right": pl.UInt16,
-        },
+        {"lon_left": [out_lon_left], "lon_right": [out_lon_right]},
+        schema={"lon_left": pl.UInt16, "lon_right": pl.UInt16},
     )
     df_out = ar_common.convert_lon(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 def test_sort_by_row() -> None:
@@ -599,15 +435,11 @@ def test_sort_by_row() -> None:
         "over",
     ]
     df_in = pl.LazyFrame(
-        {col_name: [] for col_name in sample(cols, len(cols))},
+        {col_name: [] for col_name in sample(cols, len(cols))}
     )
     df_expected = pl.LazyFrame({col_name: [] for col_name in cols})
     df_out = ar_common.sort(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=True,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=True)
 
 
 @pytest.mark.parametrize(
@@ -628,10 +460,7 @@ def test_sort_by_row() -> None:
     ],
 )
 def test_sort_by_no(
-    in_no: list[int],
-    in_ns: list[str],
-    out_no: list[int],
-    out_ns: list[str],
+    in_no: list[int], in_ns: list[str], out_no: list[int], out_ns: list[str]
 ) -> None:
     cols = [
         "lat_left",
@@ -649,24 +478,12 @@ def test_sort_by_no(
         "over",
     ]
     df_in = pl.LazyFrame(
-        {
-            "no": in_no,
-            "ns": in_ns,
-        },
-        schema={
-            "no": pl.UInt32,
-            "ns": pl.Categorical,
-        },
+        {"no": in_no, "ns": in_ns},
+        schema={"no": pl.UInt32, "ns": pl.Categorical},
     ).with_columns([pl.lit(None).alias(col) for col in cols])
     df_expected = pl.LazyFrame(
-        {
-            "no": out_no,
-            "ns": out_ns,
-        },
-        schema={
-            "no": pl.UInt32,
-            "ns": pl.Categorical,
-        },
+        {"no": out_no, "ns": out_ns},
+        schema={"no": pl.UInt32, "ns": pl.Categorical},
     ).with_columns([pl.lit(None).alias(col) for col in cols])
     df_out = ar_common.sort(df_in)
     assert_frame_equal(

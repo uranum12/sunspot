@@ -32,7 +32,7 @@ def calc_sunspot_number(df: pl.LazyFrame) -> pl.DataFrame:
         .with_columns(
             # wolf number
             # R = 10g + f
-            (pl.col("ng").cast(pl.UInt16) * 10 + pl.col("ns")).alias("nc"),
+            (pl.col("ng").cast(pl.UInt16) * 10 + pl.col("ns")).alias("nc")
         )
         .sort("date")
         .collect()
@@ -71,10 +71,9 @@ def main() -> None:
             [
                 ns,
                 np.full(
-                    (start + df.height - ns.shape[0], ns.shape[1]),
-                    np.nan,
+                    (start + df.height - ns.shape[0], ns.shape[1]), np.nan
                 ),
-            ],
+            ]
         )
 
     # merge fujimori data with other observatories' data

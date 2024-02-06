@@ -30,10 +30,7 @@ def test_create_calendar() -> None:
                 1,  # 9/2
             ],
         },
-        schema={
-            "date": pl.Date,
-            "obs": pl.UInt8,
-        },
+        schema={"date": pl.Date, "obs": pl.UInt8},
     )
     calendar_expected = seiryo_obs_calendar.ObsCalendar(
         {
@@ -96,7 +93,7 @@ def test_create_calendar() -> None:
                     seiryo_obs_calendar.ObsDay(date(2020, 9, 5), 0),
                 ],
             ],
-        },
+        }
     )
     calendar = seiryo_obs_calendar.create_calendar(df_in, year, month, first)
     assert calendar == calendar_expected
@@ -104,8 +101,7 @@ def test_create_calendar() -> None:
 
 def test_print_calendar() -> None:
     df = pl.DataFrame(
-        {"date": [], "obs": []},
-        schema={"date": pl.Date, "obs": pl.UInt8},
+        {"date": [], "obs": []}, schema={"date": pl.Date, "obs": pl.UInt8}
     )
     calendar = seiryo_obs_calendar.create_calendar(df, 2020, 2, 2)
     seiryo_obs_calendar.print_calendar(calendar)

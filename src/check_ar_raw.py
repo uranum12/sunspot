@@ -14,6 +14,8 @@ columns: dict[ar_type.SchemaType, list[str]] = {
     ar_type.SchemaType.NEW: ["no", "lat", "lon", "first", "last"],
 }
 
+pat_months = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
+
 patterns: dict[ar_type.SchemaType, dict[str, str]] = {
     ar_type.SchemaType.NOTEBOOK_1: {
         "ns": r"^[NS]$",
@@ -39,8 +41,8 @@ patterns: dict[ar_type.SchemaType, dict[str, str]] = {
         "no": r"^[NS]\d{4}$",
         "lat": r"(^/$|^[p-]?\d{1,2}(~[p-]?\d{1,2})?\??$)",
         "lon": r"(^/$|^[p-]?\d{1,3}(~[p-]?\d{1,3})?\??$)",
-        "first": r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.\d{1,2}$",
-        "last": r"^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.\d{1,2}$",
+        "first": rf"^{pat_months}\.\d{{1,2}}$",
+        "last": rf"^{pat_months}\.\d{{1,2}}$",
     },
 }
 
@@ -53,7 +55,7 @@ def check_raw(df: pl.DataFrame, pats: dict[str, str]) -> pl.DataFrame:
                 pl.col(col).str.count_matches(pat) != 1
                 for col, pat in pats.items()
             ],
-        ),
+        )
     )
 
 

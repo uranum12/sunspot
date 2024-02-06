@@ -26,16 +26,8 @@ import seiryo_check_data
                 )
             ),
             pl.DataFrame(
-                {
-                    "col1": [2, 3],
-                    "col2": [None, -3],
-                    "col3": ["bar", None],
-                },
-                schema={
-                    "col1": pl.UInt16,
-                    "col2": pl.Int8,
-                    "col3": pl.Utf8,
-                },
+                {"col1": [2, 3], "col2": [None, -3], "col3": ["bar", None]},
+                schema={"col1": pl.UInt16, "col2": pl.Int8, "col3": pl.Utf8},
             ),
         ),
         (
@@ -45,37 +37,20 @@ import seiryo_check_data
                     "col2": [-1, -2, -3],
                     "col3": ["foo", "bar", "baz"],
                 },
-                schema={
-                    "col1": pl.UInt16,
-                    "col2": pl.Int8,
-                    "col3": pl.Utf8,
-                },
+                schema={"col1": pl.UInt16, "col2": pl.Int8, "col3": pl.Utf8},
             ),
             pl.DataFrame(
-                {
-                    "col1": [],
-                    "col2": [],
-                    "col3": [],
-                },
-                schema={
-                    "col1": pl.UInt16,
-                    "col2": pl.Int8,
-                    "col3": pl.Utf8,
-                },
+                {"col1": [], "col2": [], "col3": []},
+                schema={"col1": pl.UInt16, "col2": pl.Int8, "col3": pl.Utf8},
             ),
         ),
     ],
 )
 def test_find_null_values(
-    df_in: pl.DataFrame,
-    df_expected: pl.DataFrame,
+    df_in: pl.DataFrame, df_expected: pl.DataFrame
 ) -> None:
     df_out = seiryo_check_data.find_null_values(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -112,21 +87,11 @@ def test_find_invalid_group_number(
     out_expected: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "date": in_date,
-            "no": in_no,
-        },
-        schema={
-            "date": pl.Date,
-            "no": pl.UInt8,
-        },
+        {"date": in_date, "no": in_no},
+        schema={"date": pl.Date, "no": pl.UInt8},
     )
     df_expected = pl.DataFrame(
-        {
-            "date": out_date,
-            "original": out_original,
-            "expected": out_expected,
-        },
+        {"date": out_date, "original": out_original, "expected": out_expected},
         schema={
             "date": pl.Date,
             "original": pl.List(pl.UInt8),
@@ -134,11 +99,7 @@ def test_find_invalid_group_number(
         },
     )
     df_out = seiryo_check_data.find_invalid_group_number(df_in).sort("date")
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -151,13 +112,7 @@ def test_find_invalid_group_number(
             [10, 50],
             [-50, -10],
         ),
-        (
-            [1, 2, 3, 4, 5],
-            [-5, -4, -3, -2, -1],
-            10,
-            [],
-            [],
-        ),
+        ([1, 2, 3, 4, 5], [-5, -4, -3, -2, -1], 10, [], []),
     ],
 )
 def test_find_invalid_lat_range(
@@ -168,31 +123,16 @@ def test_find_invalid_lat_range(
     out_lat_max: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "lat_min": in_lat_min,
-            "lat_max": in_lat_max,
-        },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-        },
+        {"lat_min": in_lat_min, "lat_max": in_lat_max},
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8},
     )
     df_expected = pl.DataFrame(
-        {
-            "lat_min": out_lat_min,
-            "lat_max": out_lat_max,
-        },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-        },
+        {"lat_min": out_lat_min, "lat_max": out_lat_max},
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8},
     )
     df_out = seiryo_check_data.find_invalid_lat_range(df_in, in_threshold)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -214,14 +154,7 @@ def test_find_invalid_lat_range(
             [10, 20, 50],
             [-50, -40, -10],
         ),
-        (
-            [1, 2, 3, 4, 5],
-            [-5, -4, -3, -2, -1],
-            -10,
-            10,
-            [],
-            [],
-        ),
+        ([1, 2, 3, 4, 5], [-5, -4, -3, -2, -1], -10, 10, [], []),
     ],
 )
 def test_find_invalid_lon_range(
@@ -233,35 +166,18 @@ def test_find_invalid_lon_range(
     out_lon_max: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "lon_min": in_lon_min,
-            "lon_max": in_lon_max,
-        },
-        schema={
-            "lon_min": pl.Int8,
-            "lon_max": pl.Int8,
-        },
+        {"lon_min": in_lon_min, "lon_max": in_lon_max},
+        schema={"lon_min": pl.Int8, "lon_max": pl.Int8},
     )
     df_expected = pl.DataFrame(
-        {
-            "lon_min": out_lon_min,
-            "lon_max": out_lon_max,
-        },
-        schema={
-            "lon_min": pl.Int8,
-            "lon_max": pl.Int8,
-        },
+        {"lon_min": out_lon_min, "lon_max": out_lon_max},
+        schema={"lon_min": pl.Int8, "lon_max": pl.Int8},
     )
     df_out = seiryo_check_data.find_invalid_lon_range(
-        df_in,
-        in_min_threshold,
-        in_max_threshold,
+        df_in, in_min_threshold, in_max_threshold
     )
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -283,14 +199,7 @@ def test_find_invalid_lon_range(
             [40, 50],
             [30, 40],
         ),
-        (
-            [1, 1, 1, 1, 1],
-            [1, 2, 3, 4, 5],
-            10,
-            [],
-            [],
-            [],
-        ),
+        ([1, 1, 1, 1, 1], [1, 2, 3, 4, 5], 10, [], [], []),
     ],
 )
 def test_find_invalid_lat_interval(
@@ -302,14 +211,8 @@ def test_find_invalid_lat_interval(
     out_interval: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "lat_min": in_lat_min,
-            "lat_max": in_lat_max,
-        },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-        },
+        {"lat_min": in_lat_min, "lat_max": in_lat_max},
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8},
     )
     df_expected = pl.DataFrame(
         {
@@ -317,18 +220,11 @@ def test_find_invalid_lat_interval(
             "lat_max": out_lat_max,
             "interval": out_interval,
         },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-            "interval": pl.Int8,
-        },
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8, "interval": pl.Int8},
     )
     df_out = seiryo_check_data.find_invalid_lat_interval(df_in, in_interval)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -350,14 +246,7 @@ def test_find_invalid_lat_interval(
             [40, 50],
             [30, 40],
         ),
-        (
-            [1, 1, 1, 1, 1],
-            [1, 2, 3, 4, 5],
-            10,
-            [],
-            [],
-            [],
-        ),
+        ([1, 1, 1, 1, 1], [1, 2, 3, 4, 5], 10, [], [], []),
     ],
 )
 def test_find_invalid_lon_interval(
@@ -369,14 +258,8 @@ def test_find_invalid_lon_interval(
     out_interval: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "lon_min": in_lon_min,
-            "lon_max": in_lon_max,
-        },
-        schema={
-            "lon_min": pl.Int8,
-            "lon_max": pl.Int8,
-        },
+        {"lon_min": in_lon_min, "lon_max": in_lon_max},
+        schema={"lon_min": pl.Int8, "lon_max": pl.Int8},
     )
     df_expected = pl.DataFrame(
         {
@@ -384,18 +267,11 @@ def test_find_invalid_lon_interval(
             "lon_max": out_lon_max,
             "interval": out_interval,
         },
-        schema={
-            "lon_min": pl.Int8,
-            "lon_max": pl.Int8,
-            "interval": pl.Int8,
-        },
+        schema={"lon_min": pl.Int8, "lon_max": pl.Int8, "interval": pl.Int8},
     )
     df_out = seiryo_check_data.find_invalid_lon_interval(df_in, in_interval)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -430,31 +306,13 @@ def test_find_invalid_lon_interval(
     ],
 )
 def test_find_duplicate_date(
-    in_date: list[date],
-    out_date: list[date],
+    in_date: list[date], out_date: list[date]
 ) -> None:
-    df_in = pl.DataFrame(
-        {
-            "date": in_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
-    df_expected = pl.DataFrame(
-        {
-            "date": out_date,
-        },
-        schema={
-            "date": pl.Date,
-        },
-    )
+    df_in = pl.DataFrame({"date": in_date}, schema={"date": pl.Date})
+    df_expected = pl.DataFrame({"date": out_date}, schema={"date": pl.Date})
     df_out = seiryo_check_data.find_duplicate_date(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -470,15 +328,7 @@ def test_find_duplicate_date(
             [6, 15],
             [7, 12],
         ),
-        (
-            [1, 2, 3, 4, 5],
-            [5, 4, 3, 2, 1],
-            [6, 6, 6, 6, 6],
-            [],
-            [],
-            [],
-            [],
-        ),
+        ([1, 2, 3, 4, 5], [5, 4, 3, 2, 1], [6, 6, 6, 6, 6], [], [], [], []),
     ],
 )
 def test_find_invalid_total_group(
@@ -491,24 +341,11 @@ def test_find_invalid_total_group(
     out_tg: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "ng": in_ng,
-            "sg": in_sg,
-            "tg": in_tg,
-        },
-        schema={
-            "ng": pl.UInt8,
-            "sg": pl.UInt8,
-            "tg": pl.UInt8,
-        },
+        {"ng": in_ng, "sg": in_sg, "tg": in_tg},
+        schema={"ng": pl.UInt8, "sg": pl.UInt8, "tg": pl.UInt8},
     )
     df_expected = pl.DataFrame(
-        {
-            "ng": out_ng,
-            "sg": out_sg,
-            "nsg": out_nsg,
-            "tg": out_tg,
-        },
+        {"ng": out_ng, "sg": out_sg, "nsg": out_nsg, "tg": out_tg},
         schema={
             "ng": pl.UInt8,
             "sg": pl.UInt8,
@@ -518,10 +355,7 @@ def test_find_invalid_total_group(
     )
     df_out = seiryo_check_data.find_invalid_total_group(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 
@@ -537,15 +371,7 @@ def test_find_invalid_total_group(
             [6, 15],
             [7, 12],
         ),
-        (
-            [1, 2, 3, 4, 5],
-            [5, 4, 3, 2, 1],
-            [6, 6, 6, 6, 6],
-            [],
-            [],
-            [],
-            [],
-        ),
+        ([1, 2, 3, 4, 5], [5, 4, 3, 2, 1], [6, 6, 6, 6, 6], [], [], [], []),
     ],
 )
 def test_find_invalid_total_number(
@@ -558,24 +384,11 @@ def test_find_invalid_total_number(
     out_tf: list[int],
 ) -> None:
     df_in = pl.DataFrame(
-        {
-            "nf": in_nf,
-            "sf": in_sf,
-            "tf": in_tf,
-        },
-        schema={
-            "nf": pl.UInt8,
-            "sf": pl.UInt8,
-            "tf": pl.UInt8,
-        },
+        {"nf": in_nf, "sf": in_sf, "tf": in_tf},
+        schema={"nf": pl.UInt8, "sf": pl.UInt8, "tf": pl.UInt8},
     )
     df_expected = pl.DataFrame(
-        {
-            "nf": out_nf,
-            "sf": out_sf,
-            "nsf": out_nsf,
-            "tf": out_tf,
-        },
+        {"nf": out_nf, "sf": out_sf, "nsf": out_nsf, "tf": out_tf},
         schema={
             "nf": pl.UInt8,
             "sf": pl.UInt8,
@@ -585,8 +398,5 @@ def test_find_invalid_total_number(
     )
     df_out = seiryo_check_data.find_invalid_total_number(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )

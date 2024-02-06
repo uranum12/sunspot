@@ -19,7 +19,7 @@ def main(argv: list[str]) -> None:
                         .filter(pl.col("ns").eq(ns))
                         .filter(pl.col("no").is_between(no - 1, no + 1))
                         .select("ns", "no", "first", "last")
-                        .collect(),
+                        .collect()
                     )
             case "sn":
                 year, month, day = map(int, argv[2].split("-"))
@@ -30,7 +30,7 @@ def main(argv: list[str]) -> None:
                 print(
                     pl.scan_parquet(Path("out/sn/all.parquet"))
                     .filter(pl.col("date").is_between(start_date, end_date))
-                    .collect(),
+                    .collect()
                 )
 
 

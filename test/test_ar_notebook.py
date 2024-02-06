@@ -44,17 +44,9 @@ def test_fill_blanks(in_name: str, in_type: pl.PolarsDataType) -> None:
 
 
 @pytest.mark.parametrize(
-    ("in_no", "out_no"),
-    [
-        ("1234_56", "123456"),
-        ("4321_2", "43212"),
-    ],
+    ("in_no", "out_no"), [("1234_56", "123456"), ("4321_2", "43212")]
 )
 def test_concat_no(in_no: str, out_no: str) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "no": [in_no],
-        },
-    )
+    df_in = pl.LazyFrame({"no": [in_no]})
     df_out = ar_notebook.concat_no(df_in).collect()
     assert df_out.item(0, "no") == out_no

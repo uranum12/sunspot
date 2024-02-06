@@ -35,12 +35,8 @@ def find_invalid_group_number(df: pl.DataFrame) -> pl.DataFrame:
             .cast(pl.UInt8)
             .alias("expected"),
         )
-        .with_columns(
-            pl.col("original", "expected").list.sort(),
-        )
-        .filter(
-            pl.col("original") != pl.col("expected"),
-        )
+        .with_columns(pl.col("original", "expected").list.sort())
+        .filter(pl.col("original") != pl.col("expected"))
         .collect()
     )
 
@@ -59,14 +55,12 @@ def find_invalid_lat_range(df: pl.DataFrame, threshold: int) -> pl.DataFrame:
         pl.any_horizontal(
             ~pl.col("lat_min").abs().is_between(0, threshold),
             ~pl.col("lat_max").abs().is_between(0, threshold),
-        ),
+        )
     )
 
 
 def find_invalid_lon_range(
-    df: pl.DataFrame,
-    min_threshold: int,
-    max_threshold: int,
+    df: pl.DataFrame, min_threshold: int, max_threshold: int
 ) -> pl.DataFrame:
     """不正な範囲に存在する経度を検索する
 
@@ -82,7 +76,7 @@ def find_invalid_lon_range(
         pl.any_horizontal(
             ~pl.col("lon_min").is_between(min_threshold, max_threshold),
             ~pl.col("lon_max").is_between(min_threshold, max_threshold),
-        ),
+        )
     )
 
 
@@ -97,10 +91,8 @@ def find_invalid_lat_interval(df: pl.DataFrame, interval: int) -> pl.DataFrame:
         pl.DataFrame: 不正値を含む行のみの新しいデータフレーム
     """
     return df.with_columns(
-        (pl.col("lat_max") - pl.col("lat_min")).alias("interval"),
-    ).filter(
-        pl.col("interval") > interval,
-    )
+        (pl.col("lat_max") - pl.col("lat_min")).alias("interval")
+    ).filter(pl.col("interval") > interval)
 
 
 def find_invalid_lon_interval(df: pl.DataFrame, interval: int) -> pl.DataFrame:
@@ -114,10 +106,8 @@ def find_invalid_lon_interval(df: pl.DataFrame, interval: int) -> pl.DataFrame:
         pl.DataFrame: 不正値を含む行のみの新しいデータフレーム
     """
     return df.with_columns(
-        (pl.col("lon_max") - pl.col("lon_min")).alias("interval"),
-    ).filter(
-        pl.col("interval") > interval,
-    )
+        (pl.col("lon_max") - pl.col("lon_min")).alias("interval")
+    ).filter(pl.col("interval") > interval)
 
 
 def find_duplicate_date(df: pl.DataFrame) -> pl.DataFrame:
@@ -141,10 +131,8 @@ def find_invalid_total_group(df: pl.DataFrame) -> pl.DataFrame:
     Returns:
         pl.DataFrame: 不正値を含む行のみの新しいデータフレーム
     """
-    return df.with_columns(
-        pl.col("ng").add(pl.col("sg")).alias("nsg"),
-    ).filter(
-        pl.col("tg") != pl.col("nsg"),
+    return df.with_columns(pl.col("ng").add(pl.col("sg")).alias("nsg")).filter(
+        pl.col("tg") != pl.col("nsg")
     )
 
 
@@ -157,10 +145,8 @@ def find_invalid_total_number(df: pl.DataFrame) -> pl.DataFrame:
     Returns:
         pl.DataFrame: 不正値を含む行のみの新しいデータフレーム
     """
-    return df.with_columns(
-        pl.col("nf").add(pl.col("sf")).alias("nsf"),
-    ).filter(
-        pl.col("tf") != pl.col("nsf"),
+    return df.with_columns(pl.col("nf").add(pl.col("sf")).alias("nsf")).filter(
+        pl.col("tf") != pl.col("nsf")
     )
 
 

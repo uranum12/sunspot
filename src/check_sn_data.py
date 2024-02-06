@@ -29,14 +29,12 @@ def find_gf_reversals(lf: pl.LazyFrame) -> pl.DataFrame | None:
     逆転しているものを返す
     """
     return filter_df(
-        lf,
-        (pl.col("ng") > pl.col("nf")) | (pl.col("sg") > pl.col("sf")),
+        lf, (pl.col("ng") > pl.col("nf")) | (pl.col("sg") > pl.col("sf"))
     )
 
 
 def check_by_total(
-    lf: pl.LazyFrame,
-    index: pl.LazyFrame,
+    lf: pl.LazyFrame, index: pl.LazyFrame
 ) -> pl.DataFrame | None:
     return (
         df
@@ -48,13 +46,10 @@ def check_by_total(
                 (pl.col("sf") + pl.col("sg") * 10).alias("st"),
             )
             .group_by("year", "month")
-            .agg(
-                pl.col("nt").sum(),
-                pl.col("st").sum(),
-            )
+            .agg(pl.col("nt").sum(), pl.col("st").sum())
             .join(index, on=["year", "month"], how="outer")
             .filter(
-                (pl.col("nt") != pl.col("n")) | (pl.col("st") != pl.col("s")),
+                (pl.col("nt") != pl.col("n")) | (pl.col("st") != pl.col("s"))
             )
             .sort("year", "month")
             .collect()
@@ -71,9 +66,7 @@ def is_sun_rised(sun: Sun, dt: datetime) -> bool:
 
 
 def check_sun_rised(
-    lf: pl.LazyFrame,
-    lat: int = 35,
-    lon: int = 135,
+    lf: pl.LazyFrame, lat: int = 35, lon: int = 135
 ) -> pl.DataFrame | None:
     sun = Sun(lat, lon)
 

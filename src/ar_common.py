@@ -13,7 +13,7 @@ def extract_ns(df: pl.LazyFrame) -> pl.LazyFrame:
 def convert_no(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         # 通し番号を文字列から整数へ
-        pl.col("no").cast(pl.UInt32),
+        pl.col("no").cast(pl.UInt32)
     )
 
 
@@ -28,8 +28,7 @@ def detect_coords_over(df: pl.LazyFrame) -> pl.LazyFrame:
 
 
 def extract_coords_qm(
-    df: pl.LazyFrame,
-    coords: list[str] | None = None,
+    df: pl.LazyFrame, coords: list[str] | None = None
 ) -> pl.LazyFrame:
     if coords is None:
         coords = ["lat", "lon"]
@@ -45,21 +44,18 @@ def extract_coords_qm(
 
 
 def extract_coords_lr(
-    df: pl.LazyFrame,
-    coords: list[str] | None = None,
+    df: pl.LazyFrame, coords: list[str] | None = None
 ) -> pl.LazyFrame:
     if coords is None:
         coords = ["lat", "lon"]
     return (
         df.with_columns(
             # 経緯度の数値を分割
-            pl.col(coords).str.split("~"),
+            pl.col(coords).str.split("~")
         )
         .with_columns(
             # 経緯度の左の数値
-            pl.col(coords)
-            .list.get(0)
-            .name.suffix("_left"),
+            pl.col(coords).list.get(0).name.suffix("_left")
         )
         .with_columns(
             # 経緯度の右の数値
@@ -70,22 +66,21 @@ def extract_coords_lr(
                 .otherwise(pl.col(f"{coord}_left"))
                 .name.suffix("_right")
                 for coord in coords
-            ],
+            ]
         )
         .drop(coords)
     )
 
 
 def extract_coords_sign(
-    df: pl.LazyFrame,
-    coords: list[str] | None = None,
+    df: pl.LazyFrame, coords: list[str] | None = None
 ) -> pl.LazyFrame:
     if coords is None:
         coords = ["lat", "lon"]
     return df.with_columns(
         # 経緯度の左右の数値の符号
         pl.col(
-            [f"{coord}_{lr}" for coord in coords for lr in ["left", "right"]],
+            [f"{coord}_{lr}" for coord in coords for lr in ["left", "right"]]
         )
         .str.extract(r"([p-])")
         .str.replace(r"(p)", "+")
@@ -93,7 +88,7 @@ def extract_coords_sign(
         .name.suffix("_sign"),
         # 経緯度の左右の数値から符号を削除
         pl.col(
-            [f"{coord}_{lr}" for coord in coords for lr in ["left", "right"]],
+            [f"{coord}_{lr}" for coord in coords for lr in ["left", "right"]]
         ).str.replace(r"p|-", ""),
     )
 
@@ -101,14 +96,14 @@ def extract_coords_sign(
 def convert_lat(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         # 緯度の各数値を符号なし整数へ変換
-        pl.col("lat_left", "lat_right").cast(pl.UInt8),
+        pl.col("lat_left", "lat_right").cast(pl.UInt8)
     )
 
 
 def convert_lon(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
         # 経度の各数値を符号なし整数へ変換
-        pl.col("lon_left", "lon_right").cast(pl.UInt16),
+        pl.col("lon_left", "lon_right").cast(pl.UInt16)
     )
 
 

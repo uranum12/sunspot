@@ -13,21 +13,18 @@ def convert_number(df: pl.LazyFrame) -> pl.LazyFrame:
 
 def convert_date(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.with_columns(
-        pl.col("date").str.replace_all(r"([-/\.])", " ").str.split(by=" "),
+        pl.col("date").str.replace_all(r"([-/\.])", " ").str.split(by=" ")
     ).with_columns(
         pl.date(
             pl.col("date").list.get(0),
             pl.col("date").list.get(1),
             pl.col("date").list.get(2),
-        ),
+        )
     )
 
 
 def convert_coord(
-    df: pl.LazyFrame,
-    *,
-    col: str,
-    dtype: pl.PolarsDataType,
+    df: pl.LazyFrame, *, col: str, dtype: pl.PolarsDataType
 ) -> pl.LazyFrame:
     pat_left_sign = r"(?P<left_sign>[nsewpm+-]?)"
     pat_left = r"(?P<left>\d{1,2}(?:\.\d+)?)"
@@ -39,12 +36,12 @@ def convert_coord(
     return (
         df.with_columns(
             # 正規表現で構造体へ分解
-            pl.col(col).str.extract_groups(pat),
+            pl.col(col).str.extract_groups(pat)
         )
         .unnest(col)  # 構造体から列へ分解
         .with_columns(
             # 符号の文字を小文字へ変換
-            pl.col("left_sign", "right_sign").str.to_lowercase(),
+            pl.col("left_sign", "right_sign").str.to_lowercase()
         )
         .with_columns(
             # 右の符号と数値が存在しなければ左で埋める
@@ -56,18 +53,17 @@ def convert_coord(
             # 右の符号を左の符号で埋める
             pl.when(
                 pl.col("right_sign").eq("")
-                & pl.col("left_sign").is_in({"s", "w"}),
+                & pl.col("left_sign").is_in({"s", "w"})
             )
             .then(pl.lit("-"))
             .otherwise(pl.col("right_sign"))
-            .alias("right_sign"),
+            .alias("right_sign")
         )
         .with_columns(
             # 文字の符号を数式の符号へ変換
             pl.col("left_sign", "right_sign").str.replace_many(
-                ["n", "s", "e", "w", "p", "m"],
-                ["+", "-", "+", "-", "+", "-"],
-            ),
+                ["n", "s", "e", "w", "p", "m"], ["+", "-", "+", "-", "+", "-"]
+            )
         )
         .with_columns(
             # 符号を数値へ反映
@@ -76,9 +72,7 @@ def convert_coord(
         )
         .with_columns(
             # 文字列から小数へ変換し、四捨五入
-            pl.col("left", "right")
-            .cast(pl.Float64)
-            .round(),
+            pl.col("left", "right").cast(pl.Float64).round()
         )
         .with_columns(
             # 最大値と最小値を算出し、整数へ変換
@@ -99,13 +93,13 @@ def split(df: pl.LazyFrame) -> tuple[pl.LazyFrame, pl.LazyFrame]:
 def calc_lat(df: pl.LazyFrame) -> pl.LazyFrame:
     return (
         df.with_columns(  # 緯度の中央値を算出
-            ((pl.col("lat_min") + pl.col("lat_max")) / 2).alias("lat"),
+            ((pl.col("lat_min") + pl.col("lat_max")) / 2).alias("lat")
         )
         .with_columns(  # 緯度の中央値をもとに北半球と南半球を分類
             pl.when(pl.col("lat") >= 0)
             .then(pl.lit("N"))
             .otherwise(pl.lit("S"))
-            .alias("lat"),
+            .alias("lat")
         )
         .drop("lat_min", "lat_max")
     )
@@ -142,14 +136,12 @@ def fill_sn(df: pl.LazyFrame) -> pl.LazyFrame:
 
 def sort_ar(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.select(
-        ["date", "no", "lat_min", "lat_max", "lon_min", "lon_max"],
+        ["date", "no", "lat_min", "lat_max", "lon_min", "lon_max"]
     ).sort("date", "no")
 
 
 def sort_sn(df: pl.LazyFrame) -> pl.LazyFrame:
-    return df.select(
-        ["date", "ng", "nf", "sg", "sf", "tg", "tf"],
-    ).sort("date")
+    return df.select(["date", "ng", "nf", "sg", "sf", "tg", "tf"]).sort("date")
 
 
 def main() -> None:

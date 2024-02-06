@@ -19,10 +19,7 @@ def calc_date_range(df: pl.LazyFrame) -> tuple[date, date]:
         tuple[date, date]: 開始日と最終日
     """
     date_range: dict[str, date] = (
-        df.select(
-            pl.min("date").alias("start"),
-            pl.max("date").alias("end"),
-        )
+        df.select(pl.min("date").alias("start"), pl.max("date").alias("end"))
         .collect()
         .to_dicts()[0]
     )
@@ -58,7 +55,7 @@ def calc_dayly_obs(df: pl.LazyFrame, start: date, end: date) -> pl.LazyFrame:
 
     return (
         pl.LazyFrame(
-            {"date": pl.date_range(start, end, interval="1d", eager=True)},
+            {"date": pl.date_range(start, end, interval="1d", eager=True)}
         )
         .join(
             df.select("date").with_columns(pl.lit(1).alias("obs")),
@@ -118,28 +115,13 @@ def draw_monthly_obs_days(df: pl.DataFrame) -> Figure:
 def draw_monthly_obs_days_plotly(df: pl.DataFrame) -> go.Figure:
     return (
         go.Figure()
-        .add_trace(
-            go.Bar(
-                x=df["date"],
-                y=df["obs"],
-            ),
-        )
+        .add_trace(go.Bar(x=df["date"], y=df["obs"]))
         .update_layout(
             {
-                "title": {
-                    "text": "observations days per month",
-                },
-                "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
-                },
-                "yaxis": {
-                    "title": {
-                        "text": "observations days",
-                    },
-                },
-            },
+                "title": {"text": "observations days per month"},
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "observations days"}},
+            }
         )
     )
 
@@ -188,20 +170,13 @@ def main() -> None:
                 "showgrid": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
-    fig.write_json(
-        output_path / "observations_days.json",
-        pretty=True,
-    )
+    fig.write_json(output_path / "observations_days.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"observations_days.{ext}"
         fig.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
 

@@ -33,9 +33,7 @@ def split_data(df: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
     # NとSに分離
     # この時NとSに跨っているデータを分ける
     df_n = (
-        df.filter(
-            pl.any_horizontal(pl.all().ge(0)),
-        )
+        df.filter(pl.any_horizontal(pl.all().ge(0)))
         .with_columns(
             [
                 pl.when(pl.col(col).lt(0))
@@ -43,14 +41,12 @@ def split_data(df: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
                 .otherwise(pl.col(col))
                 .alias(col)
                 for col in ["min", "max"]
-            ],
+            ]
         )
         .sort("min", "max")
     )
     df_s = (
-        df.filter(
-            pl.any_horizontal(pl.all().le(0)),
-        )
+        df.filter(pl.any_horizontal(pl.all().le(0)))
         .with_columns(
             [
                 pl.when(pl.col(col).gt(0))
@@ -58,7 +54,7 @@ def split_data(df: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
                 .otherwise(-pl.col(col))  # Sのマイナス表記を戻す
                 .alias(col)
                 for col in ["min", "max"]
-            ],
+            ]
         )
         .rename({"min": "max", "max": "min"})
         .sort("min", "max")

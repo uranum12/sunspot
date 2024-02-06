@@ -44,10 +44,7 @@ def main() -> None:
 
         df_data = df.to_dict(as_series=False)
         line = butterfly_agg_common.create_line(
-            df_data["lat_min"],
-            df_data["lat_max"],
-            lat_min,
-            lat_max,
+            df_data["lat_min"], df_data["lat_max"], lat_min, lat_max
         )
         data.append(line.reshape(-1, 1))
 

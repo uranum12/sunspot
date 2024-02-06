@@ -53,44 +53,31 @@ def create_line(
 
 
 def create_date_index(
-    start: date,
-    end: date,
-    step: butterfly_type.DateDelta,
+    start: date, end: date, step: butterfly_type.DateDelta
 ) -> npt.NDArray[np.datetime64]:
     years = f"{step.years}y" if step.years is not None else ""
     months = f"{step.months}mo" if step.months is not None else ""
     days = f"{step.days}d" if step.days is not None else ""
     interval = f"{years}{months}{days}"
-    return pl.date_range(
-        start,
-        end,
-        interval=interval,
-        eager=True,
-    ).to_numpy()
+    return pl.date_range(start, end, interval, eager=True).to_numpy()
 
 
 def create_date_index_daily(
-    start: date,
-    end: date,
+    start: date, end: date
 ) -> npt.NDArray[np.datetime64]:
     return create_date_index(start, end, butterfly_type.DateDelta(days=1))
 
 
 def create_date_index_monthly(
-    start: date,
-    end: date,
+    start: date, end: date
 ) -> npt.NDArray[np.datetime64]:
     return create_date_index(
-        start.replace(day=1),
-        end,
-        butterfly_type.DateDelta(months=1),
+        start.replace(day=1), end, butterfly_type.DateDelta(months=1)
     )
 
 
 def create_lat_index(
-    lat_min: int,
-    lat_max: int,
-    lat_step: int = 1,
+    lat_min: int, lat_max: int, lat_step: int = 1
 ) -> npt.NDArray[np.int8]:
     lat_range = np.arange(lat_min, lat_max + 1, lat_step, dtype=np.int8)[::-1]
     return np.insert(np.abs(lat_range), np.arange(1, len(lat_range)), -1)

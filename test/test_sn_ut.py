@@ -20,25 +20,7 @@ import sn_ut
     ],
 )
 def test_calc_time(in_time: str, out_time: time) -> None:
-    df_in = pl.LazyFrame(
-        {
-            "time": [in_time],
-        },
-        schema={
-            "time": pl.Utf8,
-        },
-    )
-    df_expected = pl.LazyFrame(
-        {
-            "time": [out_time],
-        },
-        schema={
-            "time": pl.Time,
-        },
-    )
+    df_in = pl.LazyFrame({"time": [in_time]}, schema={"time": pl.Utf8})
+    df_expected = pl.LazyFrame({"time": [out_time]}, schema={"time": pl.Time})
     df_out = sn_ut.calc_time(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)

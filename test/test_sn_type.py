@@ -18,8 +18,6 @@ import sn_type
     ],
 )
 def test_detect_time_type(
-    in_year: int,
-    in_month: int,
-    out_time_type: sn_type.TimeType,
+    in_year: int, in_month: int, out_time_type: sn_type.TimeType
 ) -> None:
     assert sn_type.detect_time_type(in_year, in_month) == out_time_type

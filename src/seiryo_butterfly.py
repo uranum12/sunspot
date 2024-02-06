@@ -112,10 +112,7 @@ def calc_date_limit(df: pl.LazyFrame) -> tuple[date, date]:
         tuple[date, date]: 開始日と最終日
     """
     date_range: dict[str, date] = (
-        df.select(
-            pl.min("date").alias("start"),
-            pl.max("date").alias("end"),
-        )
+        df.select(pl.min("date").alias("start"), pl.max("date").alias("end"))
         .collect()
         .to_dicts()[0]
     )
@@ -155,10 +152,7 @@ def agg_lat(df: pl.LazyFrame, interval: str) -> pl.LazyFrame:
 
 
 def fill_lat(
-    df: pl.LazyFrame,
-    start: date,
-    end: date,
-    interval: str,
+    df: pl.LazyFrame, start: date, end: date, interval: str
 ) -> pl.LazyFrame:
     """範囲内の空白を空データで埋める
 
@@ -190,10 +184,7 @@ def calc_lat(df: pl.LazyFrame, info: ButterflyInfo) -> pl.DataFrame:
         pl.DataFrame: 緯度データ
     """
     return (
-        df.pipe(
-            agg_lat,
-            interval=info.date_interval.to_interval(),
-        )
+        df.pipe(agg_lat, interval=info.date_interval.to_interval())
         .pipe(
             fill_lat,
             start=info.date_start,
@@ -205,10 +196,7 @@ def calc_lat(df: pl.LazyFrame, info: ButterflyInfo) -> pl.DataFrame:
 
 
 def create_line(
-    data_min: list[int],
-    data_max: list[int],
-    lat_min: int,
-    lat_max: int,
+    data_min: list[int], data_max: list[int], lat_min: int, lat_max: int
 ) -> npt.NDArray[np.uint8]:
     """蝶形図の一列分のデータを作成する
 
@@ -255,8 +243,7 @@ def create_line(
 
 
 def create_image(
-    df: pl.DataFrame,
-    info: ButterflyInfo,
+    df: pl.DataFrame, info: ButterflyInfo
 ) -> npt.NDArray[np.uint8]:
     """緯度データから蝶形図のデータを作成する
 
@@ -277,9 +264,7 @@ def create_image(
 
 
 def create_date_index(
-    start: date,
-    end: date,
-    interval: str,
+    start: date, end: date, interval: str
 ) -> npt.NDArray[np.datetime64]:
     """蝶形図の日付のインデックスを作成する
 
@@ -309,8 +294,7 @@ def create_lat_index(lat_min: int, lat_max: int) -> npt.NDArray[np.int8]:
 
 
 def draw_butterfly_diagram(
-    img: npt.NDArray[np.uint8],
-    info: ButterflyInfo,
+    img: npt.NDArray[np.uint8], info: ButterflyInfo
 ) -> Figure:
     """蝶形図データを基に画像を作成する
 
@@ -322,9 +306,7 @@ def draw_butterfly_diagram(
         Figure: 作成した蝶形図
     """
     date_index = create_date_index(
-        info.date_start,
-        info.date_end,
-        info.date_interval.to_interval(),
+        info.date_start, info.date_end, info.date_interval.to_interval()
     )
     lat_index = create_lat_index(info.lat_min, info.lat_max)
 
@@ -354,13 +336,10 @@ def draw_butterfly_diagram(
 
 
 def draw_butterfly_diagram_plotly(
-    img: npt.NDArray[np.uint8],
-    info: ButterflyInfo,
+    img: npt.NDArray[np.uint8], info: ButterflyInfo
 ) -> go.Figure:
     date_index = create_date_index(
-        info.date_start,
-        info.date_end,
-        info.date_interval.to_interval(),
+        info.date_start, info.date_end, info.date_interval.to_interval()
     )
     lat_index = create_lat_index(info.lat_min, info.lat_max)
 
@@ -374,32 +353,21 @@ def draw_butterfly_diagram_plotly(
         go.Figure()
         .add_trace(
             go.Heatmap(
-                z=img,
-                showscale=False,
-                colorscale=[
-                    [0, "white"],
-                    [1, "black"],
-                ],
-            ),
+                z=img, showscale=False, colorscale=[[0, "white"], [1, "black"]]
+            )
         )
         .update_layout(
             {
-                "title": {
-                    "text": "butterfly diagram",
-                },
+                "title": {"text": "butterfly diagram"},
                 "xaxis": {
-                    "title": {
-                        "text": "date",
-                    },
+                    "title": {"text": "date"},
                     "constrain": "domain",
                     "tickmode": "array",
                     "tickvals": [i[0] for i in xlabel],
                     "ticktext": [i[1] for i in xlabel],
                 },
                 "yaxis": {
-                    "title": {
-                        "text": "latitude",
-                    },
+                    "title": {"text": "latitude"},
                     "autorange": "reversed",
                     "scaleanchor": "x",
                     "constrain": "domain",
@@ -407,7 +375,7 @@ def draw_butterfly_diagram_plotly(
                     "tickvals": [i[0] for i in ylabel],
                     "ticktext": [i[1] for i in ylabel],
                 },
-            },
+            }
         )
     )
 
@@ -420,13 +388,7 @@ def main() -> None:
     data_file = pl.scan_parquet(data_path)
     start, end = adjust_dates(*calc_date_limit(data_file))
 
-    info = ButterflyInfo(
-        -50,
-        50,
-        start,
-        end,
-        DateDelta(months=1),
-    )
+    info = ButterflyInfo(-50, 50, start, end, DateDelta(months=1))
     pprint(info)
 
     df = calc_lat(data_file, info)
@@ -467,21 +429,14 @@ def main() -> None:
                 "mirror": True,
                 "ticks": "outside",
             },
-        },
+        }
     )
 
-    fig.write_json(
-        output_path / "butterfly_diagram.json",
-        pretty=True,
-    )
+    fig.write_json(output_path / "butterfly_diagram.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"butterfly_diagram.{ext}"
         fig.write_image(
-            file_path,
-            width=800,
-            height=500,
-            engine="kaleido",
-            scale=10,
+            file_path, width=800, height=500, engine="kaleido", scale=10
         )
     fig.show()
 

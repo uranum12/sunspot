@@ -11,7 +11,7 @@ def main() -> None:
     df = (
         pl.scan_parquet(data_file)
         .filter(
-            pl.all_horizontal(pl.col("ng", "nf", "sg", "sf").is_not_null()),
+            pl.all_horizontal(pl.col("ng", "nf", "sg", "sf").is_not_null())
         )
         .select("date")
         .with_columns(pl.col("date").dt.truncate("1y").dt.year())

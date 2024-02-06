@@ -9,60 +9,28 @@ import butterfly_common
 
 def test_cast_lat_sign() -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat_left": [12],
-            "lat_right": [12],
-        },
-        schema={
-            "lat_left": pl.UInt8,
-            "lat_right": pl.UInt8,
-        },
+        {"lat_left": [12], "lat_right": [12]},
+        schema={"lat_left": pl.UInt8, "lat_right": pl.UInt8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat_left": [12],
-            "lat_right": [12],
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
+        {"lat_left": [12], "lat_right": [12]},
+        schema={"lat_left": pl.Int8, "lat_right": pl.Int8},
     )
     df_out = butterfly_common.cast_lat_sign(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 def test_drop_lat_null() -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat_left": [4, None],
-            "lat_right": [12, None],
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
+        {"lat_left": [4, None], "lat_right": [12, None]},
+        schema={"lat_left": pl.Int8, "lat_right": pl.Int8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat_left": [4],
-            "lat_right": [12],
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
+        {"lat_left": [4], "lat_right": [12]},
+        schema={"lat_left": pl.Int8, "lat_right": pl.Int8},
     )
     df_out = butterfly_common.drop_lat_null(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -107,10 +75,7 @@ def test_reverse_south(
     )
     df_out = butterfly_common.reverse_south(df_in)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        categorical_as_str=True,
+        df_out, df_expected, check_column_order=False, categorical_as_str=True
     )
 
 
@@ -152,21 +117,11 @@ def test_reverse_minus(
         },
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat_left": [out_lat_left],
-            "lat_right": [out_lat_right],
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
+        {"lat_left": [out_lat_left], "lat_right": [out_lat_right]},
+        schema={"lat_left": pl.Int8, "lat_right": pl.Int8},
     )
     df_out = butterfly_common.reverse_minus(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -181,37 +136,18 @@ def test_reverse_minus(
     ],
 )
 def test_fix_order(
-    in_lat_left: int,
-    in_lat_right: int,
-    out_lat_min: int,
-    out_lat_max: int,
+    in_lat_left: int, in_lat_right: int, out_lat_min: int, out_lat_max: int
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "lat_left": [in_lat_left],
-            "lat_right": [in_lat_right],
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
+        {"lat_left": [in_lat_left], "lat_right": [in_lat_right]},
+        schema={"lat_left": pl.Int8, "lat_right": pl.Int8},
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat_min": [out_lat_min],
-            "lat_max": [out_lat_max],
-        },
-        schema={
-            "lat_min": pl.Int8,
-            "lat_max": pl.Int8,
-        },
+        {"lat_min": [out_lat_min], "lat_max": [out_lat_max]},
+        schema={"lat_min": pl.Int8, "lat_max": pl.Int8},
     )
     df_out = butterfly_common.fix_order(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -224,36 +160,18 @@ def test_fix_order(
     ],
 )
 def test_complement_last(
-    in_first: date,
-    in_last: date | None,
-    out_last: date,
+    in_first: date, in_last: date | None, out_last: date
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "first": [in_first],
-            "last": [in_last],
-        },
-        schema={
-            "first": pl.Date,
-            "last": pl.Date,
-        },
+        {"first": [in_first], "last": [in_last]},
+        schema={"first": pl.Date, "last": pl.Date},
     )
     df_expected = pl.LazyFrame(
-        {
-            "first": [in_first],
-            "last": [out_last],
-        },
-        schema={
-            "first": pl.Date,
-            "last": pl.Date,
-        },
+        {"first": [in_first], "last": [out_last]},
+        schema={"first": pl.Date, "last": pl.Date},
     )
     df_out = butterfly_common.complement_last(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -274,37 +192,18 @@ def test_complement_last(
     ],
 )
 def test_truncate_day(
-    in_first: date,
-    in_last: date,
-    out_first: date,
-    out_last: date,
+    in_first: date, in_last: date, out_first: date, out_last: date
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "first": [in_first],
-            "last": [in_last],
-        },
-        schema={
-            "first": pl.Date,
-            "last": pl.Date,
-        },
+        {"first": [in_first], "last": [in_last]},
+        schema={"first": pl.Date, "last": pl.Date},
     )
     df_expected = pl.LazyFrame(
-        {
-            "first": [out_first],
-            "last": [out_last],
-        },
-        schema={
-            "first": pl.Date,
-            "last": pl.Date,
-        },
+        {"first": [out_first], "last": [out_last]},
+        schema={"first": pl.Date, "last": pl.Date},
     )
     df_out = butterfly_common.truncate_day(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 @pytest.mark.parametrize(
@@ -374,21 +273,12 @@ def test_filter_data(
         },
     )
     df_expected = pl.LazyFrame(
-        {
-            "lat_left": out_lat_left,
-            "lat_right": out_lat_right,
-        },
-        schema={
-            "lat_left": pl.Int8,
-            "lat_right": pl.Int8,
-        },
+        {"lat_left": out_lat_left, "lat_right": out_lat_right},
+        schema={"lat_left": pl.Int8, "lat_right": pl.Int8},
     )
     df_out = butterfly_common.filter_data(df_in, in_date)
     assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-        check_row_order=False,
+        df_out, df_expected, check_column_order=False, check_row_order=False
     )
 
 

@@ -244,7 +244,7 @@ def validate_row(row: dict[str, str | None], *, first: bool) -> list[str]:
 
     if int(row["no"]) == 0:
         errors.extend(
-            [field for field in ["lat", "lon", "num"] if row[field] != ""],
+            [field for field in ["lat", "lon", "num"] if row[field] != ""]
         )
 
     else:
@@ -281,16 +281,12 @@ def validate_file(file: Iterable[str]) -> list[dict]:
                     "type": "row",
                     "line": reader.line_num,
                     "over": list(row["over"]),
-                },
+                }
             )
 
         if len(ret := validate_row(row, first=first)) != 0:
             errors.append(
-                {
-                    "type": "field",
-                    "line": reader.line_num,
-                    "fields": ret,
-                },
+                {"type": "field", "line": reader.line_num, "fields": ret}
             )
 
         if first:
@@ -312,12 +308,12 @@ def main() -> None:
                         case "row":
                             print(
                                 f"    {err['line']: <4}row over       :"
-                                f" {err['over']}",
+                                f" {err['over']}"
                             )
                         case "field":
                             print(
                                 f"    {err['line']: <4}field invalid  :"
-                                f" {err['fields']}",
+                                f" {err['fields']}"
                             )
                 print()
 

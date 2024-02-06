@@ -10,47 +10,19 @@ import ar_merge
 @pytest.mark.parametrize(
     ("in_no", "in_over", "out_no"),
     [
-        (
-            [1, 2, 3, 4],
-            [False, False, False, False],
-            [],
-        ),
-        (
-            [1, 2, 3, 3],
-            [False, False, True, False],
-            [3],
-        ),
-        (
-            [1, 2, 3, 3],
-            [False, False, False, False],
-            [],
-        ),
-        (
-            [1, 2, 2, 2],
-            [False, True, False, False],
-            [],
-        ),
-        (
-            [1, 2, 3, 4],
-            [True, True, False, False],
-            [],
-        ),
+        ([1, 2, 3, 4], [False, False, False, False], []),
+        ([1, 2, 3, 3], [False, False, True, False], [3]),
+        ([1, 2, 3, 3], [False, False, False, False], []),
+        ([1, 2, 2, 2], [False, True, False, False], []),
+        ([1, 2, 3, 4], [True, True, False, False], []),
     ],
 )
 def test_extract_over_no(
-    in_no: list[int],
-    in_over: list[int],
-    out_no: list[int],
+    in_no: list[int], in_over: list[int], out_no: list[int]
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "no": in_no,
-            "over": in_over,
-        },
-        schema={
-            "no": pl.UInt32,
-            "over": pl.Boolean,
-        },
+        {"no": in_no, "over": in_over},
+        schema={"no": pl.UInt32, "over": pl.Boolean},
     )
     s_expected = pl.Series("no", out_no, dtype=pl.UInt32)
     s_out = ar_merge.extract_over_no(df_in)
@@ -87,35 +59,15 @@ def test_get_obs_date(
     out_last: list[int],
 ) -> None:
     df_in = pl.LazyFrame(
-        {
-            "no": in_no,
-            "first": in_first,
-            "last": in_last,
-        },
-        schema={
-            "no": pl.UInt32,
-            "first": pl.Date,
-            "last": pl.Date,
-        },
+        {"no": in_no, "first": in_first, "last": in_last},
+        schema={"no": pl.UInt32, "first": pl.Date, "last": pl.Date},
     )
     df_expected = pl.LazyFrame(
-        {
-            "no": out_no,
-            "first": out_first,
-            "last": out_last,
-        },
-        schema={
-            "no": pl.UInt32,
-            "first": pl.Date,
-            "last": pl.Date,
-        },
+        {"no": out_no, "first": out_first, "last": out_last},
+        schema={"no": pl.UInt32, "first": pl.Date, "last": pl.Date},
     )
     df_out = ar_merge.get_obs_date(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 def test_get_not_null() -> None:
@@ -180,11 +132,7 @@ def test_get_not_null() -> None:
         },
     )
     df_out = ar_merge.get_not_null(df_in)
-    assert_frame_equal(
-        df_out,
-        df_expected,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
 def test_merge() -> None:
@@ -250,16 +198,8 @@ def test_merge() -> None:
             "lon_left_sign": [None, None, None],
             "lon_right_sign": [None, None, None],
             "lon_question": [None, "?", None],
-            "first": [
-                date(2000, 5, 5),
-                date(2000, 5, 30),
-                date(2000, 12, 30),
-            ],
-            "last": [
-                date(2000, 5, 5),
-                date(2000, 6, 3),
-                date(2001, 1, 7),
-            ],
+            "first": [date(2000, 5, 5), date(2000, 5, 30), date(2000, 12, 30)],
+            "last": [date(2000, 5, 5), date(2000, 6, 3), date(2001, 1, 7)],
             "over": [False, False, False],
         },
         schema={
@@ -281,8 +221,4 @@ def test_merge() -> None:
         },
     )
     df_out = ar_merge.merge(df_in)
-    assert_frame_equal(
-        df_out,
-        df_correct,
-        check_column_order=False,
-    )
+    assert_frame_equal(df_out, df_correct, check_column_order=False)

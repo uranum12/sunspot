@@ -179,24 +179,12 @@ def test_validate_num(in_num: str, result: bool) -> None:
             [],
         ),
         (
-            {
-                "date": "",
-                "no": "1",
-                "lat": "N12",
-                "lon": "E10",
-                "num": "3",
-            },
+            {"date": "", "no": "1", "lat": "N12", "lon": "E10", "num": "3"},
             True,
             ["date"],
         ),
         (
-            {
-                "date": "",
-                "no": "1",
-                "lat": "N12",
-                "lon": "E10",
-                "num": "3",
-            },
+            {"date": "", "no": "1", "lat": "N12", "lon": "E10", "num": "3"},
             False,
             [],
         ),
@@ -223,13 +211,7 @@ def test_validate_num(in_num: str, result: bool) -> None:
             ["lat", "lon", "num"],
         ),
         (
-            {
-                "date": "2020/8/20",
-                "no": "0",
-                "lat": "",
-                "lon": "",
-                "num": "",
-            },
+            {"date": "2020/8/20", "no": "0", "lat": "", "lon": "", "num": ""},
             True,
             [],
         ),
@@ -245,44 +227,24 @@ def test_validate_num(in_num: str, result: bool) -> None:
             ["lat", "num"],
         ),
         (
-            {
-                "date": None,
-                "no": "1",
-                "lat": None,
-                "lon": None,
-                "num": None,
-            },
+            {"date": None, "no": "1", "lat": None, "lon": None, "num": None},
             True,
             ["date", "lat", "lon", "num"],
         ),
         (
-            {
-                "date": None,
-                "no": None,
-                "lat": "12",
-                "lon": "3",
-                "num": None,
-            },
+            {"date": None, "no": None, "lat": "12", "lon": "3", "num": None},
             True,
             ["date", "no"],
         ),
         (
-            {
-                "date": None,
-                "no": "0",
-                "lat": None,
-                "lon": None,
-                "num": None,
-            },
+            {"date": None, "no": "0", "lat": None, "lon": None, "num": None},
             True,
             ["date", "lat", "lon", "num"],
         ),
     ],
 )
 def test_validate_row(
-    in_row: dict[str, str | None],
-    in_first: bool,
-    result: list[str],
+    in_row: dict[str, str | None], in_first: bool, result: list[str]
 ) -> None:
     assert seiryo_check_file.validate_row(in_row, first=in_first) == result
 
@@ -310,18 +272,10 @@ def test_validate_row(
                 {
                     "type": "header",
                     "header": ["dat", "No", "lat", "long", "num"],
-                },
+                }
             ],
         ),
-        (
-            [],
-            [
-                {
-                    "type": "header",
-                    "header": None,
-                },
-            ],
-        ),
+        ([], [{"type": "header", "header": None}]),
         (
             [
                 "date,no,lat,lon,num\n",
@@ -330,16 +284,8 @@ def test_validate_row(
                 "2020/9/2,0,,,,\n",
             ],
             [
-                {
-                    "type": "row",
-                    "line": 3,
-                    "over": ["foo"],
-                },
-                {
-                    "type": "row",
-                    "line": 4,
-                    "over": [""],
-                },
+                {"type": "row", "line": 3, "over": ["foo"]},
+                {"type": "row", "line": 4, "over": [""]},
             ],
         ),
         (
@@ -350,16 +296,8 @@ def test_validate_row(
                 "2020/9/2,0,,\n",
             ],
             [
-                {
-                    "type": "field",
-                    "line": 2,
-                    "fields": ["date"],
-                },
-                {
-                    "type": "field",
-                    "line": 4,
-                    "fields": ["num"],
-                },
+                {"type": "field", "line": 2, "fields": ["date"]},
+                {"type": "field", "line": 4, "fields": ["num"]},
             ],
         ),
     ],

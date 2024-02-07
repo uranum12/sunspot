@@ -147,53 +147,6 @@ def draw_sunspot_number_whole_disk_plotly(df: pl.DataFrame) -> go.Figure:
     )
 
 
-def draw_sunspot_number_hemispheric(df: pl.DataFrame) -> Figure:
-    fig = plt.figure(figsize=(8, 5))
-    ax = fig.add_subplot(111)
-
-    ax.plot(df["date"], df["north"], lw=1, label="north")
-    ax.plot(df["date"], df["south"], lw=1, label="south")
-
-    ax.set_title("fujimori's sunspot number", y=1.1)
-    ax.set_xlabel("year")
-    ax.set_ylabel("relative sunspot number")
-
-    ax.legend(
-        fancybox=False,
-        edgecolor="black",
-        framealpha=1,
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.02),
-        borderaxespad=0,
-        ncol=2,
-    )
-
-    return fig
-
-
-def draw_sunspot_number_hemispheric_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["date"], y=df["north"], mode="lines+markers", name="north"
-            )
-        )
-        .add_trace(
-            go.Scatter(
-                x=df["date"], y=df["south"], mode="lines+markers", name="south"
-            )
-        )
-        .update_layout(
-            {
-                "title": {"text": "fujimori's hemispheric sunspot number"},
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "sunspot number"}},
-            }
-        )
-    )
-
-
 def draw_scatter(df: pl.DataFrame, factor: float, r2: float) -> Figure:
     fig = plt.figure(figsize=(8, 5))
     ax = fig.add_subplot(111)
@@ -383,26 +336,16 @@ def main_matplotlib() -> None:
             pad_inches=0.1,
         )
 
-    fig2 = draw_sunspot_number_hemispheric(df_fujimori)
-
-    for ext in "pdf", "png":
-        fig2.savefig(
-            output_path / f"sunspot_number_sn.{ext}",
-            dpi=300,
-            bbox_inches="tight",
-            pad_inches=0.1,
-        )
-
     factor = calc_factor(df_joined)
     print(f"{factor=}")
 
     r2 = calc_r2(df_joined, factor)
     print(f"{r2=}")
 
-    fig3 = draw_scatter(df_joined, factor, r2)
+    fig2 = draw_scatter(df_joined, factor, r2)
 
     for ext in "pdf", "png":
-        fig3.savefig(
+        fig2.savefig(
             output_path / f"scatter.{ext}",
             dpi=300,
             bbox_inches="tight",
@@ -412,10 +355,10 @@ def main_matplotlib() -> None:
     df_ratio_diff = calc_ratio_and_diff(df_joined, factor)
     print(df_ratio_diff)
 
-    fig4 = draw_ratio_and_diff(df_ratio_diff, factor)
+    fig3 = draw_ratio_and_diff(df_ratio_diff, factor)
 
     for ext in "pdf", "png":
-        fig4.savefig(
+        fig3.savefig(
             output_path / f"ratio_diff.{ext}",
             dpi=300,
             bbox_inches="tight",
@@ -487,7 +430,13 @@ def main_plotly() -> None:
             file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
-    fig2 = draw_sunspot_number_hemispheric_plotly(df_fujimori)
+    factor = calc_factor(df_joined)
+    print(f"{factor=}")
+
+    r2 = calc_r2(df_joined, factor)
+    print(f"{r2=}")
+
+    fig2 = draw_scatter_plotly(df_joined, factor, r2)
     fig2.update_layout(
         {
             "template": "simple_white",
@@ -526,22 +475,17 @@ def main_plotly() -> None:
             },
         }
     )
-    fig2.write_json(
-        output_path / "sunspot_number_hemispheric.json", pretty=True
-    )
+    fig2.write_json(output_path / "scatter.json", pretty=True)
     for ext in "pdf", "png":
-        file_path = output_path / f"sunspot_number_hemispheric.{ext}"
+        file_path = output_path / f"scatter.{ext}"
         fig2.write_image(
             file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
-    factor = calc_factor(df_joined)
-    print(f"{factor=}")
+    df_ratio_diff = calc_ratio_and_diff(df_joined, factor)
+    print(df_ratio_diff)
 
-    r2 = calc_r2(df_joined, factor)
-    print(f"{r2=}")
-
-    fig3 = draw_scatter_plotly(df_joined, factor, r2)
+    fig3 = draw_ratio_plotly(df_ratio_diff)
     fig3.update_layout(
         {
             "template": "simple_white",
@@ -549,16 +493,7 @@ def main_plotly() -> None:
             "title": {
                 "font_size": 24,
                 "x": 0.5,
-                "y": 0.95,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "legend": {
-                "borderwidth": 1,
-                "font_size": 16,
-                "orientation": "h",
-                "x": 0.5,
-                "y": 1.1,
+                "y": 0.9,
                 "xanchor": "center",
                 "yanchor": "middle",
             },
@@ -580,17 +515,14 @@ def main_plotly() -> None:
             },
         }
     )
-    fig3.write_json(output_path / "scatter.json", pretty=True)
+    fig3.write_json(output_path / "ratio.json", pretty=True)
     for ext in "pdf", "png":
-        file_path = output_path / f"scatter.{ext}"
+        file_path = output_path / f"ratio.{ext}"
         fig3.write_image(
             file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
-    df_ratio_diff = calc_ratio_and_diff(df_joined, factor)
-    print(df_ratio_diff)
-
-    fig4 = draw_ratio_plotly(df_ratio_diff)
+    fig4 = draw_diff_plotly(df_ratio_diff)
     fig4.update_layout(
         {
             "template": "simple_white",
@@ -620,52 +552,15 @@ def main_plotly() -> None:
             },
         }
     )
-    fig4.write_json(output_path / "ratio.json", pretty=True)
+    fig4.write_json(output_path / "diff.json", pretty=True)
     for ext in "pdf", "png":
-        file_path = output_path / f"ratio.{ext}"
+        file_path = output_path / f"diff.{ext}"
         fig4.write_image(
             file_path, width=800, height=500, engine="kaleido", scale=10
         )
 
-    fig5 = draw_diff_plotly(df_ratio_diff)
+    fig5 = draw_ratio_and_diff_plotly(df_ratio_diff)
     fig5.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.9,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig5.write_json(output_path / "diff.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"diff.{ext}"
-        fig5.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
-        )
-
-    fig6 = draw_ratio_and_diff_plotly(df_ratio_diff)
-    fig6.update_layout(
         {
             "template": "simple_white",
             "font_family": "Century",
@@ -709,10 +604,10 @@ def main_plotly() -> None:
             },
         }
     )
-    fig6.write_json(output_path / "ratio_and_diff.json", pretty=True)
+    fig5.write_json(output_path / "ratio_and_diff.json", pretty=True)
     for ext in "pdf", "png":
         file_path = output_path / f"ratio_and_diff.{ext}"
-        fig6.write_image(
+        fig5.write_image(
             file_path, width=800, height=500, engine="kaleido", scale=10
         )
 

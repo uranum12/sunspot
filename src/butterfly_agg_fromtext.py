@@ -25,14 +25,16 @@ def main() -> None:
                 pl.when(pl.col("ns").eq("N"))
                 .then(
                     pl.col("data").map_elements(
-                        lambda a: [[int(a) for a in a.split("-")] for a in a]
+                        lambda a: [[int(a) for a in a.split("-")] for a in a],
+                        return_dtype=pl.List(pl.List(pl.Int64)),
                     )
                 )
                 .otherwise(
                     pl.col("data").map_elements(
                         lambda a: [
                             [-int(a) for a in a.split("-")[::-1]] for a in a
-                        ]
+                        ],
+                        return_dtype=pl.List(pl.List(pl.Int64)),
                     )
                 )
             )

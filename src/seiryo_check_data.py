@@ -31,8 +31,10 @@ def find_invalid_group_number(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("no").alias("original"),
             pl.col("no")
             .count()
-            .map_elements(lambda no: list(range(1, no + 1)))
-            .cast(pl.UInt8)
+            .map_elements(
+                lambda no: pl.Series(range(1, no + 1), dtype=pl.UInt8),
+                return_dtype=pl.List(pl.UInt8),
+            )
             .alias("expected"),
         )
         .with_columns(pl.col("original", "expected").list.sort())

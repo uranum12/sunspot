@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import polars as pl
@@ -47,6 +47,7 @@ def check_by_total(
             )
             .group_by("year", "month")
             .agg(pl.col("nt").sum(), pl.col("st").sum())
+            # .cast({"month": pl.UInt32})
             .join(index, on=["year", "month"], how="outer")
             .filter(
                 (pl.col("nt") != pl.col("n")) | (pl.col("st") != pl.col("s"))
@@ -60,8 +61,9 @@ def check_by_total(
 
 
 def is_sun_rised(sun: Sun, dt: datetime) -> bool:
-    sr = sun.get_local_sunrise_time(dt.date() - timedelta(days=1))
-    ss = sun.get_local_sunset_time(dt.date())
+    tz = timezone(timedelta(hours=9))
+    sr = sun.get_sunrise_time(dt, tz)
+    ss = sun.get_sunset_time(dt + timedelta(days=1), tz)
     return sr <= dt <= ss
 
 
@@ -78,7 +80,7 @@ def check_sun_rised(
         ~pl.col("date")
         .dt.combine(pl.col("time"))
         .dt.replace_time_zone("Asia/Tokyo")
-        .map_elements(_is_sun_rised),
+        .map_elements(_is_sun_rised, return_dtype=pl.Boolean),
     )
 
 

@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,6 +27,24 @@ def load_silso_data(path: Path) -> pl.DataFrame:
         .drop("year", "month")
         .collect()
     )
+
+
+def load_flare_data(path: Path) -> pl.DataFrame:
+    dates: list[date] = []
+    indexes: list[float] = []
+    for file in path.glob("*.txt"):
+        year = int(file.name[18:22])
+        with file.open("r") as f:
+            l_mean = next(
+                line.strip()
+                for line in f.readlines()
+                if line.startswith("Mean")
+            )
+        for i, d in enumerate(l_mean.split()[1:]):
+            dates.append(date(year, i + 1, 1))
+            indexes.append(float(d))
+
+    return pl.DataFrame({"date": dates, "index": indexes}).sort("date")
 
 
 def calc_sunspot_number(df: pl.DataFrame) -> pl.DataFrame:
@@ -60,6 +79,20 @@ def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
         msg = "missing data for 'silso' on certain dates"
         raise ValueError(msg)
     return df
+
+
+def join_flare_data(
+    df_seiryo: pl.DataFrame, df_flare: pl.DataFrame
+) -> pl.DataFrame:
+    return (
+        df_seiryo.lazy()
+        .select("date", "total")
+        .rename({"total": "seiryo"})
+        .join(
+            df_flare.lazy().rename({"index": "flare"}), on="date", how="left"
+        )
+        .collect()
+    )
 
 
 def calc_factor(df: pl.DataFrame) -> float:
@@ -353,15 +386,52 @@ def draw_ratio_and_diff_plotly(df: pl.DataFrame) -> go.Figure:
     )
 
 
-def main() -> None:
+def draw_sunspot_number_with_flare_plotly(df: pl.DataFrame) -> go.Figure:
+    return (
+        go.Figure()
+        .add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["seiryo"],
+                mode="lines+markers",
+                name="Seiryo",
+            )
+        )
+        .add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["flare"],
+                yaxis="y2",
+                mode="lines+markers",
+                name="Flare",
+            )
+        )
+        .update_layout(
+            {
+                "title": "sunspot number and solar flare index",
+                "xaxis": {"title": {"text": "date"}},
+                "yaxis": {"title": {"text": "sunspot number"}, "side": "left"},
+                "yaxis2": {
+                    "title": {"text": "solar flare index"},
+                    "overlaying": "y",
+                    "side": "right",
+                },
+            }
+        )
+    )
+
+
+def main() -> None:  # noqa: PLR0915
     path_seiryo = Path("out/seiryo/sn.parquet")
     path_silso = Path("data/SN_m_tot_V2.0.txt")
+    path_flare = Path("data/flare")
     output_path = Path("out/seiryo")
 
     df_seiryo = pl.read_parquet(path_seiryo).pipe(calc_sunspot_number)
     print(df_seiryo)
     df_silso = load_silso_data(path_silso)
     print(df_silso)
+    df_flare = load_flare_data(path_flare)
 
     df_joined = join_data(df_seiryo, df_silso)
     print(df_joined)
@@ -640,6 +710,63 @@ def main() -> None:
     for ext in "pdf", "png":
         file_path = output_path / f"ratio_and_diff.{ext}"
         fig6.write_image(
+            file_path, width=800, height=500, engine="kaleido", scale=10
+        )
+
+    df_flare_joined = join_flare_data(df_seiryo, df_flare)
+    print(df_flare_joined)
+
+    fig7 = draw_sunspot_number_with_flare_plotly(df_flare_joined)
+    fig7.update_layout(
+        {
+            "template": "simple_white",
+            "font_family": "Century",
+            "title": {
+                "font_size": 24,
+                "x": 0.5,
+                "y": 0.95,
+                "xanchor": "center",
+                "yanchor": "middle",
+            },
+            "legend": {
+                "borderwidth": 1,
+                "font_size": 16,
+                "orientation": "h",
+                "x": 0.5,
+                "y": 1.1,
+                "xanchor": "center",
+                "yanchor": "middle",
+            },
+            "xaxis": {
+                "title_font_size": 20,
+                "tickfont_size": 16,
+                "linewidth": 1,
+                "mirror": True,
+                "showgrid": True,
+                "ticks": "outside",
+            },
+            "yaxis": {
+                "title_font_size": 20,
+                "tickfont_size": 16,
+                "linewidth": 1,
+                "showgrid": True,
+                "ticks": "outside",
+            },
+            "yaxis2": {
+                "title_font_size": 20,
+                "tickfont_size": 16,
+                "linewidth": 1,
+                "showgrid": True,
+                "ticks": "outside",
+            },
+        }
+    )
+    fig7.write_json(
+        output_path / "sunspot_number_with_flare.json", pretty=True
+    )
+    for ext in "pdf", "png":
+        file_path = output_path / f"sunspot_number_with_flare.{ext}"
+        fig7.write_image(
             file_path, width=800, height=500, engine="kaleido", scale=10
         )
 

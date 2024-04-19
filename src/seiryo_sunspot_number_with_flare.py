@@ -1,8 +1,9 @@
 from datetime import date
 from pathlib import Path
 
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 import polars as pl
+from matplotlib.figure import Figure
 
 
 def load_flare_data(path: Path) -> pl.DataFrame:
@@ -35,105 +36,66 @@ def join_data(df_sn: pl.DataFrame, df_flare: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def draw_sunspot_number_with_flare_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["date"],
-                y=df["seiryo"],
-                mode="lines+markers",
-                name="Seiryo",
-            )
-        )
-        .add_trace(
-            go.Scatter(
-                x=df["date"],
-                y=df["flare"],
-                yaxis="y2",
-                mode="lines+markers",
-                name="Flare",
-            )
-        )
-        .update_layout(
-            {
-                "title": "sunspot number and solar flare index",
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "sunspot number"}, "side": "left"},
-                "yaxis2": {
-                    "title": {"text": "solar flare index"},
-                    "overlaying": "y",
-                    "side": "right",
-                },
-            }
-        )
+def draw_sunspot_number_with_flare(df: pl.DataFrame) -> Figure:
+    fig = plt.figure(figsize=(8, 5))
+    ax1 = fig.add_subplot(111)
+
+    ax1.plot(df["date"], df["seiryo"], c="C0", lw=1, label="seiryo")
+
+    ax1.set_title("sunspot number and solar flare index", y=1.1)
+    ax1.set_xlabel("date")
+    ax1.set_ylabel("sunspot number")
+    ax1.grid()
+
+    ax2 = ax1.twinx()
+
+    ax2.plot(df["date"], df["flare"], c="C1", lw=1, label="flare")  # type: ignore[attr-defined]
+    ax2.set_ylabel("solar flare index")
+    ax2.grid()
+
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()  # type: ignore[attr-defined]
+    ax1.legend(
+        h1 + h2,
+        l1 + l2,
+        fancybox=False,
+        edgecolor="black",
+        framealpha=1,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.02),
+        borderaxespad=0,
+        ncol=2,
     )
+
+    fig.tight_layout()
+
+    return fig
 
 
 def main() -> None:
-    path_sn = Path("out/seiryo/sn_monthly.parquet")
+    path_seiryo = Path("out/seiryo/sunspot/monthly.parquet")
     path_flare = Path("data/flare")
-    output_path = Path("out/seiryo")
+    output_path = Path("out/seiryo/sunspot")
 
-    df_sn = pl.read_parquet(path_sn)
-    print(df_sn)
+    df_seiryo = pl.read_parquet(path_seiryo)
+    print(df_seiryo)
 
     df_flare = load_flare_data(path_flare)
     print(df_flare)
 
-    df_joined = join_data(df_sn, df_flare)
-    print(df_joined)
+    df_with_flare = join_data(df_seiryo, df_flare)
+    print(df_with_flare)
+    df_with_flare.write_parquet(output_path / "with_flare.parquet")
 
-    fig = draw_sunspot_number_with_flare_plotly(df_joined)
-    fig.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.95,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "legend": {
-                "borderwidth": 1,
-                "font_size": 16,
-                "orientation": "h",
-                "x": 0.5,
-                "y": 1.1,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis2": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig.write_json(output_path / "sunspot_number_with_flare.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"sunspot_number_with_flare.{ext}"
-        fig.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    fig_with_flare = draw_sunspot_number_with_flare(df_with_flare)
+
+    for f in ["png", "pdf"]:
+        fig_with_flare.savefig(
+            output_path / f"with_flare.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
 

@@ -1,8 +1,8 @@
+import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly.graph_objects as go
 import polars as pl
 from matplotlib.figure import Figure
 from scipy import optimize
@@ -80,6 +80,7 @@ def draw_sunspot_number_with_silso(df: pl.DataFrame) -> Figure:
     ax.set_xlabel("date")
     ax.set_ylabel("sunspot number")
 
+    ax.grid()
     ax.legend(
         fancybox=False,
         edgecolor="black",
@@ -93,32 +94,6 @@ def draw_sunspot_number_with_silso(df: pl.DataFrame) -> Figure:
     fig.tight_layout()
 
     return fig
-
-
-def draw_sunspot_number_with_silso_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["date"],
-                y=df["seiryo"],
-                mode="lines+markers",
-                name="seiryo",
-            )
-        )
-        .add_trace(
-            go.Scatter(
-                x=df["date"], y=df["silso"], mode="lines+markers", name="silso"
-            )
-        )
-        .update_layout(
-            {
-                "title": {"text": "seiryo's whole-disk sunspot number"},
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "sunspot number"}},
-            }
-        )
-    )
 
 
 def draw_scatter(df: pl.DataFrame, factor: float, r2: float) -> Figure:
@@ -136,76 +111,57 @@ def draw_scatter(df: pl.DataFrame, factor: float, r2: float) -> Figure:
     ax.set_xlabel("SILSO")
     ax.set_ylabel("seiryo")
 
+    ax.grid()
+
     fig.tight_layout()
 
     return fig
 
 
-def draw_scatter_plotly(
-    df: pl.DataFrame, factor: float, r2: float
-) -> go.Figure:
-    silso_max: float = df.select(pl.max("silso")).item()
-    seiryo_max: float = df.select(pl.max("seiryo")).item()
-    factor_max = max(silso_max, seiryo_max / factor)
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["silso"],
-                y=df["seiryo"],
-                text=df["date"],
-                mode="markers",
-                name="sunspot number",
-            )
-        )
-        .add_trace(
-            go.Scatter(
-                x=[0, factor_max],
-                y=np.poly1d([factor, 0])([0, factor_max]),
-                mode="lines",
-                name="scaling factor",
-                marker_color="black",
-            )
-        )
-        .add_annotation(
-            text=f"$y={factor:.5f}x$",
-            showarrow=False,
-            xref="paper",
-            yref="paper",
-            yanchor="top",
-            x=0.8,
-            y=0.2,
-        )
-        .add_annotation(
-            text=f"$R^2={r2:.5f}$",
-            showarrow=False,
-            xref="paper",
-            yref="paper",
-            yanchor="bottom",
-            x=0.8,
-            y=0.2,
-        )
-        .update_layout(
-            {
-                "title": {"text": "silso and seiryo"},
-                "xaxis": {"title": {"text": "silso"}},
-                "yaxis": {"title": {"text": "seiryo"}},
-            }
-        )
-    )
+def draw_ratio(df: pl.DataFrame, factor: float) -> Figure:
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+
+    ax.axhline(y=factor, c="black", lw=1, ls="--", zorder=1)
+    ax.plot(df["date"], df["ratio"], lw=1, zorder=2)
+
+    ax.set_title("ratio: seiryo / SILSO")
+    ax.set_xlabel("date")
+    ax.set_ylabel("ratio")
+    ax.grid()
+
+    fig.tight_layout()
+
+    return fig
 
 
-def draw_ratio_and_diff(df: pl.DataFrame, factor: float) -> Figure:
+def draw_diff(df: pl.DataFrame) -> Figure:
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(111)
+
+    ax.plot(df["date"], df["diff"], lw=1)
+
+    ax.set_title("difference: seiryo* - SILSO")
+    ax.set_xlabel("date")
+    ax.set_ylabel("difference")
+    ax.grid()
+
+    fig.tight_layout()
+
+    return fig
+
+
+def draw_ratio_diff_1(df: pl.DataFrame, factor: float) -> Figure:
     fig = plt.figure(figsize=(8, 8))
     ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
+    ax2 = fig.add_subplot(212, sharex=ax1)
 
     ax1.axhline(y=factor, c="black", lw=1, ls="--", zorder=1)
     ax1.plot(df["date"], df["ratio"], lw=1, zorder=2)
 
     ax1.set_title("ratio: seiryo / SILSO")
-    ax1.set_xlabel("date")
     ax1.set_ylabel("ratio")
+    ax1.tick_params(bottom=False, labelbottom=False)
     ax1.grid()
 
     ax2.plot(df["date"], df["diff"], lw=1)
@@ -220,78 +176,46 @@ def draw_ratio_and_diff(df: pl.DataFrame, factor: float) -> Figure:
     return fig
 
 
-def draw_ratio_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["date"], y=df["ratio"], mode="lines+markers", name="ratio"
-            )
-        )
-        .update_layout(
-            {
-                "title": {"text": "ratio: seiryo / silso"},
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "ratio"}},
-            }
-        )
+def draw_ratio_diff_2(df: pl.DataFrame) -> Figure:
+    fig = plt.figure(figsize=(8, 5))
+    ax1 = fig.add_subplot(111)
+
+    ax1.plot(df["date"], df["ratio"], c="C0", lw=1, label="ratio")
+
+    ax1.set_title(
+        "ratio: seiryo / SILSO and difference: seiryo* - SILSO", y=1.1
+    )
+    ax1.set_xlabel("date")
+    ax1.set_ylabel("ratio")
+    ax1.grid()
+
+    ax2 = ax1.twinx()
+
+    ax2.plot(df["date"], df["diff"], c="C1", lw=1, label="diff")  # type: ignore[attr-defined]
+    ax2.set_ylabel("difference")
+    ax2.grid()
+
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()  # type: ignore[attr-defined]
+    ax1.legend(
+        h1 + h2,
+        l1 + l2,
+        fancybox=False,
+        edgecolor="black",
+        framealpha=1,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.02),
+        borderaxespad=0,
+        ncol=2,
     )
 
-
-def draw_diff_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["date"], y=df["diff"], mode="lines+markers", name="diff"
-            )
-        )
-        .update_layout(
-            {
-                "title": {"text": "difference: seiryo* - silso"},
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "difference"}},
-            }
-        )
-    )
-
-
-def draw_ratio_and_diff_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(
-            go.Scatter(
-                x=df["date"], y=df["ratio"], mode="lines+markers", name="ratio"
-            )
-        )
-        .add_trace(
-            go.Scatter(
-                x=df["date"],
-                y=df["diff"],
-                yaxis="y2",
-                mode="lines+markers",
-                name="diff",
-            )
-        )
-        .update_layout(
-            {
-                "title": {"text": "ratio and difference"},
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "ratio"}, "side": "left"},
-                "yaxis2": {
-                    "title": {"text": "difference"},
-                    "overlaying": "y",
-                    "side": "right",
-                },
-            }
-        )
-    )
+    return fig
 
 
 def main() -> None:
-    path_seiryo = Path("out/seiryo/sn_monthly.parquet")
+    path_seiryo = Path("out/seiryo/sunspot/monthly.parquet")
     path_silso = Path("data/SN_m_tot_V2.0.txt")
-    output_path = Path("out/seiryo")
+    output_path = Path("out/seiryo/sunspot")
 
     df_seiryo = pl.read_parquet(path_seiryo)
     print(df_seiryo)
@@ -299,236 +223,86 @@ def main() -> None:
     df_silso = load_silso_data(path_silso)
     print(df_silso)
 
-    df_joined = join_data(df_seiryo, df_silso)
-    print(df_joined)
+    df_seiryo_with_silso = join_data(df_seiryo, df_silso)
+    print(df_seiryo_with_silso)
+    df_seiryo_with_silso.write_parquet(output_path / "with_silso.parquet")
 
-    factor = calc_factor(df_joined)
+    factor = calc_factor(df_seiryo_with_silso)
     print(f"{factor=}")
 
-    r2 = calc_r2(df_joined, factor)
+    r2 = calc_r2(df_seiryo_with_silso, factor)
     print(f"{r2=}")
 
-    df_ratio_diff = calc_ratio_and_diff(df_joined, factor)
-    print(df_ratio_diff)
+    with (output_path / "factor_r2.json").open("w") as json_file:
+        json.dump({"factor": factor, "r2": r2}, json_file)
 
-    fig1 = draw_sunspot_number_with_silso_plotly(df_joined)
-    fig1.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.95,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "legend": {
-                "borderwidth": 1,
-                "font_size": 16,
-                "orientation": "h",
-                "x": 0.5,
-                "y": 1.1,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig1.write_json(
-        output_path / "sunspot_number_with_silso.json", pretty=True
-    )
-    for ext in "pdf", "png":
-        file_path = output_path / f"sunspot_number_with_silso.{ext}"
-        fig1.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    df_ratio_and_diff = calc_ratio_and_diff(df_seiryo_with_silso, factor)
+    print(df_ratio_and_diff)
+    df_ratio_and_diff.write_parquet(output_path / "ratio_diff.parquet")
+
+    fig_with_silso = draw_sunspot_number_with_silso(df_seiryo_with_silso)
+
+    for f in ["png", "pdf"]:
+        fig_with_silso.savefig(
+            output_path / f"with_silso.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
-    fig3 = draw_scatter_plotly(df_joined, factor, r2)
-    fig3.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.95,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "legend": {
-                "borderwidth": 1,
-                "font_size": 16,
-                "orientation": "h",
-                "x": 0.5,
-                "y": 1.1,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig3.write_json(output_path / "scatter.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"scatter.{ext}"
-        fig3.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    fig_scatter = draw_scatter(df_seiryo_with_silso, factor, r2)
+
+    for f in ["png", "pdf"]:
+        fig_scatter.savefig(
+            output_path / f"scatter.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
-    fig4 = draw_ratio_plotly(df_ratio_diff)
-    fig4.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.9,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig4.write_json(output_path / "ratio.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"ratio.{ext}"
-        fig4.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    fig_ratio = draw_ratio(df_ratio_and_diff, factor)
+
+    for f in ["png", "pdf"]:
+        fig_ratio.savefig(
+            output_path / f"ratio.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
-    fig5 = draw_diff_plotly(df_ratio_diff)
-    fig5.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.9,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig5.write_json(output_path / "diff.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"diff.{ext}"
-        fig5.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    fig_diff = draw_diff(df_ratio_and_diff)
+
+    for f in ["png", "pdf"]:
+        fig_diff.savefig(
+            output_path / f"diff.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
+        )
+    fig_ratio_and_diff_1 = draw_ratio_diff_1(df_ratio_and_diff, factor)
+
+    for f in ["png", "pdf"]:
+        fig_ratio_and_diff_1.savefig(
+            output_path / f"ratio_diff_1.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
-    fig6 = draw_ratio_and_diff_plotly(df_ratio_diff)
-    fig6.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.95,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "legend": {
-                "borderwidth": 1,
-                "font_size": 16,
-                "orientation": "h",
-                "x": 0.5,
-                "y": 1.1,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis2": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig6.write_json(output_path / "ratio_and_diff.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"ratio_and_diff.{ext}"
-        fig6.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    fig_ratio_and_diff_2 = draw_ratio_diff_2(df_ratio_and_diff)
+
+    for f in ["png", "pdf"]:
+        fig_ratio_and_diff_2.savefig(
+            output_path / f"ratio_diff_2.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
 

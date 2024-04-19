@@ -1,6 +1,6 @@
 repos:
   - repo: https://gitlab.com/vojko.pribudic/pre-commit-update
-    rev: v0.2.3
+    rev: v0.3.0
     hooks:
       - id: pre-commit-update
         args: [--dry-run]
@@ -19,7 +19,7 @@ repos:
       - id: poetry-export
         args: [--format, requirements.txt, --without-hashes, --output, requirements.txt]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.7
+    rev: v0.4.0
     hooks:
       - id: ruff
       - id: ruff-format

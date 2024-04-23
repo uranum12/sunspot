@@ -7,21 +7,20 @@ from matplotlib.figure import Figure
 
 
 def load_flare_data(path: Path) -> pl.DataFrame:
+    with path.open("r") as f:
+        lines = [line.strip() for line in f if line.strip()]
+    year = int(lines[3])
+    mean_line = [
+        line.replace("Mean", "").split()
+        for line in lines
+        if line.startswith("Mean")
+    ]
     dates: list[date] = []
     indexes: list[float] = []
-    for file in path.glob("*.txt"):
-        year = int(file.name[18:22])
-        with file.open("r") as f:
-            l_mean = next(
-                line.strip()
-                for line in f.readlines()
-                if line.startswith("Mean")
-            )
-        for i, d in enumerate(l_mean.split()[1:]):
-            dates.append(date(year, i + 1, 1))
-            indexes.append(float(d))
-
-    return pl.DataFrame({"date": dates, "index": indexes}).sort("date")
+    for i, d in enumerate(mean_line[0]):
+        dates.append(date(year, i + 1, 1))
+        indexes.append(float(d))
+    return pl.DataFrame({"date": dates, "index": indexes})
 
 
 def join_data(df_sn: pl.DataFrame, df_flare: pl.DataFrame) -> pl.DataFrame:
@@ -80,7 +79,9 @@ def main() -> None:
     df_seiryo = pl.read_parquet(path_seiryo)
     print(df_seiryo)
 
-    df_flare = load_flare_data(path_flare)
+    df_flare = pl.concat(
+        load_flare_data(file) for file in path_flare.glob("*.txt")
+    ).sort("date")
     print(df_flare)
 
     df_with_flare = join_data(df_seiryo, df_flare)

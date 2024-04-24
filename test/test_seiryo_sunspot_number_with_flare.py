@@ -106,7 +106,7 @@ import seiryo_sunspot_number_with_flare
         ),
     ],
 )
-def test_load_flare_data(
+def test_load_flare_file(
     mocker: MockerFixture,
     in_text: str,
     out_date: list[date],
@@ -120,36 +120,102 @@ def test_load_flare_data(
         schema={"date": pl.Date, "index": pl.Float64},
     )
 
-    df_out = seiryo_sunspot_number_with_flare.load_flare_data(
+    df_out = seiryo_sunspot_number_with_flare.load_flare_file(
         Path("dummy/path")
     )
 
     assert_frame_equal(df_out, df_expected, check_column_order=False)
 
 
+def test_load_flare_data(mocker: MockerFixture) -> None:
+    mocker.patch(
+        "pathlib.Path.glob",
+        side_effect=[
+            (Path(f"north_{year}") for year in range(2010, 2012)),
+            (Path(f"south_{year}") for year in range(2010, 2012)),
+            (Path(f"total_{year}") for year in range(2011, 2013)),
+        ],
+    )
+
+    def _create_df(dt: date, v: float) -> pl.DataFrame:
+        return pl.DataFrame(
+            {"date": [dt], "index": [v]},
+            schema={"date": pl.Date, "index": pl.Float64},
+        )
+
+    mocker.patch(
+        "seiryo_sunspot_number_with_flare.load_flare_file",
+        side_effect=[
+            _create_df(date(2010, 1, 1), 1.2),
+            _create_df(date(2011, 1, 1), 2.3),
+            _create_df(date(2010, 1, 1), 12.3),
+            _create_df(date(2011, 1, 1), 23.4),
+            _create_df(date(2011, 1, 1), 12),
+            _create_df(date(2012, 1, 1), 23),
+        ],
+    )
+    df_expected = pl.DataFrame(
+        {
+            "date": [date(2010, 1, 1), date(2011, 1, 1), date(2012, 1, 1)],
+            "north": [1.2, 2.3, None],
+            "south": [12.3, 23.4, None],
+            "total": [None, 12, 23],
+        },
+        schema={
+            "date": pl.Date,
+            "north": pl.Float64,
+            "south": pl.Float64,
+            "total": pl.Float64,
+        },
+    )
+    df_out = seiryo_sunspot_number_with_flare.load_flare_data(
+        Path("bummy/path")
+    )
+    print(df_out)
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
+
+
 @pytest.mark.parametrize(
     (
-        "in_sn_date",
-        "in_sn_total",
+        "in_seiryo_date",
+        "in_seiryo_north",
+        "in_seiryo_south",
+        "in_seiryo_total",
         "in_flare_date",
-        "in_flare_index",
+        "in_flare_north",
+        "in_flare_south",
+        "in_flare_total",
         "out_date",
-        "out_seiryo",
-        "out_flare",
+        "out_seiryo_north",
+        "out_seiryo_south",
+        "out_seiryo_total",
+        "out_flare_north",
+        "out_flare_south",
+        "out_flare_total",
     ),
     [
         pytest.param(
             [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             [1, 2, 3],
+            [2, 3, 4],
+            [3, 4, 5],
             [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             [2, 4, 6],
+            [3, 5, 7],
+            [4, 6, 8],
             [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             [1, 2, 3],
+            [2, 3, 4],
+            [3, 4, 5],
             [2, 4, 6],
+            [3, 5, 7],
+            [4, 6, 8],
         ),
         pytest.param(
             [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             [1, 2, 3],
+            [2, 3, 4],
+            [3, 4, 5],
             [
                 date(2020, 1, 1),
                 date(2020, 2, 1),
@@ -158,9 +224,15 @@ def test_load_flare_data(
                 date(2020, 5, 1),
             ],
             [2, 4, 6, 8, 10],
+            [3, 5, 7, 9, 11],
+            [4, 6, 8, 10, 12],
             [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
             [1, 2, 3],
+            [2, 3, 4],
+            [3, 4, 5],
             [2, 4, 6],
+            [3, 5, 7],
+            [4, 6, 8],
         ),
         pytest.param(
             [
@@ -171,8 +243,12 @@ def test_load_flare_data(
                 date(2020, 5, 1),
             ],
             [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            [3, 4, 5, 6, 7],
             [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
             [2, 4, 6],
+            [3, 5, 7],
+            [4, 6, 8],
             [
                 date(2020, 1, 1),
                 date(2020, 2, 1),
@@ -181,32 +257,82 @@ def test_load_flare_data(
                 date(2020, 5, 1),
             ],
             [1, 2, 3, 4, 5],
+            [2, 3, 4, 5, 6],
+            [3, 4, 5, 6, 7],
             [None, 2, 4, 6, None],
+            [None, 3, 5, 7, None],
+            [None, 4, 6, 8, None],
         ),
     ],
 )
 def test_join_data(
-    in_sn_date: list[date],
-    in_sn_total: list[float],
+    in_seiryo_date: list[date],
+    in_seiryo_north: list[float],
+    in_seiryo_south: list[float],
+    in_seiryo_total: list[float],
     in_flare_date: list[date],
-    in_flare_index: list[float],
+    in_flare_north: list[float],
+    in_flare_south: list[float],
+    in_flare_total: list[float],
     out_date: list[date],
-    out_seiryo: list[float],
-    out_flare: list[float | None],
+    out_seiryo_north: list[float],
+    out_seiryo_south: list[float],
+    out_seiryo_total: list[float],
+    out_flare_north: list[float],
+    out_flare_south: list[float],
+    out_flare_total: list[float],
 ) -> None:
-    df_in_sn = pl.DataFrame(
-        {"date": in_sn_date, "total": in_sn_total},
-        schema={"date": pl.Date, "total": pl.Float64},
+    df_in_seiryo = pl.DataFrame(
+        {
+            "date": in_seiryo_date,
+            "north": in_seiryo_north,
+            "south": in_seiryo_south,
+            "total": in_seiryo_total,
+        },
+        schema={
+            "date": pl.Date,
+            "north": pl.Float64,
+            "south": pl.Float64,
+            "total": pl.Float64,
+        },
     )
     df_in_flare = pl.DataFrame(
-        {"date": in_flare_date, "index": in_flare_index},
-        schema={"date": pl.Date, "index": pl.Float64},
+        {
+            "date": in_flare_date,
+            "north": in_flare_north,
+            "south": in_flare_south,
+            "total": in_flare_total,
+        },
+        schema={
+            "date": pl.Date,
+            "north": pl.Float64,
+            "south": pl.Float64,
+            "total": pl.Float64,
+        },
     )
     df_expected = pl.DataFrame(
-        {"date": out_date, "seiryo": out_seiryo, "flare": out_flare},
-        schema={"date": pl.Date, "seiryo": pl.Float64, "flare": pl.Float64},
+        {
+            "date": out_date,
+            "seiryo_north": out_seiryo_north,
+            "seiryo_south": out_seiryo_south,
+            "seiryo_total": out_seiryo_total,
+            "flare_north": out_flare_north,
+            "flare_south": out_flare_south,
+            "flare_total": out_flare_total,
+        },
+        schema={
+            "date": pl.Date,
+            "seiryo_north": pl.Float64,
+            "seiryo_south": pl.Float64,
+            "seiryo_total": pl.Float64,
+            "flare_north": pl.Float64,
+            "flare_south": pl.Float64,
+            "flare_total": pl.Float64,
+        },
     )
-    df_out = seiryo_sunspot_number_with_flare.join_data(df_in_sn, df_in_flare)
+    df_out = seiryo_sunspot_number_with_flare.join_data(
+        df_in_seiryo, df_in_flare
+    )
     assert_frame_equal(df_out, df_expected)
 
 
@@ -214,9 +340,35 @@ def test_draw_sunspot_number_with_flare() -> None:
     df = pl.DataFrame(
         {
             "date": [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
-            "seiryo": [1, 2, 3],
-            "flare": [1, 2, 3],
+            "seiryo_total": [1, 2, 3],
+            "flare_total": [1, 2, 3],
         },
-        schema={"date": pl.Date, "seiryo": pl.Float64, "flare": pl.Float64},
+        schema={
+            "date": pl.Date,
+            "seiryo_total": pl.Float64,
+            "flare_total": pl.Float64,
+        },
     )
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(df)
+
+
+def test_draw_sunspot_number_with_flare_hemispheric() -> None:
+    df = pl.DataFrame(
+        {
+            "date": [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
+            "seiryo_north": [1, 2, 3],
+            "seiryo_south": [1, 2, 3],
+            "flare_north": [1, 2, 3],
+            "flare_south": [1, 2, 3],
+        },
+        schema={
+            "date": pl.Date,
+            "seiryo_north": pl.Float64,
+            "seiryo_south": pl.Float64,
+            "flare_north": pl.Float64,
+            "flare_south": pl.Float64,
+        },
+    )
+    _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare_hemispheric(  # noqa: E501
+        df
+    )

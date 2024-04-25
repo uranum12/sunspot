@@ -69,7 +69,17 @@ def test_butterfly_info() -> None:
         "date_end": date(2020, 5, 5),
         "date_interval": seiryo_butterfly.DateDelta(days=1),
     }
+    json_expected = (
+        "{\n"
+        '  "lat_min": -50,\n'
+        '  "lat_max": 50,\n'
+        '  "date_start": "2020-02-02",\n'
+        '  "date_end": "2020-05-05",\n'
+        '  "date_interval": "P1D"\n'
+        "}"
+    )
     assert info.to_dict() == dict_expected
+    assert info.to_json() == json_expected
 
 
 @pytest.mark.parametrize(
@@ -599,4 +609,3 @@ def test_draw_butterfly_diagram() -> None:
         seiryo_butterfly.DateDelta(months=1),
     )
     _ = seiryo_butterfly.draw_butterfly_diagram(img, info)
-    _ = seiryo_butterfly.draw_butterfly_diagram_plotly(img, info)

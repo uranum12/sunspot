@@ -1,13 +1,12 @@
+import json
 from dataclasses import asdict, dataclass, fields
 from datetime import date
-from json import dump as json_dump
 from pathlib import Path
 from pprint import pprint
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-import plotly.graph_objects as go
 import polars as pl
 from matplotlib.figure import Figure
 
@@ -67,6 +66,26 @@ class DateDelta:
         days = self._format_time(self.days, "D")
         return f"P{years}{months}{days}"
 
+    @classmethod
+    def fromisoformat(cls: type["DateDelta"], data: str) -> "DateDelta":
+        data = data.removeprefix("P")
+        if "Y" in data:
+            y_s, data = data.split("Y")
+            y = int(y_s)
+        else:
+            y = 0
+        if "M" in data:
+            m_s, data = data.split("M")
+            m = int(m_s)
+        else:
+            m = 0
+        if "D" in data:
+            d_s, data = data.split("D")
+            d = int(d_s)
+        else:
+            d = 0
+        return cls(years=y, months=m, days=d)
+
 
 @dataclass(frozen=True, slots=True)
 class ButterflyInfo:
@@ -100,6 +119,21 @@ class ButterflyInfo:
         return {
             field.name: getattr(self, field.name) for field in fields(self)
         }
+
+    def to_json(self: "ButterflyInfo") -> str:
+        return json.dumps(
+            self.to_dict(), default=lambda o: o.isoformat(), indent=2
+        )
+
+    @classmethod
+    def from_dict(cls: type["ButterflyInfo"], data: dict) -> "ButterflyInfo":
+        return cls(
+            data["lat_min"],
+            data["lat_max"],
+            date.fromisoformat(data["date_start"]),
+            date.fromisoformat(data["date_end"]),
+            DateDelta.fromisoformat(data["date_interval"]),
+        )
 
 
 def calc_date_limit(df: pl.LazyFrame) -> tuple[date, date]:
@@ -335,54 +369,9 @@ def draw_butterfly_diagram(
     return fig
 
 
-def draw_butterfly_diagram_plotly(
-    img: npt.NDArray[np.uint8], info: ButterflyInfo
-) -> go.Figure:
-    date_index = create_date_index(
-        info.date_start, info.date_end, info.date_interval.to_interval()
-    )
-    lat_index = create_lat_index(info.lat_min, info.lat_max)
-
-    xlabel = [
-        (i, f"{d.year}")
-        for i, d in enumerate(item.item() for item in date_index)
-        if d.month == 1 and d.year % 2 == 0
-    ]
-    ylabel = [(i, n) for i, n in enumerate(lat_index) if n % 10 == 0]
-    return (
-        go.Figure()
-        .add_trace(
-            go.Heatmap(
-                z=img, showscale=False, colorscale=[[0, "white"], [1, "black"]]
-            )
-        )
-        .update_layout(
-            {
-                "title": {"text": "butterfly diagram"},
-                "xaxis": {
-                    "title": {"text": "date"},
-                    "constrain": "domain",
-                    "tickmode": "array",
-                    "tickvals": [i[0] for i in xlabel],
-                    "ticktext": [i[1] for i in xlabel],
-                },
-                "yaxis": {
-                    "title": {"text": "latitude"},
-                    "autorange": "reversed",
-                    "scaleanchor": "x",
-                    "constrain": "domain",
-                    "tickmode": "array",
-                    "tickvals": [i[0] for i in ylabel],
-                    "ticktext": [i[1] for i in ylabel],
-                },
-            }
-        )
-    )
-
-
 def main() -> None:
     data_path = Path("out/seiryo/ar.parquet")
-    output_path = Path("out/seiryo")
+    output_path = Path("out/seiryo/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
     data_file = pl.scan_parquet(data_path)
@@ -397,48 +386,22 @@ def main() -> None:
     img = create_image(df, info)
     print(img)
 
-    with (output_path / "butterfly.npz").open("wb") as f_img:
+    with (output_path / "monthly.npz").open("wb") as f_img:
         np.savez_compressed(f_img, img=img)
 
-    with (output_path / "butterfly.json").open("w") as f_info:
-        json_dump(info.to_dict(), f_info, default=lambda o: o.isoformat())
+    with (output_path / "monthly.json").open("w") as f_info:
+        f_info.write(info.to_json())
 
-    fig = draw_butterfly_diagram_plotly(img, info)
-    fig.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.9,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "ticks": "outside",
-            },
-        }
-    )
+    fig_butterfly = draw_butterfly_diagram(img, info)
 
-    fig.write_json(output_path / "butterfly_diagram.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"butterfly_diagram.{ext}"
-        fig.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    for f in ["png", "pdf"]:
+        fig_butterfly.savefig(
+            output_path / f"butterfly_diagram.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
-    fig.show()
 
 
 if __name__ == "__main__":

@@ -39,6 +39,26 @@ def test_date_delta(
 
 
 @pytest.mark.parametrize(
+    ("in_str", "out_years", "out_months", "out_days"),
+    [
+        pytest.param("P1Y2M3D", 1, 2, 3),
+        pytest.param("P1Y", 1, 0, 0),
+        pytest.param("P1M", 0, 1, 0),
+        pytest.param("P1D", 0, 0, 1),
+        pytest.param("P12Y3D", 12, 0, 3),
+    ],
+)
+def test_date_delta_fromisoformat(
+    in_str: str, out_years: int, out_months: int, out_days: int
+) -> None:
+    delta_expected = seiryo_butterfly.DateDelta(
+        years=out_years, months=out_months, days=out_days
+    )
+    delta_out = seiryo_butterfly.DateDelta.fromisoformat(in_str)
+    assert delta_out == delta_expected
+
+
+@pytest.mark.parametrize(
     ("in_years", "in_months", "in_days", "out_error_msg"),
     [
         (0, 0, 0, "all parameters cannot be zero"),
@@ -80,6 +100,65 @@ def test_butterfly_info() -> None:
     )
     assert info.to_dict() == dict_expected
     assert info.to_json() == json_expected
+
+
+@pytest.mark.parametrize(
+    (
+        "in_dict",
+        "out_lat_min",
+        "out_lat_max",
+        "out_date_start",
+        "out_date_end",
+        "out_date_interval",
+    ),
+    [
+        pytest.param(
+            {
+                "lat_min": -12,
+                "lat_max": 12,
+                "date_start": "2020-02-02",
+                "date_end": "2020-12-12",
+                "date_interval": "P1M",
+            },
+            -12,
+            12,
+            date(2020, 2, 2),
+            date(2020, 12, 12),
+            seiryo_butterfly.DateDelta(months=1),
+        ),
+        pytest.param(
+            {
+                "lat_min": 3,
+                "lat_max": 12,
+                "date_start": "1960-02-02",
+                "date_end": "2020-12-12",
+                "date_interval": "P1D",
+            },
+            3,
+            12,
+            date(1960, 2, 2),
+            date(2020, 12, 12),
+            seiryo_butterfly.DateDelta(days=1),
+        ),
+    ],
+)
+def test_butterfly_info_from_dict(
+    in_dict: dict[str, int | str],
+    out_lat_min: int,
+    out_lat_max: int,
+    out_date_start: date,
+    out_date_end: date,
+    out_date_interval: seiryo_butterfly.DateDelta,
+) -> None:
+    info_expected = seiryo_butterfly.ButterflyInfo(
+        out_lat_min,
+        out_lat_max,
+        out_date_start,
+        out_date_end,
+        out_date_interval,
+    )
+    info_out = seiryo_butterfly.ButterflyInfo.from_dict(in_dict)
+    assert info_out == info_expected
 
 
 @pytest.mark.parametrize(

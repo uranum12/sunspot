@@ -3,7 +3,6 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
 import polars as pl
 from dateutil.relativedelta import relativedelta
 from matplotlib.figure import Figure
@@ -112,23 +111,10 @@ def draw_monthly_obs_days(df: pl.DataFrame) -> Figure:
     return fig
 
 
-def draw_monthly_obs_days_plotly(df: pl.DataFrame) -> go.Figure:
-    return (
-        go.Figure()
-        .add_trace(go.Bar(x=df["date"], y=df["obs"]))
-        .update_layout(
-            {
-                "title": {"text": "observations days per month"},
-                "xaxis": {"title": {"text": "date"}},
-                "yaxis": {"title": {"text": "observations days"}},
-            }
-        )
-    )
-
-
 def main() -> None:
     data_file = Path("out/seiryo/sn.parquet")
-    output_path = Path("out/seiryo")
+    output_path = Path("out/seiryo/observations")
+    output_path.mkdir(exist_ok=True)
 
     df = pl.scan_parquet(data_file)
 
@@ -136,47 +122,21 @@ def main() -> None:
 
     df_daily = calc_dayly_obs(df, start, end).collect()
     print(df_daily)
-    df_daily.write_parquet(output_path / "observations_daily.parquet")
+    df_daily.write_parquet(output_path / "daily.parquet")
 
     df_monthly = calc_monthly_obs(df_daily.lazy()).collect()
     print(df_monthly)
-    df_monthly.write_parquet(output_path / "observations_monthly.parquet")
+    df_monthly.write_parquet(output_path / "monthly.parquet")
 
-    fig = draw_monthly_obs_days_plotly(df_monthly)
-    fig.update_layout(
-        {
-            "template": "simple_white",
-            "font_family": "Century",
-            "title": {
-                "font_size": 24,
-                "x": 0.5,
-                "y": 0.9,
-                "xanchor": "center",
-                "yanchor": "middle",
-            },
-            "xaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-            "yaxis": {
-                "title_font_size": 20,
-                "tickfont_size": 16,
-                "linewidth": 1,
-                "mirror": True,
-                "showgrid": True,
-                "ticks": "outside",
-            },
-        }
-    )
-    fig.write_json(output_path / "observations_days.json", pretty=True)
-    for ext in "pdf", "png":
-        file_path = output_path / f"observations_days.{ext}"
-        fig.write_image(
-            file_path, width=800, height=500, engine="kaleido", scale=10
+    fig = draw_monthly_obs_days(df_monthly)
+
+    for f in ["png", "pdf"]:
+        fig.savefig(
+            output_path / f"monthly.{f}",
+            format=f,
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.1,
         )
 
 

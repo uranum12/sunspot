@@ -216,4 +216,3 @@ def test_draw_monthly_obs_days() -> None:
         schema={"date": pl.Date, "obs": pl.UInt8},
     )
     _ = seiryo_obs_days.draw_monthly_obs_days(df)
-    _ = seiryo_obs_days.draw_monthly_obs_days_plotly(df)

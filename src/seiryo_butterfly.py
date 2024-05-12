@@ -370,7 +370,7 @@ def draw_butterfly_diagram(
 
 
 def main() -> None:
-    data_path = Path("out/seiryo/ar.parquet")
+    data_path = Path("out/seiryo/all.parquet")
     output_path = Path("out/seiryo/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 

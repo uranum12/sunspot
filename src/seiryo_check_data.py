@@ -3,16 +3,8 @@ from pathlib import Path
 import polars as pl
 
 
-def find_null_values(df: pl.DataFrame) -> pl.DataFrame:
-    """欠損値を検索する
-
-    Args:
-        df (pl.DataFrame): 黒点群データまたは黒点数データ
-
-    Returns:
-        pl.DataFrame: 欠損値を含む行のみの新しいデータフレーム
-    """
-    return df.filter(pl.any_horizontal(pl.all().is_null()))
+def create_expected_group_numbers(no: int) -> pl.Series:
+    return pl.Series(range(1, no + 1), dtype=pl.UInt8)
 
 
 def find_invalid_group_number(df: pl.DataFrame) -> pl.DataFrame:
@@ -32,13 +24,15 @@ def find_invalid_group_number(df: pl.DataFrame) -> pl.DataFrame:
             pl.col("no")
             .count()
             .map_elements(
-                lambda no: pl.Series(range(1, no + 1), dtype=pl.UInt8),
-                return_dtype=pl.List(pl.UInt8),
+                create_expected_group_numbers, return_dtype=pl.List(pl.UInt8)
             )
             .alias("expected"),
         )
         .with_columns(pl.col("original", "expected").list.sort())
-        .filter(pl.col("original") != pl.col("expected"))
+        .filter(
+            (pl.col("original") != pl.col("expected"))
+            & (pl.col("original") != [0])
+        )
         .collect()
     )
 
@@ -112,116 +106,43 @@ def find_invalid_lon_interval(df: pl.DataFrame, interval: int) -> pl.DataFrame:
     ).filter(pl.col("interval") > interval)
 
 
-def find_duplicate_date(df: pl.DataFrame) -> pl.DataFrame:
-    """重複した日付を検索する
+def main() -> None:
+    df = pl.read_parquet(Path("out/seiryo/all.parquet"))
 
-    Args:
-        df (pl.DataFrame): 黒点数データ
-
-    Returns:
-        pl.DataFrame: 重複した日付を含む行のみの新しいデータフレーム
-    """
-    return df.filter(pl.col("date").is_duplicated())
-
-
-def find_invalid_total_group(df: pl.DataFrame) -> pl.DataFrame:
-    """不正な黒点群数の合計値を検索する
-
-    Args:
-        df (pl.DataFrame): 黒点数データ
-
-    Returns:
-        pl.DataFrame: 不正値を含む行のみの新しいデータフレーム
-    """
-    return df.with_columns(pl.col("ng").add(pl.col("sg")).alias("nsg")).filter(
-        pl.col("tg") != pl.col("nsg")
-    )
-
-
-def find_invalid_total_number(df: pl.DataFrame) -> pl.DataFrame:
-    """不正な黒点数の合計値を検索する
-
-    Args:
-        df (pl.DataFrame): 黒点数データ
-
-    Returns:
-        pl.DataFrame: 不正値を含む行のみの新しいデータフレーム
-    """
-    return df.with_columns(pl.col("nf").add(pl.col("sf")).alias("nsf")).filter(
-        pl.col("tf") != pl.col("nsf")
-    )
-
-
-def check_ar_data(df: pl.DataFrame) -> None:
     lat_threshold = 50
     lon_min_threshold = -180
     lon_max_threshold = 180
     lat_interval = 15
     lon_interval = 30
 
-    ret = find_null_values(df)
-    if ret.height != 0:
-        print("Null values found in AR data")
-        print(ret.sort("date", "no"))
-
-    ret = find_invalid_group_number(df)
-    if ret.height != 0:
-        print("Invalid group numbers found in AR data")
-        print(ret.sort("date"))
-
-    ret = find_invalid_lat_range(df, lat_threshold)
-    if ret.height != 0:
-        print("Invalid latitude range values found in AR data")
-        print(ret.drop("lon_min", "lon_max").sort("date", "no"))
-
-    ret = find_invalid_lon_range(df, lon_min_threshold, lon_max_threshold)
-    if ret.height != 0:
-        print("Invalid longitude range values found in AR data")
-        print(ret.drop("lat_min", "lat_max").sort("date", "no"))
-
-    ret = find_invalid_lat_interval(df, lat_interval)
-    if ret.height != 0:
-        print("Invalid latitude interval found in AR data")
-        print(ret.drop("lon_min", "lon_max").sort("date", "no"))
-
-    ret = find_invalid_lon_interval(df, lon_interval)
-    if ret.height != 0:
-        print("Invalid longitude interval found in AR data")
-        print(ret.drop("lat_min", "lat_max").sort("date", "no"))
-
-
-def check_sn_data(df: pl.DataFrame) -> None:
-    ret = find_null_values(df)
-    if ret.height != 0:
-        print("Null values found in SN data")
-        print(ret.sort("date"))
-
-    ret = find_duplicate_date(df)
-    if ret.height != 0:
-        print("Duplicate dates found in SN data")
-        print(ret.sort("date"))
-
-    ret = find_invalid_total_group(df)
-    if ret.height != 0:
-        print("Invalid total group number found in SN data")
-        print(ret.drop("nf", "sf", "tf").sort("date"))
-
-    ret = find_invalid_total_number(df)
-    if ret.height != 0:
-        print("Invalid total number found in SN data")
-        print(ret.drop("ng", "sg", "tg").sort("date"))
-
-
-def main() -> None:
-    df_ar = pl.read_parquet(Path("out/seiryo/ar.parquet"))
-    df_sn = pl.read_parquet(Path("out/seiryo/sn.parquet"))
-
     with pl.Config() as cfg:
         cfg.set_tbl_cols(-1)
         cfg.set_tbl_rows(-1)
 
-        check_ar_data(df_ar)
-        check_sn_data(df_sn)
+        ret = find_invalid_group_number(df)
+        if ret.height != 0:
+            print("Invalid group numbers found")
+            print(ret.sort("date"))
+
+        ret = find_invalid_lat_range(df, lat_threshold)
+        if ret.height != 0:
+            print("Invalid latitude range values found")
+            print(ret.drop("lon_min", "lon_max", "num").sort("date", "no"))
+
+        ret = find_invalid_lon_range(df, lon_min_threshold, lon_max_threshold)
+        if ret.height != 0:
+            print("Invalid longitude range values found")
+            print(ret.drop("lat_min", "lat_max", "num").sort("date", "no"))
+
+        ret = find_invalid_lat_interval(df, lat_interval)
+        if ret.height != 0:
+            print("Invalid latitude interval found")
+            print(ret.drop("lon_min", "lon_max", "num").sort("date", "no"))
+
+        ret = find_invalid_lon_interval(df, lon_interval)
+        if ret.height != 0:
+            print("Invalid longitude interval found")
+            print(ret.drop("lat_min", "lat_max", "num").sort("date", "no"))
 
 
 if __name__ == "__main__":

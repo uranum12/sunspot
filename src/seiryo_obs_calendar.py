@@ -64,7 +64,7 @@ def main() -> None:
     year = 2020
     month = 8
     first = 6
-    df = pl.read_parquet(Path("out/seiryo/observations_daily.parquet"))
+    df = pl.read_parquet(Path("out/seiryo/observations/daily.parquet"))
 
     cal = create_calendar(df, year, month, first)
     print_calendar(cal)

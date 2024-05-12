@@ -5,7 +5,82 @@ import polars as pl
 from matplotlib.figure import Figure
 
 
-def calc_sunspot_number(df: pl.DataFrame) -> pl.DataFrame:
+def split(df: pl.LazyFrame) -> tuple[pl.LazyFrame, pl.LazyFrame]:
+    df_spot = df.filter(~pl.col("no").eq(0))
+    df_nospot = df.filter(pl.col("no").eq(0))
+
+    return df_spot, df_nospot
+
+
+def calc_lat(df: pl.LazyFrame) -> pl.LazyFrame:
+    return (
+        df.with_columns(  # 緯度の中央値を算出
+            ((pl.col("lat_min") + pl.col("lat_max")) / 2).alias("lat")
+        )
+        .with_columns(  # 緯度の中央値をもとに北半球と南半球を分類
+            pl.when(pl.col("lat") >= 0)
+            .then(pl.lit("N"))
+            .otherwise(pl.lit("S"))
+            .alias("lat")
+        )
+        .drop("lat_min", "lat_max")
+    )
+
+
+def calc_sn(df: pl.LazyFrame) -> pl.LazyFrame:
+    return (
+        df.group_by("date")  # 日付ごとに集計
+        .agg(
+            # 北半球と南半球を分類
+            pl.col("num").filter(pl.col("lat").eq("N")).alias("n"),
+            pl.col("num").filter(pl.col("lat").eq("S")).alias("s"),
+            # 黒点数、黒点群数の合計値を算出
+            pl.col("num").count().cast(pl.UInt8).alias("tg"),
+            pl.col("num").sum().cast(pl.UInt16).alias("tf"),
+        )
+        .with_columns(
+            # 北半球、南半球それぞれの黒点数、黒点群数を算出
+            pl.col("n").list.len().cast(pl.UInt8).alias("ng"),
+            pl.col("n").list.sum().cast(pl.UInt16).alias("nf"),
+            pl.col("s").list.len().cast(pl.UInt8).alias("sg"),
+            pl.col("s").list.sum().cast(pl.UInt16).alias("sf"),
+        )
+        .drop("n", "s")
+    )
+
+
+def fill_sn(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.with_columns(
+        *[pl.lit(0).cast(pl.UInt8).alias(col) for col in ["ng", "sg", "tg"]],
+        *[pl.lit(0).cast(pl.UInt16).alias(col) for col in ["nf", "sf", "tf"]],
+    )
+
+
+def sort(df: pl.LazyFrame) -> pl.LazyFrame:
+    return df.select(["date", "ng", "nf", "sg", "sf", "tg", "tf"]).sort("date")
+
+
+def agg_daily(df: pl.DataFrame) -> pl.DataFrame:
+    return (
+        df.lazy()
+        .select(
+            pl.col("date"),
+            (pl.col("ng").cast(pl.UInt16) * 10 + pl.col("nf"))
+            .cast(pl.Int16)
+            .alias("north"),
+            (pl.col("sg").cast(pl.UInt16) * 10 + pl.col("sf"))
+            .cast(pl.Int16)
+            .alias("south"),
+            (pl.col("tg").cast(pl.UInt16) * 10 + pl.col("tf"))
+            .cast(pl.Int16)
+            .alias("total"),
+        )
+        .sort("date")
+        .collect()
+    )
+
+
+def agg_monthly(df: pl.DataFrame) -> pl.DataFrame:
     return (
         df.lazy()
         .select(
@@ -66,16 +141,26 @@ def draw_sunspot_number_hemispheric(df: pl.DataFrame) -> Figure:
 
 
 def main() -> None:
-    path_seiryo = Path("out/seiryo/sn.parquet")
+    path_seiryo = Path("out/seiryo/all.parquet")
     output_path = Path("out/seiryo/sunspot")
     output_path.mkdir(exist_ok=True)
 
-    df = pl.read_parquet(path_seiryo)
-    df = calc_sunspot_number(df)
-    print(df)
-    df.write_parquet(output_path / "monthly.parquet")
+    df_spot, df_nospot = split(pl.scan_parquet(path_seiryo))
+    df_spot = df_spot.pipe(calc_lat).pipe(calc_sn)
+    df_nospot = df_nospot.select("date").pipe(fill_sn)
+    df_raw = pl.concat([df_spot, df_nospot]).pipe(sort).collect()
+    print(df_raw)
+    df_raw.write_parquet(output_path / "raw.parquet")
 
-    fig_whole_disk = draw_sunspot_number_whole_disk(df)
+    df_daily = agg_daily(df_raw)
+    print(df_daily)
+    df_daily.write_parquet(output_path / "daily.parquet")
+
+    df_monthly = agg_monthly(df_raw)
+    print(df_monthly)
+    df_monthly.write_parquet(output_path / "monthly.parquet")
+
+    fig_whole_disk = draw_sunspot_number_whole_disk(df_monthly)
 
     for f in ["png", "pdf"]:
         fig_whole_disk.savefig(
@@ -86,7 +171,7 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    fig_hemispheric = draw_sunspot_number_hemispheric(df)
+    fig_hemispheric = draw_sunspot_number_hemispheric(df_monthly)
 
     for f in ["png", "pdf"]:
         fig_hemispheric.savefig(

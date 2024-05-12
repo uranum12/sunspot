@@ -83,65 +83,10 @@ def convert_coord(
     )
 
 
-def split(df: pl.LazyFrame) -> tuple[pl.LazyFrame, pl.LazyFrame]:
-    df_spot = df.filter(~pl.col("no").eq(0))
-    df_nospot = df.filter(pl.col("no").eq(0))
-
-    return df_spot, df_nospot
-
-
-def calc_lat(df: pl.LazyFrame) -> pl.LazyFrame:
-    return (
-        df.with_columns(  # 緯度の中央値を算出
-            ((pl.col("lat_min") + pl.col("lat_max")) / 2).alias("lat")
-        )
-        .with_columns(  # 緯度の中央値をもとに北半球と南半球を分類
-            pl.when(pl.col("lat") >= 0)
-            .then(pl.lit("N"))
-            .otherwise(pl.lit("S"))
-            .alias("lat")
-        )
-        .drop("lat_min", "lat_max")
-    )
-
-
-def calc_sn(df: pl.LazyFrame) -> pl.LazyFrame:
-    return (
-        df.group_by("date")  # 日付ごとに集計
-        .agg(
-            # 北半球と南半球を分類
-            pl.col("num").filter(pl.col("lat").eq("N")).alias("n"),
-            pl.col("num").filter(pl.col("lat").eq("S")).alias("s"),
-            # 黒点数、黒点群数の合計値を算出
-            pl.col("num").count().cast(pl.UInt8).alias("tg"),
-            pl.col("num").sum().cast(pl.UInt16).alias("tf"),
-        )
-        .with_columns(
-            # 北半球、南半球それぞれの黒点数、黒点群数を算出
-            pl.col("n").list.len().cast(pl.UInt8).alias("ng"),
-            pl.col("n").list.sum().cast(pl.UInt16).alias("nf"),
-            pl.col("s").list.len().cast(pl.UInt8).alias("sg"),
-            pl.col("s").list.sum().cast(pl.UInt16).alias("sf"),
-        )
-        .drop("n", "s")
-    )
-
-
-def fill_sn(df: pl.LazyFrame) -> pl.LazyFrame:
-    return df.with_columns(
-        *[pl.lit(0).cast(pl.UInt8).alias(col) for col in ["ng", "sg", "tg"]],
-        *[pl.lit(0).cast(pl.UInt16).alias(col) for col in ["nf", "sf", "tf"]],
-    )
-
-
-def sort_ar(df: pl.LazyFrame) -> pl.LazyFrame:
+def sort(df: pl.LazyFrame) -> pl.LazyFrame:
     return df.select(
-        ["date", "no", "lat_min", "lat_max", "lon_min", "lon_max"]
+        ["date", "no", "lat_min", "lat_max", "lon_min", "lon_max", "num"]
     ).sort("date", "no")
-
-
-def sort_sn(df: pl.LazyFrame) -> pl.LazyFrame:
-    return df.select(["date", "ng", "nf", "sg", "sf", "tg", "tf"]).sort("date")
 
 
 def main() -> None:
@@ -153,23 +98,17 @@ def main() -> None:
     for path in path_seiryo.glob("*.csv"):
         df = pl.scan_csv(path, infer_schema_length=0).pipe(fill_date)
         dfl.append(df)
-    df_all = pl.concat(dfl).pipe(convert_number).pipe(convert_date)
-
-    df_spot, df_nospot = split(df_all)
-    df_spot = convert_coord(df_spot, col="lat", dtype=pl.Int8)
-    df_spot = convert_coord(df_spot, col="lon", dtype=pl.Int16)
-
-    df_ar = df_spot.drop("num").pipe(sort_ar).collect()
-    print("ar data:")
-    print(df_ar)
-    df_ar.write_parquet(output_path / "ar.parquet")
-
-    df_spot = df_spot.pipe(calc_lat).pipe(calc_sn)
-    df_nospot = df_nospot.select("date").pipe(fill_sn)
-    df_sn = pl.concat([df_spot, df_nospot]).pipe(sort_sn).collect()
-    print("sn data:")
-    print(df_sn)
-    df_sn.write_parquet(output_path / "sn.parquet")
+    df_all = (
+        pl.concat(dfl)
+        .pipe(convert_number)
+        .pipe(convert_date)
+        .pipe(convert_coord, col="lat", dtype=pl.Int8)
+        .pipe(convert_coord, col="lon", dtype=pl.Int16)
+        .pipe(sort)
+        .collect()
+    )
+    print(df_all)
+    df_all.write_parquet(output_path / "all.parquet")
 
 
 if __name__ == "__main__":

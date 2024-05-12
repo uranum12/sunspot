@@ -57,7 +57,9 @@ def calc_dayly_obs(df: pl.LazyFrame, start: date, end: date) -> pl.LazyFrame:
             {"date": pl.date_range(start, end, interval="1d", eager=True)}
         )
         .join(
-            df.select("date").with_columns(pl.lit(1).alias("obs")),
+            df.select(pl.col("date").unique()).with_columns(
+                pl.lit(1).alias("obs")
+            ),
             on="date",
             how="left",
         )
@@ -112,7 +114,7 @@ def draw_monthly_obs_days(df: pl.DataFrame) -> Figure:
 
 
 def main() -> None:
-    data_file = Path("out/seiryo/sn.parquet")
+    data_file = Path("out/seiryo/all.parquet")
     output_path = Path("out/seiryo/observations")
     output_path.mkdir(exist_ok=True)
 

@@ -328,7 +328,12 @@ def create_lat_index(lat_min: int, lat_max: int) -> npt.NDArray[np.int8]:
 
 
 def draw_butterfly_diagram(
-    img: npt.NDArray[np.uint8], info: ButterflyInfo
+    img: npt.NDArray[np.uint8],
+    info: ButterflyInfo,
+    *,
+    figsize: tuple[int, int] = (5, 8),
+    year_interval: int = 10,
+    lat_interval: int = 10,
 ) -> Figure:
     """蝶形図データを基に画像を作成する
 
@@ -347,11 +352,11 @@ def draw_butterfly_diagram(
     xlabel = [
         (i, f"{d.year}")
         for i, d in enumerate(item.item() for item in date_index)
-        if d.month == 1 and d.year % 2 == 0
+        if d.month == 1 and d.year % year_interval == 0
     ]
-    ylabel = [(i, n) for i, n in enumerate(lat_index) if n % 10 == 0]
+    ylabel = [(i, n) for i, n in enumerate(lat_index) if n % lat_interval == 0]
 
-    fig = plt.figure(figsize=(5, 8))
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111)
 
     ax.imshow(img, cmap="binary")
@@ -392,11 +397,11 @@ def main() -> None:
     with (output_path / "monthly.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    fig_butterfly = draw_butterfly_diagram(img, info)
+    fig_butterfly = draw_butterfly_diagram(img, info, year_interval=2)
 
     for f in ["png", "pdf"]:
         fig_butterfly.savefig(
-            output_path / f"butterfly_diagram.{f}",
+            output_path / f"monthly.{f}",
             format=f,
             dpi=300,
             bbox_inches="tight",

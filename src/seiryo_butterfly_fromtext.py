@@ -65,6 +65,7 @@ def main() -> None:
     pprint(info)
 
     df = seiryo_butterfly.calc_lat(lf, info)
+    df.write_parquet(output_path / "fromtext.parquet")
     print(df)
 
     img = seiryo_butterfly.create_image(df, info)

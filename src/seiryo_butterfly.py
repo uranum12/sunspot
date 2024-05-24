@@ -386,6 +386,7 @@ def main() -> None:
     pprint(info)
 
     df = calc_lat(data_file, info)
+    df.write_parquet(output_path / "monthly.parquet")
     print(df)
 
     img = create_image(df, info)

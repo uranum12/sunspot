@@ -34,8 +34,8 @@ def load_flare_data(path: Path) -> pl.DataFrame:
         load_flare_file(file).lazy() for file in path.glob("*total*.txt")
     ).rename({"index": "total"})
     return (
-        df_north.join(df_south, on="date", how="outer_coalesce")
-        .join(df_total, on="date", how="outer_coalesce")
+        df_north.join(df_south, on="date", how="full", coalesce=True)
+        .join(df_total, on="date", how="full", coalesce=True)
         .sort("date")
         .collect()
     )

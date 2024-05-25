@@ -59,6 +59,8 @@ def convert_coord(
             .otherwise(pl.col("right_sign"))
             .alias("right_sign")
         )
+        .collect()
+        .lazy()
         .with_columns(
             # 文字の符号を数式の符号へ変換
             pl.col("left_sign", "right_sign").str.replace_many(

@@ -10,10 +10,8 @@ import seiryo_butterfly
 
 
 def create_merged_image(
-    dfl: list[pl.DataFrame],
-    info: seiryo_butterfly.ButterflyInfo,
-    cmap: list[tuple[int, int, int]],
-) -> npt.NDArray[np.uint8]:
+    dfl: list[pl.DataFrame], info: seiryo_butterfly.ButterflyInfo
+) -> npt.NDArray[np.uint16]:
     lat_size = len(
         seiryo_butterfly.create_lat_index(info.lat_min, info.lat_max)
     )
@@ -38,6 +36,12 @@ def create_merged_image(
             )
             << i
         ).astype(np.uint16)
+    return img
+
+
+def create_color_image(
+    img: npt.NDArray[np.uint16], cmap: list[tuple[int, int, int]]
+) -> npt.NDArray[np.uint8]:
     img_merged = np.full((*img.shape, 3), 0xFF, dtype=np.uint8)
     for i, c in enumerate(cmap, 1):
         img_merged[img == i] = c
@@ -61,10 +65,7 @@ def main() -> None:
     )
     pprint(info)
 
-    cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0xFF, 0x00, 0x00)]
-    pprint(cmap)
-
-    img = create_merged_image(dfl, info, cmap)
+    img = create_merged_image(dfl, info)
     print(img)
 
     with (output_path / "merged.npz").open("wb") as f_img:
@@ -73,7 +74,11 @@ def main() -> None:
     with (output_path / "merged.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    fig = seiryo_butterfly.draw_butterfly_diagram(img, info, figsize=(10, 5))
+    cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0xFF, 0x00, 0x00)]
+    img_color = create_color_image(img, cmap)
+    fig = seiryo_butterfly.draw_butterfly_diagram(
+        img_color, info, figsize=(10, 5)
+    )
 
     for f in ["png", "pdf"]:
         fig.savefig(

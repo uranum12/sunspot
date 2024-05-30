@@ -29,7 +29,7 @@ def load_silso_data(path: Path) -> pl.DataFrame:
 
 
 def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
-    df = (
+    return (
         df_seiryo.lazy()
         .select("date", "total")
         .rename({"total": "seiryo"})
@@ -40,10 +40,10 @@ def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
         )
         .collect()
     )
-    if df.filter(pl.col("silso").is_null()).height != 0:
-        msg = "missing data for 'silso' on certain dates"
-        raise ValueError(msg)
-    return df
+
+
+def truncate_data(df: pl.DataFrame) -> pl.DataFrame:
+    return df.drop_nulls()
 
 
 def calc_ratio_and_diff(df: pl.DataFrame, factor: float) -> pl.DataFrame:
@@ -227,16 +227,20 @@ def main() -> None:
     print(df_seiryo_with_silso)
     df_seiryo_with_silso.write_parquet(output_path / "with_silso.parquet")
 
-    factor = calc_factor(df_seiryo_with_silso)
+    df_seiryo_with_silso_truncated = truncate_data(df_seiryo_with_silso)
+
+    factor = calc_factor(df_seiryo_with_silso_truncated)
     print(f"{factor=}")
 
-    r2 = calc_r2(df_seiryo_with_silso, factor)
+    r2 = calc_r2(df_seiryo_with_silso_truncated, factor)
     print(f"{r2=}")
 
     with (output_path / "factor_r2.json").open("w") as json_file:
         json.dump({"factor": factor, "r2": r2}, json_file)
 
-    df_ratio_and_diff = calc_ratio_and_diff(df_seiryo_with_silso, factor)
+    df_ratio_and_diff = calc_ratio_and_diff(
+        df_seiryo_with_silso_truncated, factor
+    )
     print(df_ratio_and_diff)
     df_ratio_and_diff.write_parquet(output_path / "ratio_diff.parquet")
 
@@ -251,7 +255,7 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    fig_scatter = draw_scatter(df_seiryo_with_silso, factor, r2)
+    fig_scatter = draw_scatter(df_seiryo_with_silso_truncated, factor, r2)
 
     for f in ["png", "pdf"]:
         fig_scatter.savefig(

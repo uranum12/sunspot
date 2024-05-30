@@ -171,7 +171,14 @@ def test_join_data(
 
 
 @pytest.mark.parametrize(
-    ("in_seiryo_date", "in_seiryo_total", "in_silso_date", "in_silso_total"),
+    (
+        "in_date",
+        "in_seiryo",
+        "in_silso",
+        "out_date",
+        "out_seiryo",
+        "out_silso",
+    ),
     [
         pytest.param(
             [
@@ -181,32 +188,52 @@ def test_join_data(
                 date(2020, 4, 1),
                 date(2020, 5, 1),
             ],
-            [1, 2, 3, 4, 5],
-            [date(2020, 1, 1), date(2020, 2, 1), date(2020, 3, 1)],
-            [2, 4, 6],
-        )
+            [1.2, 2.3, 3.4, 4.5, 5.6],
+            [2.4, 4.6, 6.8, 9.0, 11.2],
+            [
+                date(2020, 1, 1),
+                date(2020, 2, 1),
+                date(2020, 3, 1),
+                date(2020, 4, 1),
+                date(2020, 5, 1),
+            ],
+            [1.2, 2.3, 3.4, 4.5, 5.6],
+            [2.4, 4.6, 6.8, 9.0, 11.2],
+        ),
+        pytest.param(
+            [
+                date(2020, 1, 1),
+                date(2020, 2, 1),
+                date(2020, 3, 1),
+                date(2020, 4, 1),
+                date(2020, 5, 1),
+            ],
+            [None, 2.3, 3.4, 4.5, 5.6],
+            [2.4, 4.6, 6.8, None, None],
+            [date(2020, 2, 1), date(2020, 3, 1)],
+            [2.3, 3.4],
+            [4.6, 6.8],
+        ),
     ],
 )
-def test_join_data_with_error(
-    in_seiryo_date: list[date],
-    in_seiryo_total: list[float],
-    in_silso_date: list[date],
-    in_silso_total: list[float],
+def test_truncate_data(
+    in_date: list[date],
+    in_seiryo: list[float | None],
+    in_silso: list[float | None],
+    out_date: list[date],
+    out_seiryo: list[float],
+    out_silso: list[float],
 ) -> None:
-    df_in_seiryo = pl.DataFrame(
-        {"date": in_seiryo_date, "total": in_seiryo_total},
-        schema={"date": pl.Date, "total": pl.Float64},
+    df_in = pl.DataFrame(
+        {"date": in_date, "seiryo": in_seiryo, "silso": in_silso},
+        schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
-    df_in_silso = pl.DataFrame(
-        {"date": in_silso_date, "total": in_silso_total},
-        schema={"date": pl.Date, "total": pl.Float64},
+    df_expected = pl.DataFrame(
+        {"date": out_date, "seiryo": out_seiryo, "silso": out_silso},
+        schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
-    with pytest.raises(
-        ValueError, match="missing data for 'silso' on certain dates"
-    ):
-        _ = seiryo_sunspot_number_with_silso.join_data(
-            df_in_seiryo, df_in_silso
-        )
+    df_out = seiryo_sunspot_number_with_silso.truncate_data(df_in)
+    assert_frame_equal(df_out, df_expected)
 
 
 @pytest.mark.parametrize(

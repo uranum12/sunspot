@@ -336,6 +336,28 @@ def test_join_data(
     assert_frame_equal(df_out, df_expected)
 
 
+def test_calc_factors() -> None:
+    in_df = pl.DataFrame(
+        {
+            "seiryo_north": [1.2, 2.2, 2.1],
+            "seiryo_south": [2.3, 3.3, 3.2],
+            "seiryo_total": [3.4, 4.4, 4.3],
+            "flare_north": [4.5, None, 5.4],
+            "flare_south": [5.6, 6.6, 6.5],
+            "flare_total": [6.7, 7.7, 7.6],
+        },
+        schema={
+            "seiryo_north": pl.Float64,
+            "seiryo_south": pl.Float64,
+            "seiryo_total": pl.Float64,
+            "flare_north": pl.Float64,
+            "flare_south": pl.Float64,
+            "flare_total": pl.Float64,
+        },
+    )
+    _ = seiryo_sunspot_number_with_flare.calc_factors(in_df)
+
+
 def test_draw_sunspot_number_with_flare() -> None:
     df = pl.DataFrame(
         {
@@ -350,6 +372,9 @@ def test_draw_sunspot_number_with_flare() -> None:
         },
     )
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(df)
+    _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(
+        df, factor=1.0
+    )
 
 
 def test_draw_sunspot_number_with_flare_hemispheric() -> None:
@@ -371,4 +396,7 @@ def test_draw_sunspot_number_with_flare_hemispheric() -> None:
     )
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare_hemispheric(  # noqa: E501
         df
+    )
+    _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare_hemispheric(  # noqa: E501
+        df, factor_north=1.0, factor_south=1.0
     )

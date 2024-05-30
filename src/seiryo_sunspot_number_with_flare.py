@@ -1,9 +1,11 @@
+import json
 from datetime import date
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import polars as pl
 from matplotlib.figure import Figure
+from scipy import optimize
 
 
 def load_flare_file(path: Path) -> pl.DataFrame:
@@ -66,7 +68,27 @@ def join_data(df_seiryo: pl.DataFrame, df_flare: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def draw_sunspot_number_with_flare(df: pl.DataFrame) -> Figure:
+def calc_factors(df: pl.DataFrame) -> dict[str, float]:
+    factors: dict[str, float] = {}
+    for hemisphere in ["north", "south", "total"]:
+        df_truncated = (
+            df.lazy()
+            .select(f"seiryo_{hemisphere}", f"flare_{hemisphere}")
+            .drop_nulls()
+            .collect()
+        )
+        popt, _ = optimize.curve_fit(
+            lambda x, a: x * a,
+            df_truncated[f"seiryo_{hemisphere}"],
+            df_truncated[f"flare_{hemisphere}"],
+        )
+        factors[hemisphere] = popt[0]
+    return factors
+
+
+def draw_sunspot_number_with_flare(
+    df: pl.DataFrame, *, factor: float | None = None
+) -> Figure:
     fig = plt.figure(figsize=(8, 5))
     ax1 = fig.add_subplot(111)
 
@@ -97,12 +119,28 @@ def draw_sunspot_number_with_flare(df: pl.DataFrame) -> Figure:
         ncol=2,
     )
 
+    if factor is not None:
+        max_sunspot_number = df.select(pl.max("seiryo_total")).item()
+        max_flare_index = max_sunspot_number * factor
+        margin_sunspot_number = max_sunspot_number * 0.1
+        margin_flare_index = max_flare_index * 0.1
+        max_sunspot_number += margin_sunspot_number
+        max_flare_index += margin_flare_index
+
+        ax1.set_ylim(-margin_sunspot_number, max_sunspot_number)
+        ax2.set_ylim(-margin_flare_index, max_flare_index)
+
     fig.tight_layout()
 
     return fig
 
 
-def draw_sunspot_number_with_flare_hemispheric(df: pl.DataFrame) -> Figure:
+def draw_sunspot_number_with_flare_hemispheric(
+    df: pl.DataFrame,
+    *,
+    factor_north: float | None = None,
+    factor_south: float | None = None,
+) -> Figure:
     fig = plt.figure(figsize=(8, 8))
     ax1 = fig.add_subplot(211)
     ax1_twin = ax1.twinx()
@@ -131,6 +169,17 @@ def draw_sunspot_number_with_flare_hemispheric(df: pl.DataFrame) -> Figure:
         ncol=2,
     )
 
+    if factor_north is not None:
+        max_sunspot_number_north = df.select(pl.max("seiryo_north")).item()
+        max_flare_index_north = max_sunspot_number_north * factor_north
+        margin_sunspot_number_north = max_sunspot_number_north * 0.1
+        margin_flare_index_north = max_flare_index_north * 0.1
+        max_sunspot_number_north += margin_sunspot_number_north
+        max_flare_index_north += margin_flare_index_north
+
+        ax1.set_ylim(-margin_sunspot_number_north, max_sunspot_number_north)
+        ax1_twin.set_ylim(-margin_flare_index_north, max_flare_index_north)
+
     ax2 = fig.add_subplot(212, sharex=ax1)
     ax2_twin = ax2.twinx()
 
@@ -158,6 +207,17 @@ def draw_sunspot_number_with_flare_hemispheric(df: pl.DataFrame) -> Figure:
         ncol=2,
     )
 
+    if factor_south is not None:
+        max_sunspot_number_south = df.select(pl.max("seiryo_south")).item()
+        max_flare_index_south = max_sunspot_number_south * factor_south
+        margin_sunspot_number_south = max_sunspot_number_south * 0.1
+        margin_flare_index_south = max_flare_index_south * 0.1
+        max_sunspot_number_south += margin_sunspot_number_south
+        max_flare_index_south += margin_flare_index_south
+
+        ax2.set_ylim(-margin_sunspot_number_south, max_sunspot_number_south)
+        ax2_twin.set_ylim(-margin_flare_index_south, max_flare_index_south)
+
     fig.tight_layout()
 
     return fig
@@ -178,7 +238,15 @@ def main() -> None:
     print(df_with_flare)
     df_with_flare.write_parquet(output_path / "with_flare.parquet")
 
-    fig_with_flare = draw_sunspot_number_with_flare(df_with_flare)
+    factors = calc_factors(df_with_flare)
+    print(f"{factors=}")
+
+    with (output_path / "flare_factors.json").open("w") as json_file:
+        json.dump(factors, json_file)
+
+    fig_with_flare = draw_sunspot_number_with_flare(
+        df_with_flare, factor=factors["total"]
+    )
 
     for f in ["png", "pdf"]:
         fig_with_flare.savefig(
@@ -190,7 +258,9 @@ def main() -> None:
         )
 
     fig_with_flare_hemispheric = draw_sunspot_number_with_flare_hemispheric(
-        df_with_flare
+        df_with_flare,
+        factor_north=factors["north"],
+        factor_south=factors["south"],
     )
 
     for f in ["png", "pdf"]:

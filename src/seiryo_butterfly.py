@@ -201,7 +201,7 @@ def fill_lat(
     """
     return (
         pl.LazyFrame({"date": pl.date_range(start, end, interval, eager=True)})
-        .join(df, on="date", how="left")
+        .join(df, on="date", how="left", coalesce=True)
         .with_columns(pl.col("min", "max").fill_null(pl.lit([])))
         .sort("date")
     )

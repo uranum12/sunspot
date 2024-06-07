@@ -61,6 +61,7 @@ def join_data(
             df_silso.lazy().select("date", "total").rename({"total": "silso"}),
             on="date",
             how="left",
+            coalesce=True,
         )
         .collect()
     )

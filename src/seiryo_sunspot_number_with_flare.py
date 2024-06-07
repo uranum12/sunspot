@@ -63,6 +63,7 @@ def join_data(df_seiryo: pl.DataFrame, df_flare: pl.DataFrame) -> pl.DataFrame:
             ),
             on="date",
             how="left",
+            coalesce=True,
         )
         .collect()
     )

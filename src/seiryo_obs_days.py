@@ -62,6 +62,7 @@ def calc_dayly_obs(df: pl.LazyFrame, start: date, end: date) -> pl.LazyFrame:
             ),
             on="date",
             how="left",
+            coalesce=True,
         )
         .with_columns(pl.col("obs").fill_null(0).cast(pl.UInt8))
     )

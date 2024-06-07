@@ -37,6 +37,7 @@ def join_data(df_seiryo: pl.DataFrame, df_silso: pl.DataFrame) -> pl.DataFrame:
             df_silso.lazy().select("date", "total").rename({"total": "silso"}),
             on="date",
             how="left",
+            coalesce=True,
         )
         .collect()
     )

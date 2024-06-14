@@ -27,6 +27,7 @@ types-python-dateutil = "*"
 pytest = "*"
 pytest-mock = "*"
 pytest-cov = "*"
+tox = "*"
 
 [tool.ruff]
 src = ["src"]

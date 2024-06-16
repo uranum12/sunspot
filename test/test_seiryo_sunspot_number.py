@@ -6,6 +6,7 @@ import pytest
 from polars.testing import assert_frame_equal
 
 import seiryo_sunspot_number
+import seiryo_sunspot_number_config
 
 
 @pytest.mark.parametrize(
@@ -456,7 +457,8 @@ def test_draw_sunspot_number_whole_disk() -> None:
         },
         schema={"date": pl.Date, "total": pl.Float64},
     )
-    _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk(df)
+    config = seiryo_sunspot_number_config.SunspotNumberWholeDisk()
+    _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk(df, config)
 
 
 def test_draw_sunspot_number_hemispheric() -> None:
@@ -468,4 +470,5 @@ def test_draw_sunspot_number_hemispheric() -> None:
         },
         schema={"date": pl.Date, "north": pl.Float64, "south": pl.Float64},
     )
-    _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric(df)
+    config = seiryo_sunspot_number_config.SunspotNumberHemispheric()
+    _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric(df, config)

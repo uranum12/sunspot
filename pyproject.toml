@@ -15,6 +15,7 @@ matplotlib = "^3.8.4"
 plotly = "^5.20.0"
 kaleido = "0.2.1"
 uncertainty = { git = "https://github.com/sophiano/uncertainty" }
+pydantic = "^2.7.4"
 
 [tool.poetry.group.dev.dependencies]
 invoke = "*"
@@ -81,4 +82,4 @@ addopts = [
 branch = true
 
 [tool.coverage.report]
-exclude_also = ["if __name__ == .__main__.:"]
+exclude_also = ["if __name__ == .__main__.:", "if TYPE_CHECKING:"]

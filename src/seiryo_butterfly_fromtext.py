@@ -7,6 +7,7 @@ import numpy as np
 import polars as pl
 
 import seiryo_butterfly
+import seiryo_butterfly_config
 
 
 def load_txt_data(path: Path) -> tuple[date, date, list[str]]:
@@ -77,9 +78,9 @@ def main() -> None:
     with (output_path / "fromtext.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    fig_butterfly = seiryo_butterfly.draw_butterfly_diagram(
-        img, info, figsize=(12, 5)
-    )
+    config = seiryo_butterfly_config.ButterflyDiagram()
+    config.fig_size.width = 12
+    fig_butterfly = seiryo_butterfly.draw_butterfly_diagram(img, info, config)
 
     for f in ["png", "pdf"]:
         fig_butterfly.savefig(

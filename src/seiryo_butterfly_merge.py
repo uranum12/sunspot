@@ -7,6 +7,7 @@ import numpy.typing as npt
 import polars as pl
 
 import seiryo_butterfly
+import seiryo_butterfly_config
 
 
 def create_merged_image(
@@ -76,9 +77,9 @@ def main() -> None:
 
     cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0xFF, 0x00, 0x00)]
     img_color = create_color_image(img, cmap)
-    fig = seiryo_butterfly.draw_butterfly_diagram(
-        img_color, info, figsize=(10, 5)
-    )
+    config = seiryo_butterfly_config.ButterflyDiagram()
+    config.fig_size.width = 10
+    fig = seiryo_butterfly.draw_butterfly_diagram(img_color, info, config)
 
     for f in ["png", "pdf"]:
         fig.savefig(

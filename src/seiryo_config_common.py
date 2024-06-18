@@ -19,6 +19,11 @@ class Bar(BaseModel):
     color: str | None = None
 
 
+class Image(BaseModel):
+    cmap: str = "binary"
+    aspect: float = 1.0
+
+
 class Title(BaseModel):
     text: str
     font_family: str = "Times New Roman"

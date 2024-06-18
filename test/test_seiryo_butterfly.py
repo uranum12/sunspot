@@ -6,6 +6,7 @@ import pytest
 from polars.testing import assert_frame_equal
 
 import seiryo_butterfly
+import seiryo_butterfly_config
 
 
 @pytest.mark.parametrize(
@@ -687,4 +688,5 @@ def test_draw_butterfly_diagram() -> None:
         date(2020, 4, 1),
         seiryo_butterfly.DateDelta(months=1),
     )
-    _ = seiryo_butterfly.draw_butterfly_diagram(img, info)
+    config = seiryo_butterfly_config.ButterflyDiagram()
+    _ = seiryo_butterfly.draw_butterfly_diagram(img, info, config)

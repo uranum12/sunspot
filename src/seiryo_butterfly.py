@@ -10,6 +10,8 @@ import numpy.typing as npt
 import polars as pl
 from matplotlib.figure import Figure
 
+import seiryo_butterfly_config
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DateDelta:
@@ -330,16 +332,14 @@ def create_lat_index(lat_min: int, lat_max: int) -> npt.NDArray[np.int8]:
 def draw_butterfly_diagram(
     img: npt.NDArray[np.uint8],
     info: ButterflyInfo,
-    *,
-    figsize: tuple[int, int] = (5, 8),
-    year_interval: int = 10,
-    lat_interval: int = 10,
+    config: seiryo_butterfly_config.ButterflyDiagram,
 ) -> Figure:
     """蝶形図データを基に画像を作成する
 
     Args:
         img (npt.NDArray[np.uint8]): 蝶形図のデータ
         info (ButterflyInfo): 蝶形図の情報
+        config (ButterflyDiagram): グラフの設定
 
     Returns:
         Figure: 作成した蝶形図
@@ -352,24 +352,50 @@ def draw_butterfly_diagram(
     xlabel = [
         (i, f"{d.year}")
         for i, d in enumerate(item.item() for item in date_index)
-        if d.month == 1 and d.year % year_interval == 0
+        if d.month == 1 and d.year % config.index.year_inteerval == 0
     ]
-    ylabel = [(i, n) for i, n in enumerate(lat_index) if n % lat_interval == 0]
+    ylabel = [
+        (i, n)
+        for i, n in enumerate(lat_index)
+        if n % config.index.lat_interval == 0
+    ]
 
-    fig = plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=(config.fig_size.width, config.fig_size.height))
     ax = fig.add_subplot(111)
 
-    ax.imshow(img, cmap="binary")
+    ax.imshow(img, cmap=config.image.cmap, aspect=config.image.aspect)
 
-    ax.set_title("butterfly diagram")
+    ax.set_title(
+        config.title.text,
+        fontfamily=config.title.font_family,
+        fontsize=config.title.font_size,
+    )
 
-    ax.set_xlabel("date")
+    ax.set_xlabel(
+        config.xaxis.title.text,
+        fontfamily=config.xaxis.title.font_family,
+        fontsize=config.xaxis.title.font_size,
+    )
+
     ax.set_xticks([i[0] for i in xlabel])
-    ax.set_xticklabels([i[1] for i in xlabel])
+    ax.set_xticklabels(
+        [i[1] for i in xlabel],
+        fontfamily=config.xaxis.ticks.font_family,
+        fontsize=config.xaxis.ticks.font_size,
+    )
 
-    ax.set_ylabel("latitude")
+    ax.set_ylabel(
+        config.yaxis.title.text,
+        fontfamily=config.yaxis.title.font_family,
+        fontsize=config.yaxis.title.font_size,
+    )
+
     ax.set_yticks([i[0] for i in ylabel])
-    ax.set_yticklabels([i[1] for i in ylabel])
+    ax.set_yticklabels(
+        [i[1] for i in ylabel],
+        fontfamily=config.yaxis.ticks.font_family,
+        fontsize=config.yaxis.ticks.font_size,
+    )
 
     return fig
 
@@ -398,7 +424,9 @@ def main() -> None:
     with (output_path / "monthly.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    fig_butterfly = draw_butterfly_diagram(img, info, year_interval=2)
+    config = seiryo_butterfly_config.ButterflyDiagram()
+    config.index.year_inteerval = 2
+    fig_butterfly = draw_butterfly_diagram(img, info, config)
 
     for f in ["png", "pdf"]:
         fig_butterfly.savefig(

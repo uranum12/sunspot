@@ -19,6 +19,13 @@ class Bar(BaseModel):
     color: str | None = None
 
 
+class Scatter(BaseModel):
+    label: str = ""
+    size: float = 10.0
+    color: str | None = None
+    edge_color: str | None = "none"
+
+
 class Image(BaseModel):
     cmap: str = "binary"
     aspect: float = 1.0
@@ -39,6 +46,14 @@ class Ticks(BaseModel):
 class Axis(BaseModel):
     title: Title
     ticks: Ticks = Ticks()
+
+
+class Text(BaseModel):
+    x: float | None = None
+    y: float | None = None
+    math_font_family: str = "cm"
+    font_family: str = "Times New Roman"
+    font_size: int = 16
 
 
 class Legend(BaseModel):

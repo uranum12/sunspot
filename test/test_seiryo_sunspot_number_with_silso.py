@@ -7,6 +7,7 @@ from polars.testing import assert_frame_equal
 from pytest_mock import MockerFixture
 
 import seiryo_sunspot_number_with_silso
+import seiryo_sunspot_number_with_silso_config
 
 
 @pytest.mark.parametrize(
@@ -318,7 +319,10 @@ def test_draw_sunspot_number_with_silso() -> None:
         },
         schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
-    _ = seiryo_sunspot_number_with_silso.draw_sunspot_number_with_silso(df)
+    config = seiryo_sunspot_number_with_silso_config.SunspotNumberWithSilso()
+    _ = seiryo_sunspot_number_with_silso.draw_sunspot_number_with_silso(
+        df, config
+    )
 
 
 def test_draw_scatter() -> None:
@@ -332,7 +336,8 @@ def test_draw_scatter() -> None:
     )
     factor = 0.5
     r2 = 1.0
-    _ = seiryo_sunspot_number_with_silso.draw_scatter(df, factor, r2)
+    config = seiryo_sunspot_number_with_silso_config.Scatter()
+    _ = seiryo_sunspot_number_with_silso.draw_scatter(df, factor, r2, config)
 
 
 def test_draw_ratio_and_diff() -> None:
@@ -345,7 +350,15 @@ def test_draw_ratio_and_diff() -> None:
         schema={"date": pl.Date, "ratio": pl.Float64, "diff": pl.Float64},
     )
     factor = 0.48
-    _ = seiryo_sunspot_number_with_silso.draw_ratio(df, factor)
-    _ = seiryo_sunspot_number_with_silso.draw_diff(df)
-    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_1(df, factor)
-    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_2(df)
+    config_ratio = seiryo_sunspot_number_with_silso_config.Ratio()
+    config_diff = seiryo_sunspot_number_with_silso_config.Diff()
+    config_ratio_diff_1 = seiryo_sunspot_number_with_silso_config.RatioDiff1()
+    config_ratio_diff_2 = seiryo_sunspot_number_with_silso_config.RatioDiff2()
+    _ = seiryo_sunspot_number_with_silso.draw_ratio(df, factor, config_ratio)
+    _ = seiryo_sunspot_number_with_silso.draw_diff(df, config_diff)
+    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_1(
+        df, factor, config_ratio_diff_1
+    )
+    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_2(
+        df, config_ratio_diff_2
+    )

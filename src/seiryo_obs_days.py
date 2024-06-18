@@ -7,6 +7,8 @@ import polars as pl
 from dateutil.relativedelta import relativedelta
 from matplotlib.figure import Figure
 
+import seiryo_obs_days_config
+
 
 def calc_date_range(df: pl.LazyFrame) -> tuple[date, date]:
     """日付の開始日と最終日を算出する
@@ -85,29 +87,71 @@ def calc_monthly_obs(df: pl.LazyFrame) -> pl.LazyFrame:
     )
 
 
-def draw_monthly_obs_days(df: pl.DataFrame) -> Figure:
+def draw_monthly_obs_days(
+    df: pl.DataFrame, config: seiryo_obs_days_config.ObservationsDays
+) -> Figure:
     """月ごとの観測日数のグラフを作成する
 
     Args:
         df (pl.DataFrame): 月ごとの観測日数
+        config (ObservationsDays): グラフの設定
 
     Returns:
         Figure: 作成したグラフ
     """
-    fig = plt.figure(figsize=(8, 5))
+    date_min: date = df.select(pl.min("date")).item()
+    date_max: date = df.select(pl.max("date")).item()
+    date_min = date_min.replace(month=1, day=1)
+    date_max = date_max.replace(month=1, day=1) + relativedelta(years=1)
+    date_num_min = float(mdates.date2num(date_min))
+    date_num_max = float(mdates.date2num(date_max))
+    date_margin = (date_num_max - date_num_min) * 0.05
+    obs_max: int = df.select(pl.max("obs")).item()
+    obs_margin = obs_max * 0.05
+
+    fig = plt.figure(figsize=(config.fig_size.width, config.fig_size.height))
     ax = fig.add_subplot(111)
 
-    ax.bar(df["date"], df["obs"], width=15)
+    ax.bar(
+        df["date"], df["obs"], width=config.bar.width, color=config.bar.color
+    )
 
-    ax.set_title("observations days per month")
-    ax.set_xlabel("date")
-    ax.set_ylabel("observations days")
+    ax.set_title(
+        config.title.text,
+        fontfamily=config.title.font_family,
+        fontsize=config.title.font_size,
+    )
+
+    ax.set_xlabel(
+        config.xaxis.title.text,
+        fontfamily=config.xaxis.title.font_family,
+        fontsize=config.xaxis.title.font_size,
+    )
 
     ax.xaxis.set_major_locator(locator := mdates.AutoDateLocator())
     ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
-
     ax.set_xticks(ax.get_xticks())
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+    ax.set_xticklabels(
+        ax.get_xticklabels(),
+        fontfamily=config.xaxis.ticks.font_family,
+        fontsize=config.xaxis.ticks.font_size,
+    )
+
+    ax.set_ylabel(
+        config.yaxis.title.text,
+        fontfamily=config.yaxis.title.font_family,
+        fontsize=config.yaxis.title.font_size,
+    )
+
+    ax.set_yticks(ax.get_yticks())
+    ax.set_yticklabels(
+        ax.get_yticklabels(),
+        fontfamily=config.yaxis.ticks.font_family,
+        fontsize=config.yaxis.ticks.font_size,
+    )
+
+    ax.set_xlim(date_num_min - date_margin, date_num_max + date_margin)
+    ax.set_ylim(0, obs_max + obs_margin)
 
     fig.tight_layout()
 
@@ -131,7 +175,8 @@ def main() -> None:
     print(df_monthly)
     df_monthly.write_parquet(output_path / "monthly.parquet")
 
-    fig = draw_monthly_obs_days(df_monthly)
+    config = seiryo_obs_days_config.ObservationsDays()
+    fig = draw_monthly_obs_days(df_monthly, config)
 
     for f in ["png", "pdf"]:
         fig.savefig(

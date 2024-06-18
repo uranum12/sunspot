@@ -5,6 +5,7 @@ import pytest
 from polars.testing import assert_frame_equal
 
 import seiryo_obs_days
+import seiryo_obs_days_config
 
 
 @pytest.mark.parametrize(
@@ -244,4 +245,5 @@ def test_draw_monthly_obs_days() -> None:
         },
         schema={"date": pl.Date, "obs": pl.UInt8},
     )
-    _ = seiryo_obs_days.draw_monthly_obs_days(df)
+    config = seiryo_obs_days_config.ObservationsDays()
+    _ = seiryo_obs_days.draw_monthly_obs_days(df, config)

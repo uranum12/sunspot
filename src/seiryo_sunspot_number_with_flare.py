@@ -263,10 +263,10 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
     ax1_twin.plot(  # type: ignore[attr-defined]
         df["date"],
         df["flare_north"],
-        ls=config.line_south_flare.style,
-        lw=config.line_south_flare.width,
-        c=config.line_south_flare.color,
-        label=config.line_south_flare.label,
+        ls=config.line_north_flare.style,
+        lw=config.line_north_flare.width,
+        c=config.line_north_flare.color,
+        label=config.line_north_flare.label,
     )
 
     ax1.set_title(

@@ -18,6 +18,10 @@ class SunspotNumberWithFlare(BaseModel):
 
 class SunspotNumberWithFlareHemispheric(BaseModel):
     fig_size: FigSize = FigSize(height=8)
+    line_north_sunspot: Line = Line(color="C0", label="seiryo")
+    line_north_flare: Line = Line(color="C1", label="flare")
+    line_south_sunspot: Line = Line(color="C0", label="seiryo")
+    line_south_flare: Line = Line(color="C1", label="flare")
     title_north: Title = Title(text="North", position=1.1)
     title_south: Title = Title(text="South", position=1.1)
     xaxis: Axis = Axis(title=Title(text="date"))

@@ -251,8 +251,23 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
     ax1 = fig.add_subplot(211)
     ax1_twin = ax1.twinx()
 
-    ax1.plot(df["date"], df["seiryo_north"], lw=1, c="C0", label="seiryo")
-    ax1_twin.plot(df["date"], df["flare_north"], lw=1, c="C1", label="flare")  # type: ignore[attr-defined]
+    ax1.plot(
+        df["date"],
+        df["seiryo_north"],
+        ls=config.line_north_sunspot.style,
+        lw=config.line_north_sunspot.width,
+        c=config.line_north_sunspot.color,
+        label=config.line_north_sunspot.label,
+    )
+
+    ax1_twin.plot(  # type: ignore[attr-defined]
+        df["date"],
+        df["flare_north"],
+        ls=config.line_south_flare.style,
+        lw=config.line_south_flare.width,
+        c=config.line_south_flare.color,
+        label=config.line_south_flare.label,
+    )
 
     ax1.set_title(
         config.title_north.text,
@@ -319,8 +334,23 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
     ax2 = fig.add_subplot(212, sharex=ax1)
     ax2_twin = ax2.twinx()
 
-    ax2.plot(df["date"], df["seiryo_south"], lw=1, c="C0", label="seiryo")
-    ax2_twin.plot(df["date"], df["flare_south"], lw=1, c="C1", label="flare")  # type: ignore[attr-defined]
+    ax2.plot(
+        df["date"],
+        df["seiryo_south"],
+        ls=config.line_south_sunspot.style,
+        lw=config.line_south_sunspot.width,
+        c=config.line_south_sunspot.color,
+        label=config.line_south_sunspot.label,
+    )
+
+    ax2_twin.plot(  # type: ignore[attr-defined]
+        df["date"],
+        df["flare_south"],
+        ls=config.line_south_flare.style,
+        lw=config.line_south_flare.width,
+        c=config.line_south_flare.color,
+        label=config.line_south_flare.label,
+    )
 
     ax2.set_title(
         config.title_south.text,

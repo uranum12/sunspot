@@ -127,6 +127,8 @@ def draw_sunspot_number_whole_disk(
         ls=config.line.style,
         lw=config.line.width,
         c=config.line.color,
+        marker=config.line.marker.marker,
+        ms=config.line.marker.size,
     )
 
     ax.set_title(
@@ -199,6 +201,8 @@ def draw_sunspot_number_hemispheric(
         lw=config.line_north.width,
         c=config.line_north.color,
         label=config.line_north.label,
+        marker=config.line_north.marker.marker,
+        ms=config.line_north.marker.size,
     )
     ax.plot(
         df["date"],
@@ -207,6 +211,8 @@ def draw_sunspot_number_hemispheric(
         lw=config.line_south.width,
         c=config.line_south.color,
         label=config.line_south.label,
+        marker=config.line_south.marker.marker,
+        ms=config.line_south.marker.size,
     )
 
     ax.set_title(

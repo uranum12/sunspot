@@ -104,6 +104,8 @@ def draw_sunspot_number_with_silso(
         lw=config.line_seiryo.width,
         c=config.line_seiryo.color,
         label=config.line_seiryo.label,
+        marker=config.line_seiryo.marker.marker,
+        ms=config.line_seiryo.marker.size,
     )
     ax.plot(
         df["date"],
@@ -112,6 +114,8 @@ def draw_sunspot_number_with_silso(
         lw=config.line_silso.width,
         c=config.line_silso.color,
         label=config.line_silso.label,
+        marker=config.line_silso.marker.marker,
+        ms=config.line_silso.marker.size,
     )
 
     ax.set_title(
@@ -199,9 +203,10 @@ def draw_scatter(
     ax.scatter(
         df["silso"],
         df["seiryo"],
-        s=config.scatter.size,
+        s=config.scatter.marker.size,
         c=config.scatter.color,
         edgecolors=config.scatter.edge_color,
+        marker=config.scatter.marker.marker,
         zorder=2,
     )
 
@@ -301,6 +306,8 @@ def draw_ratio(
         ls=config.line_ratio.style,
         lw=config.line_ratio.width,
         c=config.line_ratio.color,
+        marker=config.line_ratio.marker.marker,
+        ms=config.line_ratio.marker.size,
         zorder=2,
     )
 
@@ -371,6 +378,8 @@ def draw_diff(
         ls=config.line.style,
         lw=config.line.width,
         c=config.line.color,
+        marker=config.line.marker.marker,
+        ms=config.line.marker.size,
     )
 
     ax.set_title(
@@ -454,6 +463,8 @@ def draw_ratio_diff_1(
         ls=config.line_ratio.style,
         lw=config.line_ratio.width,
         c=config.line_ratio.color,
+        marker=config.line_ratio.marker.marker,
+        ms=config.line_ratio.marker.size,
         zorder=2,
     )
 
@@ -487,6 +498,8 @@ def draw_ratio_diff_1(
         ls=config.line_diff.style,
         lw=config.line_diff.width,
         c=config.line_diff.color,
+        marker=config.line_diff.marker.marker,
+        ms=config.line_diff.marker.size,
     )
 
     ax2.set_title(
@@ -561,6 +574,8 @@ def draw_ratio_diff_2(
         lw=config.line_ratio.width,
         c=config.line_ratio.color,
         label=config.line_ratio.label,
+        marker=config.line_ratio.marker.marker,
+        ms=config.line_ratio.marker.size,
     )
 
     ax1.set_title(
@@ -612,6 +627,8 @@ def draw_ratio_diff_2(
         lw=config.line_diff.width,
         c=config.line_diff.color,
         label=config.line_diff.label,
+        marker=config.line_diff.marker.marker,
+        ms=config.line_diff.marker.size,
     )
 
     ax2.set_ylabel(

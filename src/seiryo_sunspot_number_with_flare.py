@@ -123,6 +123,8 @@ def draw_sunspot_number_with_flare(
         lw=config.line_sunspot.width,
         c=config.line_sunspot.color,
         label=config.line_sunspot.label,
+        marker=config.line_sunspot.marker.marker,
+        ms=config.line_sunspot.marker.size,
     )
 
     ax1.set_title(
@@ -174,6 +176,8 @@ def draw_sunspot_number_with_flare(
         lw=config.line_flare.width,
         c=config.line_flare.color,
         label=config.line_flare.label,
+        marker=config.line_flare.marker.marker,
+        ms=config.line_flare.marker.size,
     )
 
     ax2.set_ylabel(
@@ -258,6 +262,8 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
         lw=config.line_north_sunspot.width,
         c=config.line_north_sunspot.color,
         label=config.line_north_sunspot.label,
+        marker=config.line_north_sunspot.marker.marker,
+        ms=config.line_north_sunspot.marker.size,
     )
 
     ax1_twin.plot(  # type: ignore[attr-defined]
@@ -267,6 +273,8 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
         lw=config.line_north_flare.width,
         c=config.line_north_flare.color,
         label=config.line_north_flare.label,
+        marker=config.line_north_flare.marker.marker,
+        ms=config.line_north_flare.marker.size,
     )
 
     ax1.set_title(
@@ -341,6 +349,8 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
         lw=config.line_south_sunspot.width,
         c=config.line_south_sunspot.color,
         label=config.line_south_sunspot.label,
+        marker=config.line_south_sunspot.marker.marker,
+        ms=config.line_south_sunspot.marker.size,
     )
 
     ax2_twin.plot(  # type: ignore[attr-defined]
@@ -350,6 +360,8 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
         lw=config.line_south_flare.width,
         c=config.line_south_flare.color,
         label=config.line_south_flare.label,
+        marker=config.line_south_flare.marker.marker,
+        ms=config.line_south_flare.marker.size,
     )
 
     ax2.set_title(

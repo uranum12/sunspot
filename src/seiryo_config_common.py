@@ -6,11 +6,17 @@ class FigSize(BaseModel):
     height: float = 5.0
 
 
+class Marker(BaseModel):
+    marker: str = "o"
+    size: float = 3.0
+
+
 class Line(BaseModel):
     label: str = ""
     style: str = "-"
     width: float = 1.0
     color: str | None = None
+    marker: Marker = Marker()
 
 
 class Bar(BaseModel):
@@ -21,9 +27,9 @@ class Bar(BaseModel):
 
 class Scatter(BaseModel):
     label: str = ""
-    size: float = 10.0
     color: str | None = None
-    edge_color: str | None = "none"
+    edge_color: str | None = None
+    marker: Marker = Marker()
 
 
 class Image(BaseModel):

@@ -2,10 +2,14 @@ import json
 from datetime import date
 from pathlib import Path
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import polars as pl
+from dateutil.relativedelta import relativedelta
 from matplotlib.figure import Figure
 from scipy import optimize
+
+import seiryo_sunspot_number_with_flare_config
 
 
 def load_flare_file(path: Path) -> pl.DataFrame:
@@ -88,22 +92,105 @@ def calc_factors(df: pl.DataFrame) -> dict[str, float]:
 
 
 def draw_sunspot_number_with_flare(
-    df: pl.DataFrame, *, factor: float | None = None
+    df: pl.DataFrame,
+    config: seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlare,
+    *,
+    factor: float | None = None,
 ) -> Figure:
-    fig = plt.figure(figsize=(8, 5))
+    date_min: date = df.select(pl.min("date")).item()
+    date_max: date = df.select(pl.max("date")).item()
+    date_min = date_min.replace(month=1, day=1)
+    date_max = date_max.replace(month=1, day=1) + relativedelta(years=1)
+    date_num_min = float(mdates.date2num(date_min))
+    date_num_max = float(mdates.date2num(date_max))
+    date_margin = (date_num_max - date_num_min) * 0.05
+    sunspot_max: float = df.select(pl.max("seiryo_total")).item()
+    sunspot_margin = sunspot_max * 0.05
+    flare_max: float = (
+        sunspot_max * factor
+        if factor is not None
+        else df.select(pl.max("flare_total")).item()
+    )
+    flare_margin = flare_max * 0.05
+
+    fig = plt.figure(figsize=(config.fig_size.width, config.fig_size.height))
     ax1 = fig.add_subplot(111)
 
-    ax1.plot(df["date"], df["seiryo_total"], c="C0", lw=1, label="seiryo")
+    ax1.plot(
+        df["date"],
+        df["seiryo_total"],
+        ls=config.line_sunspot.style,
+        lw=config.line_sunspot.width,
+        c=config.line_sunspot.color,
+        label=config.line_sunspot.label,
+    )
 
-    ax1.set_title("sunspot number and solar flare index", y=1.1)
-    ax1.set_xlabel("date")
-    ax1.set_ylabel("sunspot number")
+    ax1.set_title(
+        config.title.text,
+        fontfamily=config.title.font_family,
+        fontsize=config.title.font_size,
+        y=config.title.position,
+    )
+
+    ax1.set_xlabel(
+        config.xaxis.title.text,
+        fontfamily=config.xaxis.title.font_family,
+        fontsize=config.title.font_size,
+    )
+
+    ax1.xaxis.set_major_locator(locator := mdates.AutoDateLocator())
+    ax1.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+    ax1.set_xticks(ax1.get_xticks())
+    ax1.set_xticklabels(
+        ax1.get_xticklabels(),
+        fontfamily=config.xaxis.ticks.font_family,
+        fontsize=config.xaxis.ticks.font_size,
+    )
+
+    ax1.set_ylabel(
+        config.yaxis_sunspot.title.text,
+        fontfamily=config.yaxis_sunspot.title.font_family,
+        fontsize=config.yaxis_sunspot.title.font_size,
+    )
+
+    ax1.set_yticks(ax1.get_yticks())
+    ax1.set_yticklabels(
+        ax1.get_yticklabels(),
+        fontfamily=config.yaxis_sunspot.ticks.font_family,
+        fontsize=config.yaxis_sunspot.ticks.font_size,
+    )
+
     ax1.grid()
+
+    ax1.set_xlim(date_num_min - date_margin, date_num_max + date_margin)
+    ax1.set_ylim(-sunspot_margin, sunspot_max + sunspot_margin)
 
     ax2 = ax1.twinx()
 
-    ax2.plot(df["date"], df["flare_total"], c="C1", lw=1, label="flare")  # type: ignore[attr-defined]
-    ax2.set_ylabel("solar flare index")
+    ax2.plot(  # type: ignore[attr-defined]
+        df["date"],
+        df["flare_total"],
+        ls=config.line_flare.style,
+        lw=config.line_flare.width,
+        c=config.line_flare.color,
+        label=config.line_flare.label,
+    )
+
+    ax2.set_ylabel(
+        config.yaxis_flare.title.text,
+        fontfamily=config.yaxis_flare.title.font_family,
+        fontsize=config.yaxis_flare.title.font_size,
+    )
+
+    ax2.set_yticks(ax2.get_yticks())
+    ax2.set_yticklabels(
+        ax2.get_yticklabels(),
+        fontfamily=config.yaxis_flare.ticks.font_family,
+        fontsize=config.yaxis_flare.ticks.font_size,
+    )
+
+    ax2.set_ylim(-flare_margin, flare_max + flare_margin)
+
     ax2.grid()
 
     h1, l1 = ax1.get_legend_handles_labels()
@@ -118,40 +205,95 @@ def draw_sunspot_number_with_flare(
         bbox_to_anchor=(0.5, 1.02),
         borderaxespad=0,
         ncol=2,
+        prop={
+            "family": config.legend.font_family,
+            "size": config.legend.font_size,
+        },
     )
-
-    if factor is not None:
-        max_sunspot_number = df.select(pl.max("seiryo_total")).item()
-        max_flare_index = max_sunspot_number * factor
-        margin_sunspot_number = max_sunspot_number * 0.1
-        margin_flare_index = max_flare_index * 0.1
-        max_sunspot_number += margin_sunspot_number
-        max_flare_index += margin_flare_index
-
-        ax1.set_ylim(-margin_sunspot_number, max_sunspot_number)
-        ax2.set_ylim(-margin_flare_index, max_flare_index)
 
     fig.tight_layout()
 
     return fig
 
 
-def draw_sunspot_number_with_flare_hemispheric(
+def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
     df: pl.DataFrame,
+    config: seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlareHemispheric,  # noqa: E501
     *,
     factor_north: float | None = None,
     factor_south: float | None = None,
 ) -> Figure:
-    fig = plt.figure(figsize=(8, 8))
+    date_min: date = df.select(pl.min("date")).item()
+    date_max: date = df.select(pl.max("date")).item()
+    date_min = date_min.replace(month=1, day=1)
+    date_max = date_max.replace(month=1, day=1) + relativedelta(years=1)
+    date_num_min = float(mdates.date2num(date_min))
+    date_num_max = float(mdates.date2num(date_max))
+    date_margin = (date_num_max - date_num_min) * 0.05
+    sunspot_north_max: float = df.select(pl.max("seiryo_north")).item()
+    sunspot_north_margin = sunspot_north_max * 0.05
+    flare_north_max: float = (
+        sunspot_north_max * factor_north
+        if factor_north is not None
+        else df.select(pl.max("flare_north")).item()
+    )
+    flare_north_margin = flare_north_max * 0.05
+    sunspot_south_max: float = df.select(pl.max("seiryo_south")).item()
+    sunspot_south_margin = sunspot_south_max * 0.05
+    flare_south_max: float = (
+        sunspot_south_max * factor_south
+        if factor_south is not None
+        else df.select(pl.max("flare_south")).item()
+    )
+    flare_south_margin = flare_south_max * 0.05
+
+    fig = plt.figure(figsize=(config.fig_size.width, config.fig_size.height))
     ax1 = fig.add_subplot(211)
     ax1_twin = ax1.twinx()
 
     ax1.plot(df["date"], df["seiryo_north"], lw=1, c="C0", label="seiryo")
     ax1_twin.plot(df["date"], df["flare_north"], lw=1, c="C1", label="flare")  # type: ignore[attr-defined]
 
-    ax1.set_title("north", y=1.1)
-    ax1.set_ylabel("sunspot number")
-    ax1_twin.set_ylabel("solar flare index")
+    ax1.set_title(
+        config.title_north.text,
+        fontfamily=config.title_north.font_family,
+        fontsize=config.title_north.font_size,
+        y=config.title_north.position,
+    )
+
+    ax1.set_ylabel(
+        config.yaxis_north_sunspot.title.text,
+        fontfamily=config.yaxis_north_sunspot.title.font_family,
+        fontsize=config.yaxis_north_sunspot.title.font_size,
+    )
+
+    ax1.set_yticks(ax1.get_yticks())
+    ax1.set_yticklabels(
+        ax1.get_yticklabels(),
+        fontfamily=config.yaxis_north_sunspot.ticks.font_family,
+        fontsize=config.yaxis_north_sunspot.ticks.font_size,
+    )
+
+    ax1_twin.set_ylabel(
+        config.yaxis_north_flare.title.text,
+        fontfamily=config.yaxis_north_flare.title.font_family,
+        fontsize=config.yaxis_north_flare.title.font_size,
+    )
+
+    ax1_twin.set_yticks(ax1_twin.get_yticks())
+    ax1_twin.set_yticklabels(
+        ax1_twin.get_yticklabels(),
+        fontfamily=config.yaxis_north_flare.ticks.font_family,
+        fontsize=config.yaxis_north_flare.ticks.font_size,
+    )
+
+    ax1.set_ylim(
+        -sunspot_north_margin, sunspot_north_max + sunspot_north_margin
+    )
+    ax1_twin.set_ylim(
+        -flare_north_margin, flare_north_max + flare_north_margin
+    )
+
     ax1.tick_params(bottom=False, labelbottom=False)
     ax1.grid()
     ax1_twin.grid()
@@ -168,18 +310,11 @@ def draw_sunspot_number_with_flare_hemispheric(
         bbox_to_anchor=(0.5, 1.02),
         borderaxespad=0,
         ncol=2,
+        prop={
+            "family": config.legend_north.font_family,
+            "size": config.legend_north.font_size,
+        },
     )
-
-    if factor_north is not None:
-        max_sunspot_number_north = df.select(pl.max("seiryo_north")).item()
-        max_flare_index_north = max_sunspot_number_north * factor_north
-        margin_sunspot_number_north = max_sunspot_number_north * 0.1
-        margin_flare_index_north = max_flare_index_north * 0.1
-        max_sunspot_number_north += margin_sunspot_number_north
-        max_flare_index_north += margin_flare_index_north
-
-        ax1.set_ylim(-margin_sunspot_number_north, max_sunspot_number_north)
-        ax1_twin.set_ylim(-margin_flare_index_north, max_flare_index_north)
 
     ax2 = fig.add_subplot(212, sharex=ax1)
     ax2_twin = ax2.twinx()
@@ -187,10 +322,62 @@ def draw_sunspot_number_with_flare_hemispheric(
     ax2.plot(df["date"], df["seiryo_south"], lw=1, c="C0", label="seiryo")
     ax2_twin.plot(df["date"], df["flare_south"], lw=1, c="C1", label="flare")  # type: ignore[attr-defined]
 
-    ax2.set_title("south", y=1.1)
-    ax2.set_ylabel("sunspot number")
-    ax2_twin.set_ylabel("solar flare index")
-    ax2.set_xlabel("date")
+    ax2.set_title(
+        config.title_south.text,
+        fontfamily=config.title_south.font_family,
+        fontsize=config.title_south.font_size,
+        y=config.title_south.position,
+    )
+
+    ax2.set_xlabel(
+        config.xaxis.title.text,
+        fontfamily=config.xaxis.title.font_family,
+        fontsize=config.xaxis.title.font_size,
+    )
+
+    ax2.xaxis.set_major_locator(locator := mdates.AutoDateLocator())
+    ax2.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+    ax2.set_xticks(ax2.get_xticks())
+    ax2.set_xticklabels(
+        ax2.get_xticklabels(),
+        fontfamily=config.xaxis.ticks.font_family,
+        fontsize=config.xaxis.ticks.font_size,
+    )
+
+    ax2.set_ylabel(
+        config.yaxis_north_sunspot.title.text,
+        fontfamily=config.yaxis_north_sunspot.title.font_family,
+        fontsize=config.yaxis_north_sunspot.title.font_size,
+    )
+
+    ax2.set_yticks(ax2.get_yticks())
+    ax2.set_yticklabels(
+        ax2.get_yticklabels(),
+        fontfamily=config.yaxis_north_sunspot.ticks.font_family,
+        fontsize=config.yaxis_north_sunspot.ticks.font_size,
+    )
+
+    ax2_twin.set_ylabel(
+        config.yaxis_north_flare.title.text,
+        fontfamily=config.yaxis_north_flare.title.font_family,
+        fontsize=config.yaxis_north_flare.title.font_size,
+    )
+
+    ax2_twin.set_yticks(ax2_twin.get_yticks())
+    ax2_twin.set_yticklabels(
+        ax2_twin.get_yticklabels(),
+        fontfamily=config.yaxis_north_flare.ticks.font_family,
+        fontsize=config.yaxis_north_flare.ticks.font_size,
+    )
+
+    ax2.set_xlim(date_num_min - date_margin, date_num_max + date_margin)
+    ax2.set_ylim(
+        -sunspot_south_margin, sunspot_south_max + sunspot_south_margin
+    )
+    ax2_twin.set_ylim(
+        -flare_south_margin, flare_south_max + flare_south_margin
+    )
+
     ax2.grid()
     ax2_twin.grid()
 
@@ -206,18 +393,11 @@ def draw_sunspot_number_with_flare_hemispheric(
         bbox_to_anchor=(0.5, 1.02),
         borderaxespad=0,
         ncol=2,
+        prop={
+            "family": config.legend_south.font_family,
+            "size": config.legend_south.font_size,
+        },
     )
-
-    if factor_south is not None:
-        max_sunspot_number_south = df.select(pl.max("seiryo_south")).item()
-        max_flare_index_south = max_sunspot_number_south * factor_south
-        margin_sunspot_number_south = max_sunspot_number_south * 0.1
-        margin_flare_index_south = max_flare_index_south * 0.1
-        max_sunspot_number_south += margin_sunspot_number_south
-        max_flare_index_south += margin_flare_index_south
-
-        ax2.set_ylim(-margin_sunspot_number_south, max_sunspot_number_south)
-        ax2_twin.set_ylim(-margin_flare_index_south, max_flare_index_south)
 
     fig.tight_layout()
 
@@ -245,8 +425,11 @@ def main() -> None:
     with (output_path / "flare_factors.json").open("w") as json_file:
         json.dump(factors, json_file)
 
+    config_with_flare = (
+        seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlare()
+    )
     fig_with_flare = draw_sunspot_number_with_flare(
-        df_with_flare, factor=factors["total"]
+        df_with_flare, config_with_flare, factor=factors["total"]
     )
 
     for f in ["png", "pdf"]:
@@ -258,8 +441,10 @@ def main() -> None:
             pad_inches=0.1,
         )
 
+    config_with_flare_hemispheric = seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlareHemispheric()  # noqa: E501
     fig_with_flare_hemispheric = draw_sunspot_number_with_flare_hemispheric(
         df_with_flare,
+        config_with_flare_hemispheric,
         factor_north=factors["north"],
         factor_south=factors["south"],
     )

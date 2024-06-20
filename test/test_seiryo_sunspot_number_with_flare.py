@@ -7,6 +7,7 @@ from polars.testing import assert_frame_equal
 from pytest_mock import MockerFixture
 
 import seiryo_sunspot_number_with_flare
+import seiryo_sunspot_number_with_flare_config
 
 
 @pytest.mark.parametrize(
@@ -371,9 +372,12 @@ def test_draw_sunspot_number_with_flare() -> None:
             "flare_total": pl.Float64,
         },
     )
-    _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(df)
+    config = seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlare()
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(
-        df, factor=1.0
+        df, config
+    )
+    _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(
+        df, config, factor=1.0
     )
 
 
@@ -394,9 +398,10 @@ def test_draw_sunspot_number_with_flare_hemispheric() -> None:
             "flare_south": pl.Float64,
         },
     )
+    config = seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlareHemispheric()  # noqa: E501
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare_hemispheric(  # noqa: E501
-        df
+        df, config
     )
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare_hemispheric(  # noqa: E501
-        df, factor_north=1.0, factor_south=1.0
+        df, config, factor_north=1.0, factor_south=1.0
     )

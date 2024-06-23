@@ -107,7 +107,7 @@ def main() -> None:
         if (schema_type := ar_type.detect_schema_type(year, month)) is None:
             print(f"Err: not supported date for {year}/{month}")
             continue
-        df = pl.scan_csv(path, dtypes=ar_type.detect_dtypes(schema_type))
+        df = pl.scan_csv(path, schema=ar_type.detect_dtypes(schema_type))
         df = calc_obs_date(df, year, month)
         dfl_by_schema[schema_type].append(df)
 

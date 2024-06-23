@@ -5,7 +5,6 @@ def extract_over_no(df: pl.LazyFrame) -> pl.Series:
     # 複数のシートに分かれていて、データが二つ存在するものの番号
     return (
         df.filter(pl.col("over") & pl.col("no").count().over("no").eq(2))
-        .select("no")
         .collect()
         .get_column("no")
     )

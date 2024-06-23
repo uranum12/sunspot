@@ -22,7 +22,7 @@ def main() -> None:
         year, month = map(int, path.stem.split("-"))
         file_frame = pl.scan_csv(
             path,
-            dtypes={
+            schema={
                 "date": pl.UInt8,
                 "time": pl.Utf8,
                 "ng": pl.UInt8,

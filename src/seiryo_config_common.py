@@ -15,20 +15,20 @@ class Line(BaseModel):
     label: str
     style: str
     width: float
-    color: str | None
+    color: str
     marker: Marker
 
 
 class Bar(BaseModel):
     label: str
     width: float
-    color: str | None
+    color: str
 
 
 class Scatter(BaseModel):
     label: str
-    color: str | None
-    edge_color: str | None
+    color: str
+    edge_color: str
     marker: Marker
 
 

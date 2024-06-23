@@ -5,7 +5,8 @@ import pytest
 from polars.testing import assert_frame_equal
 
 import seiryo_obs_days
-import seiryo_obs_days_config
+from seiryo_config_common import Axis, Bar, FigSize, Ticks, Title
+from seiryo_obs_days_config import ObservationsMonthly
 
 
 @pytest.mark.parametrize(
@@ -245,5 +246,32 @@ def test_draw_monthly_obs_days() -> None:
         },
         schema={"date": pl.Date, "obs": pl.UInt8},
     )
-    config = seiryo_obs_days_config.ObservationsMonthly()
+    config = ObservationsMonthly(
+        fig_size=FigSize(width=8.0, height=5.0),
+        bar=Bar(label="", width=15.0, color="C0"),
+        title=Title(
+            text="observations days per month",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="observations days",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+    )
     _ = seiryo_obs_days.draw_monthly_obs_days(df, config)

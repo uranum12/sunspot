@@ -4,8 +4,8 @@ from seiryo_config_common import Axis, Bar, FigSize, Title
 
 
 class ObservationsMonthly(BaseModel):
-    fig_size: FigSize = FigSize()
-    bar: Bar = Bar(width=15)
-    title: Title = Title(text="observations days per month")
-    xaxis: Axis = Axis(title=Title(text="date"))
-    yaxis: Axis = Axis(title=Title(text="observations days"))
+    fig_size: FigSize
+    bar: Bar
+    title: Title
+    xaxis: Axis
+    yaxis: Axis

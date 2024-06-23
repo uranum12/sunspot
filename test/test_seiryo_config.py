@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
+from seiryo_obs_days_config import ObservationsMonthly
 from seiryo_sunspot_number import (
     SunspotNumberHemispheric,
     SunspotNumberWholeDisk,
@@ -20,6 +21,9 @@ from seiryo_sunspot_number import (
         pytest.param(
             "config/seiryo/sunspot_number/hemispheric.json",
             SunspotNumberHemispheric,
+        ),
+        pytest.param(
+            "config/seiryo/observations/monthly.json", ObservationsMonthly
         ),
     ],
 )

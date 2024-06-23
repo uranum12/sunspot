@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from pathlib import Path
 
@@ -7,7 +8,7 @@ import polars as pl
 from dateutil.relativedelta import relativedelta
 from matplotlib.figure import Figure
 
-import seiryo_obs_days_config
+from seiryo_obs_days_config import ObservationsMonthly
 
 
 def calc_date_range(df: pl.LazyFrame) -> tuple[date, date]:
@@ -88,7 +89,7 @@ def calc_monthly_obs(df: pl.LazyFrame) -> pl.LazyFrame:
 
 
 def draw_monthly_obs_days(
-    df: pl.DataFrame, config: seiryo_obs_days_config.ObservationsMonthly
+    df: pl.DataFrame, config: ObservationsMonthly
 ) -> Figure:
     """月ごとの観測日数のグラフを作成する
 
@@ -160,6 +161,7 @@ def draw_monthly_obs_days(
 
 def main() -> None:
     data_file = Path("out/seiryo/all.parquet")
+    config_path = Path("config/seiryo/observations")
     output_path = Path("out/seiryo/observations")
     output_path.mkdir(exist_ok=True)
 
@@ -175,7 +177,9 @@ def main() -> None:
     print(df_monthly)
     df_monthly.write_parquet(output_path / "monthly.parquet")
 
-    config = seiryo_obs_days_config.ObservationsMonthly()
+    with (config_path / "monthly.json").open("r") as file:
+        config = ObservationsMonthly(**json.load(file))
+
     fig = draw_monthly_obs_days(df_monthly, config)
 
     for f in ["png", "pdf"]:

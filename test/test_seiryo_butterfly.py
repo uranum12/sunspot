@@ -6,7 +6,8 @@ import pytest
 from polars.testing import assert_frame_equal
 
 import seiryo_butterfly
-import seiryo_butterfly_config
+from seiryo_butterfly_config import ButterflyDiagram, Index
+from seiryo_config_common import Axis, FigSize, Image, Ticks, Title
 
 
 @pytest.mark.parametrize(
@@ -688,5 +689,33 @@ def test_draw_butterfly_diagram() -> None:
         date(2020, 4, 1),
         seiryo_butterfly.DateDelta(months=1),
     )
-    config = seiryo_butterfly_config.ButterflyDiagram()
+    config = ButterflyDiagram(
+        fig_size=FigSize(width=8.0, height=5.0),
+        index=Index(year_inteerval=10, lat_interval=10),
+        image=Image(cmap="binary", aspect=1.0),
+        title=Title(
+            text="butterfly diagram",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="latitude",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+    )
     _ = seiryo_butterfly.draw_butterfly_diagram(img, info, config)

@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from pathlib import Path
 from pprint import pprint
@@ -7,7 +8,7 @@ import numpy.typing as npt
 import polars as pl
 
 import seiryo_butterfly
-import seiryo_butterfly_config
+from seiryo_butterfly_config import ButterflyDiagram
 
 
 def create_merged_image(
@@ -50,6 +51,7 @@ def create_color_image(
 
 
 def main() -> None:
+    config_path = Path("config/seiryo/butterfly_diagram")
     output_path = Path("out/seiryo/butterfly")
 
     df1 = pl.read_parquet(Path("out/seiryo/butterfly/fromtext.parquet"))
@@ -77,8 +79,10 @@ def main() -> None:
 
     cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0xFF, 0x00, 0x00)]
     img_color = create_color_image(img, cmap)
-    config = seiryo_butterfly_config.ButterflyDiagram()
-    config.fig_size.width = 10
+
+    with (config_path / "merged.json").open("r") as file:
+        config = ButterflyDiagram(**json.load(file))
+
     fig = seiryo_butterfly.draw_butterfly_diagram(img_color, info, config)
 
     for f in ["png", "pdf"]:

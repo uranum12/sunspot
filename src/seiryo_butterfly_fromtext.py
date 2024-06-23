@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from pathlib import Path
 from pprint import pprint
@@ -7,7 +8,7 @@ import numpy as np
 import polars as pl
 
 import seiryo_butterfly
-import seiryo_butterfly_config
+from seiryo_butterfly_config import ButterflyDiagram
 
 
 def load_txt_data(path: Path) -> tuple[date, date, list[str]]:
@@ -54,6 +55,7 @@ def extract_lat(txt: list[str]) -> pl.LazyFrame:
 
 def main() -> None:
     data_path = Path("data/seiryo/1950-2023.txt")
+    config_path = Path("config/seiryo/butterfly_diagram")
     output_path = Path("out/seiryo/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -78,8 +80,9 @@ def main() -> None:
     with (output_path / "fromtext.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    config = seiryo_butterfly_config.ButterflyDiagram()
-    config.fig_size.width = 12
+    with (config_path / "fromtext.json").open("r") as file:
+        config = ButterflyDiagram(**json.load(file))
+
     fig_butterfly = seiryo_butterfly.draw_butterfly_diagram(img, info, config)
 
     for f in ["png", "pdf"]:

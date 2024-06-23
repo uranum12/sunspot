@@ -10,7 +10,7 @@ import numpy.typing as npt
 import polars as pl
 from matplotlib.figure import Figure
 
-import seiryo_butterfly_config
+from seiryo_butterfly_config import ButterflyDiagram
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -330,9 +330,7 @@ def create_lat_index(lat_min: int, lat_max: int) -> npt.NDArray[np.int8]:
 
 
 def draw_butterfly_diagram(
-    img: npt.NDArray[np.uint8],
-    info: ButterflyInfo,
-    config: seiryo_butterfly_config.ButterflyDiagram,
+    img: npt.NDArray[np.uint8], info: ButterflyInfo, config: ButterflyDiagram
 ) -> Figure:
     """蝶形図データを基に画像を作成する
 
@@ -402,6 +400,7 @@ def draw_butterfly_diagram(
 
 def main() -> None:
     data_path = Path("out/seiryo/all.parquet")
+    config_path = Path("config/seiryo/butterfly_diagram")
     output_path = Path("out/seiryo/butterfly")
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -424,8 +423,9 @@ def main() -> None:
     with (output_path / "monthly.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    config = seiryo_butterfly_config.ButterflyDiagram()
-    config.index.year_inteerval = 2
+    with (config_path / "monthly.json").open("r") as file:
+        config = ButterflyDiagram(**json.load(file))
+
     fig_butterfly = draw_butterfly_diagram(img, info, config)
 
     for f in ["png", "pdf"]:

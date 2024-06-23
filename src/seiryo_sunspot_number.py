@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -7,7 +8,10 @@ import polars as pl
 from dateutil.relativedelta import relativedelta
 from matplotlib.figure import Figure
 
-import seiryo_sunspot_number_config
+from seiryo_sunspot_number_config import (
+    SunspotNumberHemispheric,
+    SunspotNumberWholeDisk,
+)
 
 if TYPE_CHECKING:
     from datetime import date
@@ -105,8 +109,7 @@ def agg_monthly(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def draw_sunspot_number_whole_disk(
-    df: pl.DataFrame,
-    config: seiryo_sunspot_number_config.SunspotNumberWholeDisk,
+    df: pl.DataFrame, config: SunspotNumberWholeDisk
 ) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
@@ -176,8 +179,7 @@ def draw_sunspot_number_whole_disk(
 
 
 def draw_sunspot_number_hemispheric(
-    df: pl.DataFrame,
-    config: seiryo_sunspot_number_config.SunspotNumberHemispheric,
+    df: pl.DataFrame, config: SunspotNumberHemispheric
 ) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
@@ -275,6 +277,7 @@ def draw_sunspot_number_hemispheric(
 
 def main() -> None:
     path_seiryo = Path("out/seiryo/all.parquet")
+    config_path = Path("config/seiryo/sunspot_number")
     output_path = Path("out/seiryo/sunspot")
     output_path.mkdir(exist_ok=True)
 
@@ -293,7 +296,9 @@ def main() -> None:
     print(df_monthly)
     df_monthly.write_parquet(output_path / "monthly.parquet")
 
-    config_whole_disk = seiryo_sunspot_number_config.SunspotNumberWholeDisk()
+    with (config_path / "whole_disk.json").open("r") as file:
+        config_whole_disk = SunspotNumberWholeDisk(**json.load(file))
+
     fig_whole_disk = draw_sunspot_number_whole_disk(
         df_monthly, config_whole_disk
     )
@@ -307,9 +312,9 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_hemispheric = (
-        seiryo_sunspot_number_config.SunspotNumberHemispheric()
-    )
+    with (config_path / "hemispheric.json").open("r") as file:
+        config_hemispheric = SunspotNumberHemispheric(**json.load(file))
+
     fig_hemispheric = draw_sunspot_number_hemispheric(
         df_monthly, config_hemispheric
     )

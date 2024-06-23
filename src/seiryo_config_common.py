@@ -2,66 +2,66 @@ from pydantic import BaseModel
 
 
 class FigSize(BaseModel):
-    width: float = 8.0
-    height: float = 5.0
+    width: float
+    height: float
 
 
 class Marker(BaseModel):
-    marker: str = "o"
-    size: float = 3.0
+    marker: str
+    size: float
 
 
 class Line(BaseModel):
-    label: str = ""
-    style: str = "-"
-    width: float = 1.0
-    color: str | None = None
-    marker: Marker = Marker()
+    label: str
+    style: str
+    width: float
+    color: str | None
+    marker: Marker
 
 
 class Bar(BaseModel):
-    label: str = ""
-    width: float = 1.0
-    color: str | None = None
+    label: str
+    width: float
+    color: str | None
 
 
 class Scatter(BaseModel):
-    label: str = ""
-    color: str | None = None
-    edge_color: str | None = None
-    marker: Marker = Marker()
+    label: str
+    color: str | None
+    edge_color: str | None
+    marker: Marker
 
 
 class Image(BaseModel):
-    cmap: str = "binary"
-    aspect: float = 1.0
+    cmap: str
+    aspect: float
 
 
 class Title(BaseModel):
     text: str
-    font_family: str = "Times New Roman"
-    font_size: int = 16
-    position: float = 1.0
+    font_family: str
+    font_size: int
+    position: float
 
 
 class Ticks(BaseModel):
-    font_family: str = "Times New Roman"
-    font_size: int = 12
+    font_family: str
+    font_size: int
 
 
 class Axis(BaseModel):
     title: Title
-    ticks: Ticks = Ticks()
+    ticks: Ticks
 
 
 class Text(BaseModel):
-    x: float | None = None
-    y: float | None = None
-    math_font_family: str = "cm"
-    font_family: str = "Times New Roman"
-    font_size: int = 16
+    x: float | None
+    y: float | None
+    math_font_family: str
+    font_family: str
+    font_size: int
 
 
 class Legend(BaseModel):
-    font_family: str = "Times New Roman"
-    font_size: int = 12
+    font_family: str
+    font_size: int

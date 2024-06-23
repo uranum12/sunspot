@@ -1,6 +1,7 @@
 import json
 from datetime import date
 from pathlib import Path
+from re import compile
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -18,7 +19,14 @@ from seiryo_sunspot_number_with_flare_config import (
 def load_flare_file(path: Path) -> pl.DataFrame:
     with path.open("r") as f:
         lines = [line.strip() for line in f if line.strip()]
-    year = int(lines[3])
+    pat_year = compile(r"(\d{4})")
+    for line in lines:
+        if match := pat_year.match(line):
+            year = int(match.group())
+            break
+    else:
+        msg = "cannot find year"
+        raise ValueError(msg)
     mean_line = [
         line.replace("Mean", "").split()
         for line in lines

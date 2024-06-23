@@ -117,6 +117,54 @@ from seiryo_sunspot_number_with_flare_config import (
                 0.46,
             ],
         ),
+        pytest.param(
+            "Bogazici University\n"
+            "Kandilli Observatory\t\n"
+            "Istanbul\n"
+            "Turkey\n"
+            "                            FLARE INDEX OF SOLAR ACTIVITY\t\n"
+            "\n"
+            "                                 TOTAL HEMISPHERE\t\n"
+            "\n"
+            "2022\t\n"
+            "\n"
+            "-----------------------------------------------------------------------------------------------------\n"
+            "Day\tJan\tFeb\tMar\tApr\tMay\tJun\tJul\tAug\tSep\tOct\tNov\tDec\n"
+            "=====================================================================================================\n"
+            ".....\n"
+            "-----------------------------------------------------------------------------------------------------\n"
+            "Mean\t0.63\t0.36\t2.00\t1.41\t3.62\t2.69\t3.08\t8.35\t15.74\t3.82\t2.85\t8.49\t\n"
+            "-----------------------------------------------------------------------------------------------------\n"
+            "Yearly Mean =\t0.28\n",
+            [
+                date(2022, 1, 1),
+                date(2022, 2, 1),
+                date(2022, 3, 1),
+                date(2022, 4, 1),
+                date(2022, 5, 1),
+                date(2022, 6, 1),
+                date(2022, 7, 1),
+                date(2022, 8, 1),
+                date(2022, 9, 1),
+                date(2022, 10, 1),
+                date(2022, 11, 1),
+                date(2022, 12, 1),
+            ],
+            [
+                0.63,
+                0.36,
+                2.00,
+                1.41,
+                3.62,
+                2.69,
+                3.08,
+                8.35,
+                15.74,
+                3.82,
+                2.85,
+                8.49,
+            ],
+        ),
     ],
 )
 def test_load_flare_file(
@@ -138,6 +186,16 @@ def test_load_flare_file(
     )
 
     assert_frame_equal(df_out, df_expected, check_column_order=False)
+
+
+def test_load_flare_file_with_error(mocker: MockerFixture) -> None:
+    m = mocker.mock_open(read_data="")
+    mocker.patch("pathlib.Path.open", m)
+
+    with pytest.raises(ValueError, match="cannot find year"):
+        _ = seiryo_sunspot_number_with_flare.load_flare_file(
+            Path("dummy/path")
+        )
 
 
 def test_load_flare_data(mocker: MockerFixture) -> None:

@@ -1,9 +1,4 @@
 repos:
-  - repo: https://gitlab.com/vojko.pribudic/pre-commit-update
-    rev: v0.3.1post1
-    hooks:
-      - id: pre-commit-update
-        args: [--dry-run]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -17,9 +12,17 @@ repos:
       - id: poetry-check
         args: [--lock]
       - id: poetry-export
-        args: [--format, requirements.txt, --without-hashes, --output, requirements.txt]
+        args:
+          [
+            --format,
+            requirements.txt,
+            --without-hashes,
+            --output,
+            requirements.txt,
+          ]
+        additional_dependencies: ["poetry-plugin-export"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.8
+    rev: v0.4.10
     hooks:
       - id: ruff
       - id: ruff-format
@@ -27,4 +30,4 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-        additional_dependencies: ["types-python-dateutil"]
+        additional_dependencies: ["types-python-dateutil", "types-requests"]

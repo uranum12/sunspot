@@ -6,7 +6,19 @@ import pytest
 from polars.testing import assert_frame_equal
 
 import seiryo_sunspot_number
-import seiryo_sunspot_number_config
+from seiryo_config_common import (
+    Axis,
+    FigSize,
+    Legend,
+    Line,
+    Marker,
+    Ticks,
+    Title,
+)
+from seiryo_sunspot_number_config import (
+    SunspotNumberHemispheric,
+    SunspotNumberWholeDisk,
+)
 
 
 @pytest.mark.parametrize(
@@ -457,41 +469,40 @@ def test_draw_sunspot_number_whole_disk() -> None:
         },
         schema={"date": pl.Date, "total": pl.Float64},
     )
-    config_dict = {
-        "fig_size": {"width": 8.0, "height": 5.0},
-        "line": {
-            "label": "",
-            "style": "-",
-            "width": 1.0,
-            "color": "C0",
-            "marker": {"marker": "o", "size": 3.0},
-        },
-        "title": {
-            "text": "seiryo's whole-disk sunspot number",
-            "font_family": "Times New Roman",
-            "font_size": 16,
-            "position": 1.0,
-        },
-        "xaxis": {
-            "title": {
-                "text": "date",
-                "font_family": "Times New Roman",
-                "font_size": 16,
-                "position": 1.0,
-            },
-            "ticks": {"font_family": "Times New Roman", "font_size": 12},
-        },
-        "yaxis": {
-            "title": {
-                "text": "sunspot number",
-                "font_family": "Times New Roman",
-                "font_size": 16,
-                "position": 1.0,
-            },
-            "ticks": {"font_family": "Times New Roman", "font_size": 12},
-        },
-    }
-    config = seiryo_sunspot_number_config.SunspotNumberWholeDisk(**config_dict)
+    config = SunspotNumberWholeDisk(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line=Line(
+            label="",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="seiryo's whole-disk sunspot number",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="sunspot number",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+    )
     _ = seiryo_sunspot_number.draw_sunspot_number_whole_disk(df, config)
 
 
@@ -504,49 +515,46 @@ def test_draw_sunspot_number_hemispheric() -> None:
         },
         schema={"date": pl.Date, "north": pl.Float64, "south": pl.Float64},
     )
-    config_dict = {
-        "fig_size": {"width": 8.0, "height": 5.0},
-        "line_north": {
-            "label": "north",
-            "style": "-",
-            "width": 1.0,
-            "color": "C0",
-            "marker": {"marker": "o", "size": 3.0},
-        },
-        "line_south": {
-            "label": "south",
-            "style": "-",
-            "width": 1.0,
-            "color": "C1",
-            "marker": {"marker": "o", "size": 3.0},
-        },
-        "title": {
-            "text": "seiryo's hemispheric sunspot number",
-            "font_family": "Times New Roman",
-            "font_size": 16,
-            "position": 1.1,
-        },
-        "xaxis": {
-            "title": {
-                "text": "date",
-                "font_family": "Times New Roman",
-                "font_size": 16,
-                "position": 1.0,
-            },
-            "ticks": {"font_family": "Times New Roman", "font_size": 12},
-        },
-        "yaxis": {
-            "title": {
-                "text": "sunspot number",
-                "font_family": "Times New Roman",
-                "font_size": 16,
-                "position": 1.0,
-            },
-            "ticks": {"font_family": "Times New Roman", "font_size": 12},
-        },
-        "legend": {"font_family": "Times New Roman", "font_size": 12},
-    }
-    config = seiryo_sunspot_number_config.SunspotNumberHemispheric(
-        **config_dict
+    config = SunspotNumberHemispheric(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line_north=Line(
+            label="north",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_south=Line(
+            label="south",
+            style="-",
+            width=1.0,
+            color="C1",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="seiryo's hemispheric sunspot number",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.1,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="sunspot number",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        legend=Legend(font_family="Times New Roman", font_size=12),
     )
     _ = seiryo_sunspot_number.draw_sunspot_number_hemispheric(df, config)

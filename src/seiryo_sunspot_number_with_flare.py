@@ -9,7 +9,10 @@ from dateutil.relativedelta import relativedelta
 from matplotlib.figure import Figure
 from scipy import optimize
 
-import seiryo_sunspot_number_with_flare_config
+from seiryo_sunspot_number_with_flare_config import (
+    SunspotNumberWithFlare,
+    SunspotNumberWithFlareHemispheric,
+)
 
 
 def load_flare_file(path: Path) -> pl.DataFrame:
@@ -93,7 +96,7 @@ def calc_factors(df: pl.DataFrame) -> dict[str, float]:
 
 def draw_sunspot_number_with_flare(
     df: pl.DataFrame,
-    config: seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlare,
+    config: SunspotNumberWithFlare,
     *,
     factor: float | None = None,
 ) -> Figure:
@@ -222,7 +225,7 @@ def draw_sunspot_number_with_flare(
 
 def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
     df: pl.DataFrame,
-    config: seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlareHemispheric,  # noqa: E501
+    config: SunspotNumberWithFlareHemispheric,
     *,
     factor_north: float | None = None,
     factor_south: float | None = None,
@@ -449,6 +452,7 @@ def draw_sunspot_number_with_flare_hemispheric(  # noqa: PLR0915
 def main() -> None:
     path_seiryo = Path("out/seiryo/sunspot/monthly.parquet")
     path_flare = Path("data/flare")
+    config_path = Path("config/seiryo/sunspot_number")
     output_path = Path("out/seiryo/sunspot")
 
     df_seiryo = pl.read_parquet(path_seiryo)
@@ -467,9 +471,9 @@ def main() -> None:
     with (output_path / "flare_factors.json").open("w") as json_file:
         json.dump(factors, json_file)
 
-    config_with_flare = (
-        seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlare()
-    )
+    with (config_path / "with_flare.json").open("r") as file:
+        config_with_flare = SunspotNumberWithFlare(**json.load(file))
+
     fig_with_flare = draw_sunspot_number_with_flare(
         df_with_flare, config_with_flare, factor=factors["total"]
     )
@@ -483,7 +487,11 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_with_flare_hemispheric = seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlareHemispheric()  # noqa: E501
+    with (config_path / "with_flare_hemispheric.json").open("r") as file:
+        config_with_flare_hemispheric = SunspotNumberWithFlareHemispheric(
+            **json.load(file)
+        )
+
     fig_with_flare_hemispheric = draw_sunspot_number_with_flare_hemispheric(
         df_with_flare,
         config_with_flare_hemispheric,

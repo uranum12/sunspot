@@ -7,7 +7,19 @@ from polars.testing import assert_frame_equal
 from pytest_mock import MockerFixture
 
 import seiryo_sunspot_number_with_flare
-import seiryo_sunspot_number_with_flare_config
+from seiryo_config_common import (
+    Axis,
+    FigSize,
+    Legend,
+    Line,
+    Marker,
+    Ticks,
+    Title,
+)
+from seiryo_sunspot_number_with_flare_config import (
+    SunspotNumberWithFlare,
+    SunspotNumberWithFlareHemispheric,
+)
 
 
 @pytest.mark.parametrize(
@@ -372,7 +384,57 @@ def test_draw_sunspot_number_with_flare() -> None:
             "flare_total": pl.Float64,
         },
     )
-    config = seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlare()
+    config = SunspotNumberWithFlare(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line_sunspot=Line(
+            label="seiryo",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_flare=Line(
+            label="flare",
+            style="-",
+            width=1.0,
+            color="C1",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="sunspot number and solar flare index",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.1,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_sunspot=Axis(
+            title=Title(
+                text="sunspot number",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_flare=Axis(
+            title=Title(
+                text="solar flare index",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        legend=Legend(font_family="Times New Roman", font_size=12),
+    )
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare(
         df, config
     )
@@ -398,7 +460,96 @@ def test_draw_sunspot_number_with_flare_hemispheric() -> None:
             "flare_south": pl.Float64,
         },
     )
-    config = seiryo_sunspot_number_with_flare_config.SunspotNumberWithFlareHemispheric()  # noqa: E501
+    config = SunspotNumberWithFlareHemispheric(
+        fig_size=FigSize(width=8.0, height=8.0),
+        line_north_sunspot=Line(
+            label="seiryo",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_north_flare=Line(
+            label="flare",
+            style="-",
+            width=1.0,
+            color="C1",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_south_sunspot=Line(
+            label="seiryo",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_south_flare=Line(
+            label="flare",
+            style="-",
+            width=1.0,
+            color="C1",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title_north=Title(
+            text="North",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.1,
+        ),
+        title_south=Title(
+            text="South",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.1,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_north_sunspot=Axis(
+            title=Title(
+                text="sunspot number",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_north_flare=Axis(
+            title=Title(
+                text="solar flare index",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_south_sunspot=Axis(
+            title=Title(
+                text="sunspot number",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_south_flare=Axis(
+            title=Title(
+                text="solar flare index",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        legend_north=Legend(font_family="Times New Roman", font_size=12),
+        legend_south=Legend(font_family="Times New Roman", font_size=12),
+    )
     _ = seiryo_sunspot_number_with_flare.draw_sunspot_number_with_flare_hemispheric(  # noqa: E501
         df, config
     )

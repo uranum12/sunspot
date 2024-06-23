@@ -4,30 +4,28 @@ from seiryo_config_common import Axis, FigSize, Legend, Line, Title
 
 
 class SunspotNumberWithFlare(BaseModel):
-    fig_size: FigSize = FigSize()
-    line_sunspot: Line = Line(color="C0", label="seiryo")
-    line_flare: Line = Line(color="C1", label="flare")
-    title: Title = Title(
-        text="sunspot number and solar flare index", position=1.1
-    )
-    xaxis: Axis = Axis(title=Title(text="date"))
-    yaxis_sunspot: Axis = Axis(title=Title(text="sunspot number"))
-    yaxis_flare: Axis = Axis(title=Title(text="solar flare index"))
-    legend: Legend = Legend()
+    fig_size: FigSize
+    line_sunspot: Line
+    line_flare: Line
+    title: Title
+    xaxis: Axis
+    yaxis_sunspot: Axis
+    yaxis_flare: Axis
+    legend: Legend
 
 
 class SunspotNumberWithFlareHemispheric(BaseModel):
-    fig_size: FigSize = FigSize(height=8)
-    line_north_sunspot: Line = Line(color="C0", label="seiryo")
-    line_north_flare: Line = Line(color="C1", label="flare")
-    line_south_sunspot: Line = Line(color="C0", label="seiryo")
-    line_south_flare: Line = Line(color="C1", label="flare")
-    title_north: Title = Title(text="North", position=1.1)
-    title_south: Title = Title(text="South", position=1.1)
-    xaxis: Axis = Axis(title=Title(text="date"))
-    yaxis_north_sunspot: Axis = Axis(title=Title(text="sunspot number"))
-    yaxis_north_flare: Axis = Axis(title=Title(text="solar flare index"))
-    yaxis_south_sunspot: Axis = Axis(title=Title(text="sunspot number"))
-    yaxis_south_flare: Axis = Axis(title=Title(text="solar flare index"))
-    legend_north: Legend = Legend()
-    legend_south: Legend = Legend()
+    fig_size: FigSize
+    line_north_sunspot: Line
+    line_north_flare: Line
+    line_south_sunspot: Line
+    line_south_flare: Line
+    title_north: Title
+    title_south: Title
+    xaxis: Axis
+    yaxis_north_sunspot: Axis
+    yaxis_north_flare: Axis
+    yaxis_south_sunspot: Axis
+    yaxis_south_flare: Axis
+    legend_north: Legend
+    legend_south: Legend

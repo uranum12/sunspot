@@ -1,7 +1,14 @@
 from pydantic import BaseModel
 
-from seiryo_config_common import Axis, FigSize, Legend, Line, Text, Title
-from seiryo_config_common import Scatter as ScatterPlot
+from seiryo_config_common import (
+    Axis,
+    FigSize,
+    Legend,
+    Line,
+    Scatter,
+    Text,
+    Title,
+)
 
 
 class SunspotNumberWithSilso(BaseModel):
@@ -16,10 +23,10 @@ class SunspotNumberWithSilso(BaseModel):
     legend: Legend = Legend()
 
 
-class Scatter(BaseModel):
+class SunspotNumberScatter(BaseModel):
     fig_size: FigSize = FigSize()
     line_factor: Line = Line(color="black")
-    scatter: ScatterPlot = ScatterPlot()
+    scatter: Scatter = Scatter()
     text_factor: Text = Text()
     text_r2: Text = Text()
     title: Title = Title(text="SILSO and seiryo")
@@ -27,7 +34,7 @@ class Scatter(BaseModel):
     yaxis: Axis = Axis(title=Title(text="seiryo"))
 
 
-class Ratio(BaseModel):
+class SunspotNumberRatio(BaseModel):
     fig_size: FigSize = FigSize()
     line_factor: Line = Line(style="--", color="black")
     line_ratio: Line = Line()
@@ -36,7 +43,7 @@ class Ratio(BaseModel):
     yaxis: Axis = Axis(title=Title(text="ratio"))
 
 
-class Diff(BaseModel):
+class SunspotNumberDiff(BaseModel):
     fig_size: FigSize = FigSize()
     line: Line = Line()
     title: Title = Title(text="difference: seiryo* - SILSO")
@@ -44,7 +51,7 @@ class Diff(BaseModel):
     yaxis: Axis = Axis(title=Title(text="difference"))
 
 
-class RatioDiff1(BaseModel):
+class SunspotNumberRatioDiff1(BaseModel):
     fig_size: FigSize = FigSize(height=8)
     line_factor: Line = Line(style="--", color="black")
     line_ratio: Line = Line()
@@ -56,7 +63,7 @@ class RatioDiff1(BaseModel):
     yaxis_diff: Axis = Axis(title=Title(text="difference"))
 
 
-class RatioDiff2(BaseModel):
+class SunspotNumberRatioDiff2(BaseModel):
     fig_size: FigSize = FigSize()
     line_ratio: Line = Line(color="C0", label="ratio")
     line_diff: Line = Line(color="C1", label="diff")

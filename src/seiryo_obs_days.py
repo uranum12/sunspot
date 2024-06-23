@@ -88,7 +88,7 @@ def calc_monthly_obs(df: pl.LazyFrame) -> pl.LazyFrame:
 
 
 def draw_monthly_obs_days(
-    df: pl.DataFrame, config: seiryo_obs_days_config.ObservationsDays
+    df: pl.DataFrame, config: seiryo_obs_days_config.ObservationsMonthly
 ) -> Figure:
     """月ごとの観測日数のグラフを作成する
 
@@ -175,7 +175,7 @@ def main() -> None:
     print(df_monthly)
     df_monthly.write_parquet(output_path / "monthly.parquet")
 
-    config = seiryo_obs_days_config.ObservationsDays()
+    config = seiryo_obs_days_config.ObservationsMonthly()
     fig = draw_monthly_obs_days(df_monthly, config)
 
     for f in ["png", "pdf"]:

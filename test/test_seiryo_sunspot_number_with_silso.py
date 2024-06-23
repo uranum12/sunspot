@@ -336,7 +336,7 @@ def test_draw_scatter() -> None:
     )
     factor = 0.5
     r2 = 1.0
-    config = seiryo_sunspot_number_with_silso_config.Scatter()
+    config = seiryo_sunspot_number_with_silso_config.SunspotNumberScatter()
     _ = seiryo_sunspot_number_with_silso.draw_scatter(df, factor, r2, config)
 
 
@@ -350,10 +350,14 @@ def test_draw_ratio_and_diff() -> None:
         schema={"date": pl.Date, "ratio": pl.Float64, "diff": pl.Float64},
     )
     factor = 0.48
-    config_ratio = seiryo_sunspot_number_with_silso_config.Ratio()
-    config_diff = seiryo_sunspot_number_with_silso_config.Diff()
-    config_ratio_diff_1 = seiryo_sunspot_number_with_silso_config.RatioDiff1()
-    config_ratio_diff_2 = seiryo_sunspot_number_with_silso_config.RatioDiff2()
+    config_ratio = seiryo_sunspot_number_with_silso_config.SunspotNumberRatio()
+    config_diff = seiryo_sunspot_number_with_silso_config.SunspotNumberDiff()
+    config_ratio_diff_1 = (
+        seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff1()
+    )
+    config_ratio_diff_2 = (
+        seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff2()
+    )
     _ = seiryo_sunspot_number_with_silso.draw_ratio(df, factor, config_ratio)
     _ = seiryo_sunspot_number_with_silso.draw_diff(df, config_diff)
     _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_1(

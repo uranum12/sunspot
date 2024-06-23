@@ -245,5 +245,5 @@ def test_draw_monthly_obs_days() -> None:
         },
         schema={"date": pl.Date, "obs": pl.UInt8},
     )
-    config = seiryo_obs_days_config.ObservationsDays()
+    config = seiryo_obs_days_config.ObservationsMonthly()
     _ = seiryo_obs_days.draw_monthly_obs_days(df, config)

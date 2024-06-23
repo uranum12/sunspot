@@ -7,7 +7,25 @@ from polars.testing import assert_frame_equal
 from pytest_mock import MockerFixture
 
 import seiryo_sunspot_number_with_silso
-import seiryo_sunspot_number_with_silso_config
+from seiryo_config_common import (
+    Axis,
+    FigSize,
+    Legend,
+    Line,
+    Marker,
+    Scatter,
+    Text,
+    Ticks,
+    Title,
+)
+from seiryo_sunspot_number_with_silso_config import (
+    SunspotNumberDiff,
+    SunspotNumberRatio,
+    SunspotNumberRatioDiff1,
+    SunspotNumberRatioDiff2,
+    SunspotNumberScatter,
+    SunspotNumberWithSilso,
+)
 
 
 @pytest.mark.parametrize(
@@ -319,7 +337,48 @@ def test_draw_sunspot_number_with_silso() -> None:
         },
         schema={"date": pl.Date, "seiryo": pl.Float64, "silso": pl.Float64},
     )
-    config = seiryo_sunspot_number_with_silso_config.SunspotNumberWithSilso()
+    config = SunspotNumberWithSilso(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line_seiryo=Line(
+            label="seiryo",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_silso=Line(
+            label="SILSO",
+            style="-",
+            width=1.0,
+            color="C1",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="seiryo's whole-disk sunspot number",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.1,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="sunspot number",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        legend=Legend(font_family="Times New Roman", font_size=12),
+    )
     _ = seiryo_sunspot_number_with_silso.draw_sunspot_number_with_silso(
         df, config
     )
@@ -336,11 +395,162 @@ def test_draw_scatter() -> None:
     )
     factor = 0.5
     r2 = 1.0
-    config = seiryo_sunspot_number_with_silso_config.SunspotNumberScatter()
+    config = SunspotNumberScatter(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line_factor=Line(
+            label="",
+            style="-",
+            width=1.0,
+            color="black",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        scatter=Scatter(
+            label="",
+            color="C0",
+            edge_color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        text_factor=Text(
+            x=None,
+            y=None,
+            math_font_family="cm",
+            font_family="Times New Roman",
+            font_size=16,
+        ),
+        text_r2=Text(
+            x=None,
+            y=None,
+            math_font_family="cm",
+            font_family="Times New Roman",
+            font_size=16,
+        ),
+        title=Title(
+            text="SILSO and seiryo",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="SILSO",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="seiryo",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+    )
     _ = seiryo_sunspot_number_with_silso.draw_scatter(df, factor, r2, config)
 
 
-def test_draw_ratio_and_diff() -> None:
+def test_draw_ratio() -> None:
+    df = pl.DataFrame(
+        {
+            "date": [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
+            "ratio": [0.4, 0.5, 0.45],
+        },
+        schema={"date": pl.Date, "ratio": pl.Float64},
+    )
+    factor = 0.48
+    config = SunspotNumberRatio(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line_factor=Line(
+            label="",
+            style="--",
+            width=1.0,
+            color="black",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_ratio=Line(
+            label="",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="ratio: seiryo / SILSO",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="ratio",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+    )
+    _ = seiryo_sunspot_number_with_silso.draw_ratio(df, factor, config)
+
+
+def test_draw_diff() -> None:
+    df = pl.DataFrame(
+        {
+            "date": [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
+            "diff": [1, -2, 3],
+        },
+        schema={"date": pl.Date, "diff": pl.Float64},
+    )
+    config = SunspotNumberDiff(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line=Line(
+            label="",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="difference: seiryo* - SILSO",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis=Axis(
+            title=Title(
+                text="difference",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+    )
+    _ = seiryo_sunspot_number_with_silso.draw_diff(df, config)
+
+
+def test_draw_ratio_and_diff_1() -> None:
     df = pl.DataFrame(
         {
             "date": [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
@@ -350,19 +560,130 @@ def test_draw_ratio_and_diff() -> None:
         schema={"date": pl.Date, "ratio": pl.Float64, "diff": pl.Float64},
     )
     factor = 0.48
-    config_ratio = seiryo_sunspot_number_with_silso_config.SunspotNumberRatio()
-    config_diff = seiryo_sunspot_number_with_silso_config.SunspotNumberDiff()
-    config_ratio_diff_1 = (
-        seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff1()
+    config = SunspotNumberRatioDiff1(
+        fig_size=FigSize(width=8.0, height=8.0),
+        line_factor=Line(
+            label="",
+            style="--",
+            width=1.0,
+            color="black",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_ratio=Line(
+            label="",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_diff=Line(
+            label="",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title_ratio=Title(
+            text="ratio: seiryo / SILSO",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        title_diff=Title(
+            text="difference: seiryo* - SILSO",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.0,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_ratio=Axis(
+            title=Title(
+                text="ratio",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_diff=Axis(
+            title=Title(
+                text="difference",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
     )
-    config_ratio_diff_2 = (
-        seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff2()
+    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_1(df, factor, config)
+
+
+def test_draw_ratio_and_diff_2() -> None:
+    df = pl.DataFrame(
+        {
+            "date": [date(2020, 2, 1), date(2020, 3, 1), date(2020, 4, 1)],
+            "ratio": [0.4, 0.5, 0.45],
+            "diff": [1, -2, 3],
+        },
+        schema={"date": pl.Date, "ratio": pl.Float64, "diff": pl.Float64},
     )
-    _ = seiryo_sunspot_number_with_silso.draw_ratio(df, factor, config_ratio)
-    _ = seiryo_sunspot_number_with_silso.draw_diff(df, config_diff)
-    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_1(
-        df, factor, config_ratio_diff_1
+    config = SunspotNumberRatioDiff2(
+        fig_size=FigSize(width=8.0, height=5.0),
+        line_ratio=Line(
+            label="ratio",
+            style="-",
+            width=1.0,
+            color="C0",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        line_diff=Line(
+            label="diff",
+            style="-",
+            width=1.0,
+            color="C1",
+            marker=Marker(marker="o", size=3.0),
+        ),
+        title=Title(
+            text="ratio: seiryo / SILSO and difference: seiryo* - SILSO",
+            font_family="Times New Roman",
+            font_size=16,
+            position=1.1,
+        ),
+        xaxis=Axis(
+            title=Title(
+                text="date",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_ratio=Axis(
+            title=Title(
+                text="ratio",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        yaxis_diff=Axis(
+            title=Title(
+                text="difference",
+                font_family="Times New Roman",
+                font_size=16,
+                position=1.0,
+            ),
+            ticks=Ticks(font_family="Times New Roman", font_size=12),
+        ),
+        legend=Legend(font_family="Times New Roman", font_size=12),
     )
-    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_2(
-        df, config_ratio_diff_2
-    )
+    _ = seiryo_sunspot_number_with_silso.draw_ratio_diff_2(df, config)

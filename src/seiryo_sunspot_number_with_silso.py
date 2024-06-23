@@ -11,7 +11,14 @@ from matplotlib.figure import Figure
 from scipy import optimize
 from sklearn import metrics
 
-import seiryo_sunspot_number_with_silso_config
+from seiryo_sunspot_number_with_silso_config import (
+    SunspotNumberDiff,
+    SunspotNumberRatio,
+    SunspotNumberRatioDiff1,
+    SunspotNumberRatioDiff2,
+    SunspotNumberScatter,
+    SunspotNumberWithSilso,
+)
 
 if TYPE_CHECKING:
     from datetime import date
@@ -79,8 +86,7 @@ def calc_r2(df: pl.DataFrame, factor: float) -> float:
 
 
 def draw_sunspot_number_with_silso(
-    df: pl.DataFrame,
-    config: seiryo_sunspot_number_with_silso_config.SunspotNumberWithSilso,
+    df: pl.DataFrame, config: SunspotNumberWithSilso
 ) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
@@ -177,10 +183,7 @@ def draw_sunspot_number_with_silso(
 
 
 def draw_scatter(
-    df: pl.DataFrame,
-    factor: float,
-    r2: float,
-    config: seiryo_sunspot_number_with_silso_config.SunspotNumberScatter,
+    df: pl.DataFrame, factor: float, r2: float, config: SunspotNumberScatter
 ) -> Figure:
     silso_min: float = df.select(pl.min("silso")).item()
     silso_max: float = df.select(pl.max("silso")).item()
@@ -275,9 +278,7 @@ def draw_scatter(
 
 
 def draw_ratio(
-    df: pl.DataFrame,
-    factor: float,
-    config: seiryo_sunspot_number_with_silso_config.SunspotNumberRatio,
+    df: pl.DataFrame, factor: float, config: SunspotNumberRatio
 ) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
@@ -355,10 +356,7 @@ def draw_ratio(
     return fig
 
 
-def draw_diff(
-    df: pl.DataFrame,
-    config: seiryo_sunspot_number_with_silso_config.SunspotNumberDiff,
-) -> Figure:
+def draw_diff(df: pl.DataFrame, config: SunspotNumberDiff) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
     date_min = date_min.replace(month=1, day=1)
@@ -429,9 +427,7 @@ def draw_diff(
 
 
 def draw_ratio_diff_1(
-    df: pl.DataFrame,
-    factor: float,
-    config: seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff1,
+    df: pl.DataFrame, factor: float, config: SunspotNumberRatioDiff1
 ) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
@@ -548,8 +544,7 @@ def draw_ratio_diff_1(
 
 
 def draw_ratio_diff_2(
-    df: pl.DataFrame,
-    config: seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff2,
+    df: pl.DataFrame, config: SunspotNumberRatioDiff2
 ) -> Figure:
     date_min: date = df.select(pl.min("date")).item()
     date_max: date = df.select(pl.max("date")).item()
@@ -675,6 +670,7 @@ def draw_ratio_diff_2(
 def main() -> None:
     path_seiryo = Path("out/seiryo/sunspot/monthly.parquet")
     path_silso = Path("data/SN_m_tot_V2.0.txt")
+    config_path = Path("config/seiryo/sunspot_number")
     output_path = Path("out/seiryo/sunspot")
 
     df_seiryo = pl.read_parquet(path_seiryo)
@@ -704,9 +700,9 @@ def main() -> None:
     print(df_ratio_and_diff)
     df_ratio_and_diff.write_parquet(output_path / "ratio_diff.parquet")
 
-    config_with_silso = (
-        seiryo_sunspot_number_with_silso_config.SunspotNumberWithSilso()
-    )
+    with (config_path / "with_silso.json").open("r") as file:
+        config_with_silso = SunspotNumberWithSilso(**json.load(file))
+
     fig_with_silso = draw_sunspot_number_with_silso(
         df_seiryo_with_silso, config_with_silso
     )
@@ -720,9 +716,9 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_scatter = (
-        seiryo_sunspot_number_with_silso_config.SunspotNumberScatter()
-    )
+    with (config_path / "scatter.json").open("r") as file:
+        config_scatter = SunspotNumberScatter(**json.load(file))
+
     fig_scatter = draw_scatter(
         df_seiryo_with_silso_truncated, factor, r2, config_scatter
     )
@@ -736,7 +732,9 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_ratio = seiryo_sunspot_number_with_silso_config.SunspotNumberRatio()
+    with (config_path / "ratio.json").open("r") as file:
+        config_ratio = SunspotNumberRatio(**json.load(file))
+
     fig_ratio = draw_ratio(df_ratio_and_diff, factor, config_ratio)
 
     for f in ["png", "pdf"]:
@@ -748,7 +746,9 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_diff = seiryo_sunspot_number_with_silso_config.SunspotNumberDiff()
+    with (config_path / "diff.json").open("r") as file:
+        config_diff = SunspotNumberDiff(**json.load(file))
+
     fig_diff = draw_diff(df_ratio_and_diff, config_diff)
 
     for f in ["png", "pdf"]:
@@ -760,9 +760,9 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_ratio_diff_1 = (
-        seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff1()
-    )
+    with (config_path / "ratio_diff_1.json").open("r") as file:
+        config_ratio_diff_1 = SunspotNumberRatioDiff1(**json.load(file))
+
     fig_ratio_and_diff_1 = draw_ratio_diff_1(
         df_ratio_and_diff, factor, config_ratio_diff_1
     )
@@ -776,9 +776,9 @@ def main() -> None:
             pad_inches=0.1,
         )
 
-    config_ratio_diff_2 = (
-        seiryo_sunspot_number_with_silso_config.SunspotNumberRatioDiff2()
-    )
+    with (config_path / "ratio_diff_2.json").open("r") as file:
+        config_ratio_diff_2 = SunspotNumberRatioDiff2(**json.load(file))
+
     fig_ratio_and_diff_2 = draw_ratio_diff_2(
         df_ratio_and_diff, config_ratio_diff_2
     )

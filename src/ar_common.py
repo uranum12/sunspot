@@ -54,19 +54,16 @@ def extract_coords_lr(
             pl.col(coords).str.split("~")
         )
         .with_columns(
-            # 経緯度の左の数値
-            pl.col(coords).list.get(0).name.suffix("_left")
-        )
-        .with_columns(
-            # 経緯度の右の数値
-            # 存在しない場合はここで左の数値を持ってくる
             [
-                pl.when(pl.col(coord).list.len().eq(2))
-                .then(pl.col(coord).list.get(1))
-                .otherwise(pl.col(f"{coord}_left"))
-                .name.suffix("_right")
+                pl.when(pl.col(coord).list.len() == 1)
+                .then(pl.col(coord).list.concat(pl.col(coord)))
+                .otherwise(pl.col(coord))
                 for coord in coords
             ]
+        )
+        .with_columns(
+            pl.col(coords).list.get(0).name.suffix("_left"),
+            pl.col(coords).list.get(1).name.suffix("_right"),
         )
         .drop(coords)
     )

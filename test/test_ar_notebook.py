@@ -36,7 +36,7 @@ def test_calc_obs_date(in_year: int, in_month: int, out_first: date) -> None:
         ("lon_question", pl.Categorical),
     ],
 )
-def test_fill_blanks(in_name: str, in_type: pl.PolarsDataType) -> None:
+def test_fill_blanks(in_name: str, in_type: type[pl.DataType]) -> None:
     df_in = pl.LazyFrame()
     df_out = ar_notebook.fill_blanks(df_in, [(in_name, in_type)]).collect()
     assert df_out.item(0, in_name) is None

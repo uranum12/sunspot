@@ -9,7 +9,7 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
         .with_columns(
             pl.col("first", "last")
             .list.get(0)
-            .replace(
+            .replace_strict(
                 {
                     "jan": 1,
                     "feb": 2,
@@ -24,7 +24,6 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
                     "nov": 11,
                     "dec": 12,
                 },
-                default=None,
                 return_dtype=pl.UInt8,
             )
             .name.suffix("_month"),

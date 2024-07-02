@@ -73,7 +73,7 @@ def merge(df: pl.LazyFrame) -> pl.LazyFrame:
         # 結合済みとして処理
         df_over = df_over.with_columns(over=False)
         # 使用した列の順番を戻す
-        df_over = df_over.select(dfl[-1].columns)
+        df_over = df_over.select(dfl[-1].collect_schema().names())
 
         dfl.append(df_over)
 

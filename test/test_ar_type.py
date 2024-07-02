@@ -65,6 +65,6 @@ def test_detect_schema_type(
 )
 def test_detect_dtypes(
     in_schema_type: ar_type.SchemaType,
-    out_dtypes: dict[str, pl.PolarsDataType],
+    out_dtypes: dict[str, type[pl.DataType]],
 ) -> None:
     assert ar_type.detect_dtypes(in_schema_type) == out_dtypes

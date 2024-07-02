@@ -8,7 +8,7 @@ def calc_obs_date(df: pl.LazyFrame, year: int, month: int) -> pl.LazyFrame:
 
 
 def fill_blanks(
-    df: pl.LazyFrame, cols: list[tuple[str, pl.PolarsDataType]]
+    df: pl.LazyFrame, cols: list[tuple[str, type[pl.DataType]]]
 ) -> pl.LazyFrame:
     return df.with_columns(
         [pl.lit(None).cast(dtype).alias(col) for col, dtype in cols]

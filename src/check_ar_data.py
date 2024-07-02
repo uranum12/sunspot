@@ -62,7 +62,7 @@ def find_invalid_obs_range(
     """
     return filter_df(
         lf.select("ns", "no", "first", "last"),
-        (pl.col("last") - pl.col("first")).dt.days() > interval,
+        (pl.col("last") - pl.col("first")).dt.total_days() > interval,
     )
 
 

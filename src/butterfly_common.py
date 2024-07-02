@@ -24,7 +24,7 @@ def reverse_south(df: pl.LazyFrame) -> pl.LazyFrame:
             pl.when(pl.col("ns").eq("S"))
             .then(-pl.col(col))
             .otherwise(pl.col(col))
-            .cast(df.schema[col])
+            .cast(df.collect_schema()[col])
             .alias(col)
             for col in ["lat_left", "lat_right"]
         ]
@@ -38,7 +38,7 @@ def reverse_minus(df: pl.LazyFrame) -> pl.LazyFrame:
             pl.when(pl.col(f"{col}_sign").eq("-"))
             .then(-pl.col(col))
             .otherwise(pl.col(col))
-            .cast(df.schema[col])
+            .cast(df.collect_schema()[col])
             .alias(col)
             for col in ["lat_left", "lat_right"]
         ]

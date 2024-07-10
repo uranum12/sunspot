@@ -40,15 +40,17 @@ def load_flare_file(path: Path) -> pl.DataFrame:
     return pl.DataFrame({"date": dates, "index": indexes})
 
 
-def load_flare_data(path: Path) -> pl.DataFrame:
+def load_flare_files(
+    files_north: list[Path], files_south: list[Path], files_total: list[Path]
+) -> pl.DataFrame:
     df_north = pl.concat(
-        load_flare_file(file).lazy() for file in path.glob("*north*.txt")
+        load_flare_file(file).lazy() for file in files_north
     ).rename({"index": "north"})
     df_south = pl.concat(
-        load_flare_file(file).lazy() for file in path.glob("*south*.txt")
+        load_flare_file(file).lazy() for file in files_south
     ).rename({"index": "south"})
     df_total = pl.concat(
-        load_flare_file(file).lazy() for file in path.glob("*total*.txt")
+        load_flare_file(file).lazy() for file in files_total
     ).rename({"index": "total"})
     return (
         df_north.join(df_south, on="date", how="full", coalesce=True)
@@ -56,6 +58,13 @@ def load_flare_data(path: Path) -> pl.DataFrame:
         .sort("date")
         .collect()
     )
+
+
+def load_flare_data(path: Path) -> pl.DataFrame:
+    files_north = list(path.glob("*north*.txt"))
+    files_south = list(path.glob("*south*.txt"))
+    files_total = list(path.glob("*total*.txt"))
+    return load_flare_files(files_north, files_south, files_total)
 
 
 def join_data(df_seiryo: pl.DataFrame, df_flare: pl.DataFrame) -> pl.DataFrame:

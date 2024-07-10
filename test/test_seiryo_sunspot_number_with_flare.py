@@ -198,6 +198,48 @@ def test_load_flare_file_with_error(mocker: MockerFixture) -> None:
         )
 
 
+def _create_df(dt: date, v: float) -> pl.DataFrame:
+    return pl.DataFrame(
+        {"date": [dt], "index": [v]},
+        schema={"date": pl.Date, "index": pl.Float64},
+    )
+
+
+def test_load_flare_files(mocker: MockerFixture) -> None:
+    files_north = [Path(f"north_{year}") for year in range(2010, 2012)]
+    files_south = [Path(f"south_{year}") for year in range(2010, 2012)]
+    files_total = [Path(f"total_{year}") for year in range(2011, 2013)]
+    mocker.patch(
+        "seiryo_sunspot_number_with_flare.load_flare_file",
+        side_effect=[
+            _create_df(date(2010, 1, 1), 1.2),
+            _create_df(date(2011, 1, 1), 2.3),
+            _create_df(date(2010, 1, 1), 12.3),
+            _create_df(date(2011, 1, 1), 23.4),
+            _create_df(date(2011, 1, 1), 12),
+            _create_df(date(2012, 1, 1), 23),
+        ],
+    )
+    df_expected = pl.DataFrame(
+        {
+            "date": [date(2010, 1, 1), date(2011, 1, 1), date(2012, 1, 1)],
+            "north": [1.2, 2.3, None],
+            "south": [12.3, 23.4, None],
+            "total": [None, 12, 23],
+        },
+        schema={
+            "date": pl.Date,
+            "north": pl.Float64,
+            "south": pl.Float64,
+            "total": pl.Float64,
+        },
+    )
+    df_out = seiryo_sunspot_number_with_flare.load_flare_files(
+        files_north, files_south, files_total
+    )
+    assert_frame_equal(df_out, df_expected, check_column_order=False)
+
+
 def test_load_flare_data(mocker: MockerFixture) -> None:
     mocker.patch(
         "pathlib.Path.glob",
@@ -207,13 +249,6 @@ def test_load_flare_data(mocker: MockerFixture) -> None:
             (Path(f"total_{year}") for year in range(2011, 2013)),
         ],
     )
-
-    def _create_df(dt: date, v: float) -> pl.DataFrame:
-        return pl.DataFrame(
-            {"date": [dt], "index": [v]},
-            schema={"date": pl.Date, "index": pl.Float64},
-        )
-
     mocker.patch(
         "seiryo_sunspot_number_with_flare.load_flare_file",
         side_effect=[

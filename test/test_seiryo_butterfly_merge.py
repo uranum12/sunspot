@@ -8,6 +8,51 @@ import seiryo_butterfly
 import seiryo_butterfly_merge
 
 
+def test_merge_info() -> None:
+    info1 = seiryo_butterfly.ButterflyInfo(
+        -10,
+        50,
+        date(2020, 1, 1),
+        date(2020, 2, 2),
+        seiryo_butterfly.DateDelta(months=1),
+    )
+    info2 = seiryo_butterfly.ButterflyInfo(
+        -40,
+        40,
+        date(2010, 5, 1),
+        date(2011, 12, 1),
+        seiryo_butterfly.DateDelta(months=1),
+    )
+    info_expected = seiryo_butterfly.ButterflyInfo(
+        -40,
+        50,
+        date(2010, 5, 1),
+        date(2020, 2, 2),
+        seiryo_butterfly.DateDelta(months=1),
+    )
+    info_merged = seiryo_butterfly_merge.merge_info([info1, info2])
+    assert info_merged == info_expected
+
+
+def test_merge_info_with_error() -> None:
+    info1 = seiryo_butterfly.ButterflyInfo(
+        -10,
+        50,
+        date(2020, 1, 1),
+        date(2020, 2, 2),
+        seiryo_butterfly.DateDelta(months=1),
+    )
+    info2 = seiryo_butterfly.ButterflyInfo(
+        -40,
+        40,
+        date(2010, 5, 1),
+        date(2011, 12, 1),
+        seiryo_butterfly.DateDelta(days=1),
+    )
+    with pytest.raises(ValueError, match="Date interval must be equal"):
+        _ = seiryo_butterfly_merge.merge_info([info1, info2])
+
+
 @pytest.mark.parametrize(
     ("in_data", "out_img"),
     [

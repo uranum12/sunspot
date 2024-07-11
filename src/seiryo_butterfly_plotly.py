@@ -6,16 +6,19 @@ import numpy as np
 import numpy.typing as npt
 import plotly.graph_objects as go
 
-from seiryo_butterfly import ButterflyInfo, create_date_index, create_lat_index
+import seiryo_butterfly_draw
+from seiryo_butterfly import ButterflyInfo
 
 
 def draw_butterfly_diagram_plotly(
     img: npt.NDArray[np.uint8], info: ButterflyInfo
 ) -> go.Figure:
-    date_index = create_date_index(
+    date_index = seiryo_butterfly_draw.create_date_index(
         info.date_start, info.date_end, info.date_interval.to_interval()
     )
-    lat_index = create_lat_index(info.lat_min, info.lat_max)
+    lat_index = seiryo_butterfly_draw.create_lat_index(
+        info.lat_min, info.lat_max
+    )
 
     xlabel = [
         (i, f"{d.year}")

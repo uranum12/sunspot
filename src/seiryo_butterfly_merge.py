@@ -1,5 +1,4 @@
 import json
-from datetime import date
 from pathlib import Path
 from pprint import pprint
 
@@ -8,26 +7,47 @@ import numpy.typing as npt
 import polars as pl
 
 import seiryo_butterfly
-from seiryo_butterfly_config import ButterflyDiagram
+import seiryo_butterfly_image
+from seiryo_butterfly import ButterflyInfo
+
+
+def merge_info(info_list: list[ButterflyInfo]) -> ButterflyInfo:
+    if len({info.date_interval for info in info_list}) != 1:
+        msg = "Date interval must be equal"
+        raise ValueError(msg)
+    lat_min = min(info.lat_min for info in info_list)
+    lat_max = max(info.lat_max for info in info_list)
+    date_start = min(info.date_start for info in info_list)
+    date_end = max(info.date_end for info in info_list)
+    return ButterflyInfo(
+        lat_min, lat_max, date_start, date_end, info_list[0].date_interval
+    )
+
+
+def calc_lat_size(info: ButterflyInfo) -> int:
+    return (info.lat_max - info.lat_min) * 2 + 1
+
+
+def calc_date_size(info: ButterflyInfo) -> int:
+    return pl.date_range(
+        info.date_start,
+        info.date_end,
+        info.date_interval.to_interval(),
+        eager=True,
+    ).len()
 
 
 def create_merged_image(
-    dfl: list[pl.DataFrame], info: seiryo_butterfly.ButterflyInfo
+    dfl: list[pl.DataFrame], info: ButterflyInfo
 ) -> npt.NDArray[np.uint16]:
-    lat_size = len(
-        seiryo_butterfly.create_lat_index(info.lat_min, info.lat_max)
-    )
-    date_size = len(
-        seiryo_butterfly.create_date_index(
-            info.date_start, info.date_end, info.date_interval.to_interval()
-        )
-    )
+    lat_size = calc_lat_size(info)
+    date_size = calc_date_size(info)
     img: npt.NDArray[np.uint16] = np.zeros(
         (lat_size, date_size), dtype=np.uint16
     )
     for i, df in enumerate(dfl):
         img = img + (
-            seiryo_butterfly.create_image(
+            seiryo_butterfly_image.create_image(
                 seiryo_butterfly.fill_lat(
                     df.lazy(),
                     info.date_start,
@@ -51,25 +71,30 @@ def create_color_image(
 
 
 def main() -> None:
-    config_path = Path("config/seiryo/butterfly_diagram")
+    monthly_data_path = Path("out/seiryo/butterfly/trimmed_monthly.parquet")
+    monthly_info_path = monthly_data_path.with_suffix(".json")
+    fromtext_data_path = Path("out/seiryo/butterfly/trimmed_fromtext.parquet")
+    fromtext_info_path = fromtext_data_path.with_suffix(".json")
     output_path = Path("out/seiryo/butterfly")
 
-    df1 = pl.read_parquet(Path("out/seiryo/butterfly/fromtext.parquet"))
-    df2 = pl.read_parquet(Path("out/seiryo/butterfly/monthly.parquet"))
-    df2_date_min = df2.select(pl.min("date")).item()
-    dfl = [df1.filter(pl.col("date") < df2_date_min), df2]
+    monthly_data = pl.read_parquet(monthly_data_path)
 
-    info = seiryo_butterfly.ButterflyInfo(
-        -50,
-        50,
-        date(1950, 1, 1),
-        date(2024, 12, 1),
-        seiryo_butterfly.DateDelta(months=1),
-    )
+    with monthly_info_path.open("r") as f_monthly_info:
+        monthly_info = ButterflyInfo.from_dict(json.load(f_monthly_info))
+
+    fromtext_data = pl.read_parquet(fromtext_data_path)
+
+    with fromtext_info_path.open("r") as f_fromtext_info:
+        fromtext_info = ButterflyInfo.from_dict(json.load(f_fromtext_info))
+
+    info = merge_info([fromtext_info, monthly_info])
     pprint(info)
 
-    img = create_merged_image(dfl, info)
+    img = create_merged_image([fromtext_data, monthly_data], info)
     print(img)
+
+    cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0x00, 0x00, 0x00)]
+    img_color = create_color_image(img, cmap)
 
     with (output_path / "merged.npz").open("wb") as f_img:
         np.savez_compressed(f_img, img=img)
@@ -77,22 +102,8 @@ def main() -> None:
     with (output_path / "merged.json").open("w") as f_info:
         f_info.write(info.to_json())
 
-    cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0xFF, 0x00, 0x00)]
-    img_color = create_color_image(img, cmap)
-
-    with (config_path / "merged.json").open("r") as file:
-        config = ButterflyDiagram(**json.load(file))
-
-    fig = seiryo_butterfly.draw_butterfly_diagram(img_color, info, config)
-
-    for f in ["png", "pdf"]:
-        fig.savefig(
-            output_path / f"merged.{f}",
-            format=f,
-            dpi=300,
-            bbox_inches="tight",
-            pad_inches=0.1,
-        )
+    with (output_path / "merged_color.npz").open("wb") as f_img_color:
+        np.savez_compressed(f_img_color, img=img_color)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,30 @@ import seiryo_butterfly
 import seiryo_butterfly_merge
 
 
+def test_color() -> None:
+    color = seiryo_butterfly_merge.Color(2, 4, 6)
+    dict_expected = {"red": 2, "green": 4, "blue": 6}
+    tuple_expected = (2, 4, 6)
+    assert color.to_dict() == dict_expected
+    assert color.to_tuple() == tuple_expected
+
+
+@pytest.mark.parametrize(
+    ("in_red", "in_green", "in_blue"),
+    [
+        pytest.param(1000, 10, 10),
+        pytest.param(-10, 10, 10),
+        pytest.param(10, 1000, 10),
+        pytest.param(10, -10, 10),
+        pytest.param(10, 10, 1000),
+        pytest.param(10, 10, -10),
+    ],
+)
+def test_color_with_error(in_red: int, in_green: int, in_blue: int) -> None:
+    with pytest.raises(ValueError, match="color value must be 0x00 to 0xFF"):
+        _ = seiryo_butterfly_merge.Color(in_red, in_green, in_blue)
+
+
 def test_merge_info() -> None:
     info1 = seiryo_butterfly.ButterflyInfo(
         -10,
@@ -167,7 +191,11 @@ def test_create_merged_image(
     [
         pytest.param(
             [[0, 0, 0], [0, 1, 2], [3, 2, 1]],
-            [(0xFF, 0x00, 0x00), (0x00, 0xFF, 0x00), (0x00, 0x00, 0xFF)],
+            [
+                seiryo_butterfly_merge.Color(0xFF, 0x00, 0x00),
+                seiryo_butterfly_merge.Color(0x00, 0xFF, 0x00),
+                seiryo_butterfly_merge.Color(0x00, 0x00, 0xFF),
+            ],
             [
                 [[0xFF, 0xFF, 0xFF], [0xFF, 0xFF, 0xFF], [0xFF, 0xFF, 0xFF]],
                 [[0xFF, 0xFF, 0xFF], [0xFF, 0x00, 0x00], [0x00, 0xFF, 0x00]],
@@ -177,12 +205,12 @@ def test_create_merged_image(
         pytest.param(
             [[1, 2, 4], [1, 2, 4], [1, 2, 4]],
             [
-                (0xFF, 0x00, 0x00),
-                (0x00, 0xFF, 0x00),
-                (0x00, 0x00, 0xFF),
-                (0xFF, 0xFF, 0x00),
-                (0xFF, 0x00, 0xFF),
-                (0x00, 0xFF, 0xFF),
+                seiryo_butterfly_merge.Color(0xFF, 0x00, 0x00),
+                seiryo_butterfly_merge.Color(0x00, 0xFF, 0x00),
+                seiryo_butterfly_merge.Color(0x00, 0x00, 0xFF),
+                seiryo_butterfly_merge.Color(0xFF, 0xFF, 0x00),
+                seiryo_butterfly_merge.Color(0xFF, 0x00, 0xFF),
+                seiryo_butterfly_merge.Color(0x00, 0xFF, 0xFF),
             ],
             [
                 [[0xFF, 0x00, 0x00], [0x00, 0xFF, 0x00], [0xFF, 0xFF, 0x00]],
@@ -194,7 +222,7 @@ def test_create_merged_image(
 )
 def test_create_color_image(
     in_img: list[list[int]],
-    in_cmap: list[tuple[int, int, int]],
+    in_cmap: list[seiryo_butterfly_merge.Color],
     out_img: list[list[list[int]]],
 ) -> None:
     out = seiryo_butterfly_merge.create_color_image(

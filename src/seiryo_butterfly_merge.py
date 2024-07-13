@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from pprint import pprint
 
@@ -9,6 +10,28 @@ import polars as pl
 import seiryo_butterfly
 import seiryo_butterfly_image
 from seiryo_butterfly import ButterflyInfo
+
+
+@dataclass(frozen=True, slots=True)
+class Color:
+    red: int
+    green: int
+    blue: int
+
+    def __post_init__(self: "Color") -> None:
+        msg = "color value must be 0x00 to 0xFF"
+        if not 0x00 <= self.red <= 0xFF:  # noqa: PLR2004
+            raise ValueError(msg)
+        if not 0x00 <= self.green <= 0xFF:  # noqa: PLR2004
+            raise ValueError(msg)
+        if not 0x00 <= self.blue <= 0xFF:  # noqa: PLR2004
+            raise ValueError(msg)
+
+    def to_dict(self: "Color") -> dict[str, int]:
+        return asdict(self)
+
+    def to_tuple(self: "Color") -> tuple[int, int, int]:
+        return (self.red, self.green, self.blue)
 
 
 def merge_info(info_list: list[ButterflyInfo]) -> ButterflyInfo:
@@ -62,11 +85,11 @@ def create_merged_image(
 
 
 def create_color_image(
-    img: npt.NDArray[np.uint16], cmap: list[tuple[int, int, int]]
+    img: npt.NDArray[np.uint16], cmap: list[Color]
 ) -> npt.NDArray[np.uint8]:
     img_merged = np.full((*img.shape, 3), 0xFF, dtype=np.uint8)
     for i, c in enumerate(cmap, 1):
-        img_merged[img == i] = c
+        img_merged[img == i] = c.to_tuple()
     return img_merged
 
 
@@ -75,6 +98,7 @@ def main() -> None:
     monthly_info_path = monthly_data_path.with_suffix(".json")
     fromtext_data_path = Path("out/seiryo/butterfly/trimmed_fromtext.parquet")
     fromtext_info_path = fromtext_data_path.with_suffix(".json")
+    cmap_path = Path("config/color/merged.json")
     output_path = Path("out/seiryo/butterfly")
 
     monthly_data = pl.read_parquet(monthly_data_path)
@@ -93,7 +117,10 @@ def main() -> None:
     img = create_merged_image([fromtext_data, monthly_data], info)
     print(img)
 
-    cmap = [(0x00, 0x00, 0x00), (0xFF, 0x00, 0x00), (0x00, 0x00, 0x00)]
+    with cmap_path.open("r") as f_cmap:
+        json_data = json.load(f_cmap)
+        cmap = [Color(**item) for item in json_data]
+
     img_color = create_color_image(img, cmap)
 
     with (output_path / "merged.npz").open("wb") as f_img:

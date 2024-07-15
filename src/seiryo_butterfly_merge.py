@@ -9,7 +9,7 @@ import polars as pl
 import seiryo_butterfly
 import seiryo_butterfly_image
 from seiryo_butterfly import ButterflyInfo
-from seiryo_butterfly_config import Color
+from seiryo_butterfly_config import ColorMap
 
 
 def merge_info(info_list: list[ButterflyInfo]) -> ButterflyInfo:
@@ -63,10 +63,10 @@ def create_merged_image(
 
 
 def create_color_image(
-    img: npt.NDArray[np.uint16], cmap: list[Color]
+    img: npt.NDArray[np.uint16], cmap: ColorMap
 ) -> npt.NDArray[np.uint8]:
     img_merged = np.full((*img.shape, 3), 0xFF, dtype=np.uint8)
-    for i, c in enumerate(cmap, 1):
+    for i, c in enumerate(cmap.cmap, 1):
         img_merged[img == i] = (c.red, c.green, c.blue)
     return img_merged
 
@@ -76,7 +76,7 @@ def main() -> None:
     monthly_info_path = monthly_data_path.with_suffix(".json")
     fromtext_data_path = Path("out/seiryo/butterfly/trimmed_fromtext.parquet")
     fromtext_info_path = fromtext_data_path.with_suffix(".json")
-    cmap_path = Path("config/color/merged.json")
+    cmap_path = Path("config/seiryo/color/merged.json")
     output_path = Path("out/seiryo/butterfly")
 
     monthly_data = pl.read_parquet(monthly_data_path)
@@ -96,8 +96,7 @@ def main() -> None:
     print(img)
 
     with cmap_path.open("r") as f_cmap:
-        json_data = json.load(f_cmap)
-        cmap = [Color(**item) for item in json_data]
+        cmap = ColorMap(**json.load(f_cmap))
 
     img_color = create_color_image(img, cmap)
 

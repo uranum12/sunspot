@@ -5,6 +5,7 @@ import polars as pl
 import pytest
 
 import seiryo_butterfly
+import seiryo_butterfly_config
 import seiryo_butterfly_merge
 
 
@@ -168,9 +169,9 @@ def test_create_merged_image(
         pytest.param(
             [[0, 0, 0], [0, 1, 2], [3, 2, 1]],
             [
-                seiryo_butterfly_merge.Color(red=0xFF, green=0x00, blue=0x00),
-                seiryo_butterfly_merge.Color(red=0x00, green=0xFF, blue=0x00),
-                seiryo_butterfly_merge.Color(red=0x00, green=0x00, blue=0xFF),
+                seiryo_butterfly_config.Color(red=0xFF, green=0x00, blue=0x00),
+                seiryo_butterfly_config.Color(red=0x00, green=0xFF, blue=0x00),
+                seiryo_butterfly_config.Color(red=0x00, green=0x00, blue=0xFF),
             ],
             [
                 [[0xFF, 0xFF, 0xFF], [0xFF, 0xFF, 0xFF], [0xFF, 0xFF, 0xFF]],
@@ -181,12 +182,12 @@ def test_create_merged_image(
         pytest.param(
             [[1, 2, 4], [1, 2, 4], [1, 2, 4]],
             [
-                seiryo_butterfly_merge.Color(red=0xFF, green=0x00, blue=0x00),
-                seiryo_butterfly_merge.Color(red=0x00, green=0xFF, blue=0x00),
-                seiryo_butterfly_merge.Color(red=0x00, green=0x00, blue=0xFF),
-                seiryo_butterfly_merge.Color(red=0xFF, green=0xFF, blue=0x00),
-                seiryo_butterfly_merge.Color(red=0xFF, green=0x00, blue=0xFF),
-                seiryo_butterfly_merge.Color(red=0x00, green=0xFF, blue=0xFF),
+                seiryo_butterfly_config.Color(red=0xFF, green=0x00, blue=0x00),
+                seiryo_butterfly_config.Color(red=0x00, green=0xFF, blue=0x00),
+                seiryo_butterfly_config.Color(red=0x00, green=0x00, blue=0xFF),
+                seiryo_butterfly_config.Color(red=0xFF, green=0xFF, blue=0x00),
+                seiryo_butterfly_config.Color(red=0xFF, green=0x00, blue=0xFF),
+                seiryo_butterfly_config.Color(red=0x00, green=0xFF, blue=0xFF),
             ],
             [
                 [[0xFF, 0x00, 0x00], [0x00, 0xFF, 0x00], [0xFF, 0xFF, 0x00]],
@@ -198,10 +199,11 @@ def test_create_merged_image(
 )
 def test_create_color_image(
     in_img: list[list[int]],
-    in_cmap: list[seiryo_butterfly_merge.Color],
+    in_cmap: list[seiryo_butterfly_config.Color],
     out_img: list[list[list[int]]],
 ) -> None:
     out = seiryo_butterfly_merge.create_color_image(
-        np.array(in_img, dtype=np.uint16), in_cmap
+        np.array(in_img, dtype=np.uint16),
+        seiryo_butterfly_config.ColorMap(cmap=in_cmap),
     )
     np.testing.assert_equal(out, out_img)
